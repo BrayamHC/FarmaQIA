@@ -33,3 +33,7 @@ export const databaseConfig = (): DatabaseConfig => ({
         sessionTTL: process.env.SESSION_TTL ? Number(process.env.SESSION_TTL) : 14400,
     },
 });
+
+export const getDatabaseConfig = (): DatabaseCredentials => databaseConfig().database;
+
+export const getRedisConfig = (): RedisCredentials => databaseConfig().redis;
