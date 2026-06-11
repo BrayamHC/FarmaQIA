@@ -1,7 +1,11 @@
 <template>
   <div class="min-h-screen bg-slate-100">
+
+    <!-- ── Header ──────────────────────────────────────────────────── -->
     <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div class="flex h-16 items-center justify-between px-4 sm:px-6">
+
+        <!-- Izquierda: hamburger + branding -->
         <div class="flex items-center gap-3">
           <button type="button"
             class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 lg:hidden"
@@ -15,130 +19,182 @@
           </div>
         </div>
 
+        <!-- Derecha: selector de sucursal + usuario -->
         <div class="relative z-50 flex items-center gap-3">
-          <button type="button"
-            class="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition hover:border-sky-200 hover:bg-sky-50/50 hover:shadow-md"
-            @click="togglePerfilMenu">
-            <Avatar :label="inicialUsuario" shape="circle"
-              class="!h-10 !w-10 !bg-sky-100 !font-semibold !text-sky-700 ring-2 ring-white" />
 
-            <div class="hidden min-w-0 text-left sm:block">
-              <p class="truncate text-sm font-semibold text-slate-800">
-                {{ primerNombreUsuario }}
-              </p>
-            </div>
+          <!-- ── Selector de sucursal ─────────────────────────── -->
+          <div class="relative">
+            <button type="button"
+              class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-sky-200 hover:bg-sky-50/50 hover:text-sky-700"
+              @click="toggleSucursalMenu">
+              <i class="pi pi-building text-sm text-slate-400"></i>
+              <span class="hidden max-w-[120px] truncate sm:block">
+                {{ sucursalActual?.nombre ?? 'Sucursal' }}
+              </span>
+              <i :class="[
+                sucursalMenuOpen ? 'pi pi-chevron-up text-sky-600' : 'pi pi-chevron-down text-slate-400',
+                'text-xs transition',
+              ]"></i>
+            </button>
 
-            <i :class="[
-              perfilMenuOpen ? 'pi pi-chevron-up text-sky-600' : 'pi pi-chevron-down text-slate-400',
-              'text-xs transition',
-            ]"></i>
-          </button>
+            <transition name="dropdown">
+              <div v-if="sucursalMenuOpen"
+                class="absolute right-0 top-[calc(100%+0.6rem)] z-50 w-52 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                <p
+                  class="border-b border-slate-100 px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                  Sucursales
+                </p>
+                <ul class="px-2 py-2">
+                  <li v-for="s in sucursales" :key="s.id">
+                    <button type="button"
+                      class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition" :class="sucursalActual?.id === s.id
+                          ? 'bg-sky-50 font-semibold text-sky-700'
+                          : 'text-slate-700 hover:bg-slate-50'
+                        " @click="seleccionarSucursal(s)">
+                      <i class="pi pi-building text-xs"
+                        :class="sucursalActual?.id === s.id ? 'text-sky-500' : 'text-slate-400'"></i>
+                      <span class="truncate">{{ s.nombre }}</span>
+                      <i v-if="sucursalActual?.id === s.id" class="pi pi-check ml-auto text-xs text-sky-500"></i>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </transition>
+          </div>
 
-          <transition name="perfil-dropdown">
-            <div v-if="perfilMenuOpen"
-              class="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[280px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-              <div class="flex items-center gap-3 px-4 py-4">
-                <Avatar :label="inicialUsuario" shape="circle"
-                  class="!h-11 !w-11 !bg-sky-100 !font-semibold !text-sky-700" />
+          <!-- ── Usuario ──────────────────────────────────────── -->
+          <div class="relative">
+            <button type="button"
+              class="flex items-center gap-2.5 rounded-2xl py-1.5 pl-1.5 pr-3 transition hover:bg-slate-100"
+              @click="togglePerfilMenu">
+              <Avatar :label="inicialUsuario" shape="circle"
+                class="!h-9 !w-9 !bg-sky-100 !font-semibold !text-sky-700 ring-2 ring-white" />
+              <div class="hidden min-w-0 text-left sm:block">
+                <p class="truncate text-sm font-semibold text-slate-800 leading-tight">
+                  {{ primerNombreUsuario }}
+                </p>
+                <p class="truncate text-[11px] text-slate-400 leading-tight">
+                  {{ authStore.rolNombre || 'Sistema' }}
+                </p>
+              </div>
+              <i :class="[
+                perfilMenuOpen ? 'pi pi-chevron-up text-sky-600' : 'pi pi-chevron-down text-slate-400',
+                'text-xs transition',
+              ]"></i>
+            </button>
 
-                <div class="min-w-0">
-                  <p class="truncate text-sm font-semibold text-slate-900">
-                    {{ authStore.nombreCompleto || 'Usuario' }}
-                  </p>
-                  <p class="truncate text-xs text-slate-500">
-                    {{ authStore.rolNombre || 'Sistema' }}
-                  </p>
+            <transition name="dropdown">
+              <div v-if="perfilMenuOpen"
+                class="absolute right-0 top-[calc(100%+0.6rem)] z-50 w-[260px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                <!-- Info del usuario -->
+                <div class="flex items-center gap-3 px-4 py-4">
+                  <Avatar :label="inicialUsuario" shape="circle"
+                    class="!h-11 !w-11 !bg-sky-100 !font-semibold !text-sky-700 shrink-0" />
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-slate-900">
+                      {{ authStore.nombreCompleto || 'Usuario' }}
+                    </p>
+                    <p class="truncate text-xs text-slate-500">
+                      {{ authStore.rolNombre || 'Sistema' }}
+                    </p>
+                  </div>
+                </div>
+
+                <div class="border-t border-slate-100 px-2 py-2">
+                  <button type="button"
+                    class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-sky-50 hover:text-sky-700"
+                    @click="goToProfile">
+                    <i class="pi pi-user text-sm"></i>
+                    <span>Ver perfil</span>
+                  </button>
+
+                  <button type="button"
+                    class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-rose-600 transition hover:bg-rose-50"
+                    @click="handleLogout">
+                    <i class="pi pi-sign-out text-sm"></i>
+                    <span>Cerrar sesión</span>
+                  </button>
                 </div>
               </div>
+            </transition>
+          </div>
 
-              <div class="border-t border-slate-100 px-2 py-2">
-                <button type="button"
-                  class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-sky-50 hover:text-sky-700"
-                  @click="goToProfile">
-                  <i class="pi pi-user text-sm"></i>
-                  <span>Ver perfil</span>
-                </button>
-              </div>
-            </div>
-          </transition>
         </div>
       </div>
     </header>
 
+    <!-- ── Sidebar ─────────────────────────────────────────────────── -->
     <aside :class="[
       'fixed left-0 top-16 z-40 border-r border-slate-200 bg-white transition-transform duration-300 lg:translate-x-0',
       sidebarOpen ? 'translate-x-0' : '-translate-x-full',
       'w-24',
     ]" style="height: calc(100vh - 4rem);">
       <div class="flex h-full flex-col">
-        <div class="flex flex-1 flex-col">
-          <div class="border-b border-slate-200 px-3 py-3">
-            <div class="flex flex-col items-center gap-2">
-              <RouterLink to="/dashboard" @click="sidebarOpen = false">
-                <div class="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-medium transition"
-                  :class="[
-                    isActive(dashboardItem)
-                      ? 'bg-sky-50 text-sky-700'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-                  ]" v-tooltip.right="tooltipOptions(dashboardItem.label)">
-                  <i :class="[dashboardItem.icon, 'text-lg']"></i>
-                </div>
-              </RouterLink>
 
-              <RouterLink to="/" @click="sidebarOpen = false">
-                <div class="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-medium transition"
-                  :class="[
-                    isActive(homeItem)
-                      ? 'bg-sky-50 text-sky-700'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-                  ]" v-tooltip.right="tooltipOptions(homeItem.label)">
-                  <i :class="[homeItem.icon, 'text-lg']"></i>
-                </div>
-              </RouterLink>
-            </div>
+        <!-- Dashboard + Home fijados arriba -->
+        <div class="border-b border-slate-200 px-3 py-3">
+          <div class="flex flex-col items-center gap-2">
+            <RouterLink :to="dashboardItem.to" @click="sidebarOpen = false">
+              <div class="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-medium transition"
+                :class="isActive(dashboardItem) ? 'bg-sky-50 text-sky-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+                v-tooltip.right="tooltipOptions(dashboardItem.label)">
+                <i :class="[dashboardItem.icon, 'text-lg']"></i>
+              </div>
+            </RouterLink>
+
+            <RouterLink :to="homeItem.to" @click="sidebarOpen = false">
+              <div class="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-medium transition"
+                :class="isActive(homeItem) ? 'bg-sky-50 text-sky-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+                v-tooltip.right="tooltipOptions(homeItem.label)">
+                <i :class="[homeItem.icon, 'text-lg']"></i>
+              </div>
+            </RouterLink>
           </div>
-
-          <nav class="flex-1 overflow-y-auto px-3 py-5">
-            <ul class="flex flex-col items-center gap-2">
-              <li v-for="item in sidebarMenuItems" :key="item.to">
-                <RouterLink :to="item.to" @click="sidebarOpen = false">
-                  <div class="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-medium transition"
-                    :class="[
-                      isActive(item)
-                        ? 'bg-sky-50 text-sky-700'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-                    ]" v-tooltip.right="tooltipOptions(item.label)">
-                    <i :class="[item.icon, 'text-lg']"></i>
-                  </div>
-                </RouterLink>
-              </li>
-            </ul>
-          </nav>
         </div>
 
+        <!-- Módulos principales -->
+        <nav class="flex-1 overflow-y-auto px-3 py-5">
+          <ul class="flex flex-col items-center gap-2">
+            <li v-for="item in sidebarMenuItems" :key="item.to">
+              <RouterLink :to="item.to" @click="sidebarOpen = false">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-medium transition"
+                  :class="isActive(item) ? 'bg-sky-50 text-sky-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
+                  v-tooltip.right="tooltipOptions(item.label)">
+                  <i :class="[item.icon, 'text-lg']"></i>
+                </div>
+              </RouterLink>
+            </li>
+          </ul>
+        </nav>
+
+        <!-- Acciones inferiores -->
         <div class="border-t border-slate-200 bg-white px-3 py-4">
           <div class="flex flex-col items-center gap-2">
             <Button type="button" icon="pi pi-cog" severity="secondary" text aria-label="Configuración"
               class="!h-12 !w-12" v-tooltip.right="tooltipOptions('Configuración')"
               @click="router.push('/configuracion')" />
-
             <Button icon="pi pi-sign-out" severity="secondary" outlined aria-label="Cerrar sesión" class="!h-12 !w-12"
               v-tooltip.right="tooltipOptions('Cerrar sesión')" @click="handleLogout" />
           </div>
         </div>
+
       </div>
     </aside>
 
+    <!-- ── Contenido principal ─────────────────────────────────────── -->
     <div class="lg:pl-24">
       <main class="px-4 py-6 sm:px-6">
         <RouterView />
       </main>
     </div>
 
+    <!-- Overlay móvil sidebar -->
     <div v-if="sidebarOpen" class="fixed inset-x-0 bottom-0 top-16 z-20 bg-slate-900/30 lg:hidden"
       @click="sidebarOpen = false"></div>
 
-    <div v-if="perfilMenuOpen" class="fixed inset-0 z-40" @click="perfilMenuOpen = false"></div>
+    <!-- Overlay cierre de dropdowns -->
+    <div v-if="perfilMenuOpen || sucursalMenuOpen" class="fixed inset-0 z-40" @click="cerrarDropdowns"></div>
+
   </div>
 </template>
 
@@ -147,52 +203,86 @@ import { computed, ref } from 'vue';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import Avatar from 'primevue/avatar';
-
 import { useAuthStore } from '@/modules/auth/authStore';
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
+// ── UI state ────────────────────────────────────────────────────
 const sidebarOpen = ref(false);
 const perfilMenuOpen = ref(false);
+const sucursalMenuOpen = ref(false);
 
+// ── Sucursales ──────────────────────────────────────────────────
+// TODO: reemplazar con authStore.sucursales / authStore.sucursalActual
+// cuando el backend las exponga
+const sucursales = ref([
+  { id: 1, nombre: 'Matriz' },
+  { id: 2, nombre: 'Huejotzingo' },
+  { id: 3, nombre: 'Sonora' },
+  { id: 4, nombre: 'Parque' },
+]);
+const sucursalActual = ref(sucursales.value[0]);
+
+function seleccionarSucursal(s) {
+  sucursalActual.value = s;
+  sucursalMenuOpen.value = false;
+  // TODO: authStore.cambiarSucursal(s.id)
+}
+
+// ── Sidebar items ────────────────────────────────────────────────
 const dashboardItem = { label: 'Dashboard', to: '/dashboard', icon: 'pi pi-th-large' };
-const homeItem = { label: 'Home', to: '/', icon: 'pi pi-home' };
+const homeItem = { label: 'Inicio', to: '/home', icon: 'pi pi-home' };
 
 const sidebarMenuItems = [
-  { label: 'Compras', to: '/compras', icon: 'pi pi-shopping-cart' },
-  { label: 'Ventas', to: '/ventas', icon: 'pi pi-wallet' },
+  { label: 'Ventas', to: '/ventas', icon: 'pi pi-shopping-cart' },
+  { label: 'Compras', to: '/compras', icon: 'pi pi-wallet' },
   { label: 'Inventario', to: '/inventario', icon: 'pi pi-box' },
-  { label: 'Proveedores', to: '/proveedores', icon: 'pi pi-truck' },
-  { label: 'Administrador', to: '/administrador', icon: 'pi pi-users' },
   { label: 'Reportes', to: '/reportes', icon: 'pi pi-chart-bar' },
+  { label: 'Usuarios', to: '/usuarios', icon: 'pi pi-users' },
 ];
 
-const nombreCompletoUsuario = computed(() => authStore.nombreCompleto || 'Usuario');
-
+// ── Usuario ──────────────────────────────────────────────────────
 const primerNombreUsuario = computed(() => {
-  const nombre = nombreCompletoUsuario.value.trim();
-  if (!nombre) return 'Usuario';
-  return nombre.split(/\s+/)[0];
+  const nombre = (authStore.nombreCompleto ?? '').trim();
+  return nombre ? nombre.split(/\s+/)[0] : 'Usuario';
 });
 
-const inicialUsuario = computed(() => {
-  return primerNombreUsuario.value.charAt(0).toUpperCase();
-});
+const inicialUsuario = computed(() =>
+  primerNombreUsuario.value.charAt(0).toUpperCase()
+);
 
+// ── Helpers ──────────────────────────────────────────────────────
 function isActive(item) {
-  if (item.to === '/') return route.path === '/';
+  if (item.to === '/home') return route.path === '/home';
   return route.path.startsWith(item.to);
 }
 
 function togglePerfilMenu() {
+  sucursalMenuOpen.value = false;
   perfilMenuOpen.value = !perfilMenuOpen.value;
+}
+
+function toggleSucursalMenu() {
+  perfilMenuOpen.value = false;
+  sucursalMenuOpen.value = !sucursalMenuOpen.value;
+}
+
+function cerrarDropdowns() {
+  perfilMenuOpen.value = false;
+  sucursalMenuOpen.value = false;
 }
 
 async function goToProfile() {
   perfilMenuOpen.value = false;
   await router.push('/perfil');
+}
+
+async function handleLogout() {
+  perfilMenuOpen.value = false;
+  await authStore.logout();
+  await router.push('/login');
 }
 
 function tooltipOptions(label) {
@@ -211,12 +301,6 @@ function tooltipOptions(label) {
     },
   };
 }
-
-async function handleLogout() {
-  perfilMenuOpen.value = false;
-  await authStore.logout();
-  await router.push('/login');
-}
 </script>
 
 <style scoped>
@@ -225,7 +309,7 @@ nav::-webkit-scrollbar {
 }
 
 nav::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, .35);
   border-radius: 9999px;
 }
 
@@ -233,19 +317,19 @@ nav::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.perfil-dropdown-enter-active,
-.perfil-dropdown-leave-active {
-  transition: all 0.18s ease;
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all .18s ease;
 }
 
-.perfil-dropdown-enter-from,
-.perfil-dropdown-leave-to {
+.dropdown-enter-from,
+.dropdown-leave-to {
   opacity: 0;
-  transform: translateY(-6px) scale(0.98);
+  transform: translateY(-6px) scale(.98);
 }
 
-.perfil-dropdown-enter-to,
-.perfil-dropdown-leave-from {
+.dropdown-enter-to,
+.dropdown-leave-from {
   opacity: 1;
   transform: translateY(0) scale(1);
 }

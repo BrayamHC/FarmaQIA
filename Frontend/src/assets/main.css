@@ -173,3 +173,31 @@ p {
 .p-tooltip.p-tooltip-bottom .p-tooltip-arrow {
   border-bottom-color: #60A5FA;
 }
+
+.app-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-secondary) transparent;
+}
+
+.app-scroll::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.app-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 9999px;
+}
+
+.app-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-secondary);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.app-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
