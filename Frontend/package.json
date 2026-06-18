@@ -15,15 +15,16 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
-    "@primeuix/themes": "^2.0.3",
-    "@primevue/themes": "^4.5.4",
-    "chart.js": "^4.5.1",
-    "pinia": "^3.0.4",
-    "primeicons": "^7.0.0",
-    "primevue": "^4.5.5",
-    "tailwindcss-primeui": "^0.6.1",
-    "vue": "^3.5.32",
-    "vue-router": "^5.0.4"
+  "@primeuix/themes": "^2.0.3",
+  "@primevue/themes": "^4.5.4",
+  "axios": "^1.17.0",
+  "chart.js": "^4.5.1",
+  "pinia": "^3.0.4",
+  "primeicons": "^7.0.0",
+  "primevue": "^4.5.5",
+  "tailwindcss-primeui": "^0.6.1",
+  "vue": "^3.5.32",
+  "vue-router": "^5.0.4"
   },
   "devDependencies": {
     "@primevue/auto-import-resolver": "^4.5.5",
