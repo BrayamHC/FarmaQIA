@@ -4,6 +4,7 @@ import authRoutes from '@/modules/auth/auth.routes';
 import dashboardRoutes from '@/modules/dashboard/dashboard.routes';
 import homeRoutes from '@/modules/home/home.routes';
 import ventasRoutes from '@/modules/ventas/ventas.routes';
+import inventarioRoutes from '@/modules/inventario/inventario.routes';
 // ── Placeholder — eliminar cuando el módulo esté implementado ────
 const placeholderView = (title) => ({
   name: `${title}Placeholder`,
@@ -27,6 +28,7 @@ const routes = [
       ...homeRoutes,
       ...dashboardRoutes,
       ...ventasRoutes,
+      ...inventarioRoutes,
 
       // ── Compras ─────────────────────────────────────────────
       {
@@ -37,18 +39,6 @@ const routes = [
           // { path: 'proveedores',  name: 'Proveedores',     component: () => import('@/modules/compras/views/Proveedores.view.vue'),  meta: { requiresAuth: true, title: 'Proveedores | FarmaQ IA'        } },
           // { path: 'recepciones',  name: 'Recepciones',     component: () => import('@/modules/compras/views/Recepciones.view.vue'),  meta: { requiresAuth: true, title: 'Recepciones | FarmaQ IA'        } },
           // { path: 'devoluciones', name: 'Devoluciones',    component: () => import('@/modules/compras/views/Devoluciones.view.vue'), meta: { requiresAuth: true, title: 'Devoluciones | FarmaQ IA'       } },
-        ],
-      },
-
-      // ── Inventario ───────────────────────────────────────────
-      {
-        path: 'inventario',
-        children: [
-          { path: '', name: 'Inventario', component: placeholderView('Inventario'), meta: { requiresAuth: true, title: 'Inventario | FarmaQ IA' } },
-          // { path: 'productos',   name: 'Productos',   component: () => import('@/modules/inventario/views/Productos.view.vue'),   meta: { requiresAuth: true, title: 'Productos | FarmaQ IA'   } },
-          // { path: 'almacenes',   name: 'Almacenes',   component: () => import('@/modules/inventario/views/Almacenes.view.vue'),   meta: { requiresAuth: true, title: 'Almacenes | FarmaQ IA'   } },
-          // { path: 'lotes',       name: 'Lotes',       component: () => import('@/modules/inventario/views/Lotes.view.vue'),       meta: { requiresAuth: true, title: 'Lotes | FarmaQ IA'       } },
-          // { path: 'movimientos', name: 'Movimientos', component: () => import('@/modules/inventario/views/Movimientos.view.vue'), meta: { requiresAuth: true, title: 'Movimientos | FarmaQ IA' } },
         ],
       },
 
