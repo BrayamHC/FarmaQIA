@@ -1,8 +1,8 @@
 import {
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  RequestMethod,
+    MiddlewareConsumer,
+    Module,
+    NestModule,
+    RequestMethod,
 } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
@@ -15,46 +15,49 @@ import { databaseConfig } from './config/database.config';
 import { DatabaseModule } from './config/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuthMiddleware } from './middleware/auth.middleware';
+import { ProductosModule } from './modules/productos/productos.module';
+
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [databaseConfig],
-      envFilePath: '.env',
-    }),
-    DatabaseModule,
-    AuthModule,
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 60,
-      },
-    ]),
-  ],
-  controllers: [AppController],
-  providers: [
-    AppService,
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: ZodSerializerInterceptor,
-    },
-  ],
+    imports: [
+        ConfigModule.forRoot({
+            isGlobal: true,
+            load: [databaseConfig],
+            envFilePath: '.env',
+        }),
+        DatabaseModule,
+        AuthModule,
+        ProductosModule,
+        ThrottlerModule.forRoot([
+            {
+                ttl: 60000,
+                limit: 60,
+            },
+        ]),
+    ],
+    controllers: [AppController],
+    providers: [
+        AppService,
+        {
+            provide: APP_GUARD,
+            useClass: ThrottlerGuard,
+        },
+        {
+            provide: APP_INTERCEPTOR,
+            useClass: ZodSerializerInterceptor,
+        },
+    ],
 })
 export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthMiddleware)
-      .exclude(
-        { path: 'auth/login', method: RequestMethod.POST },
-        { path: 'docs', method: RequestMethod.GET },
-        { path: 'docs-json', method: RequestMethod.GET },
-        { path: 'docs/*splat', method: RequestMethod.ALL },
-      )
-      .forRoutes('*');
-  }
+    configure(consumer: MiddlewareConsumer) {
+        consumer
+            .apply(AuthMiddleware)
+            .exclude(
+                { path: 'auth/login', method: RequestMethod.POST },
+                { path: 'docs', method: RequestMethod.GET },
+                { path: 'docs-json', method: RequestMethod.GET },
+                { path: 'docs/*splat', method: RequestMethod.ALL },
+            )
+            .forRoutes('*');
+    }
 }

@@ -41,13 +41,6 @@ export async function up(knex: Knex): Promise<void> {
         table.string('pais_fiscal', 100).nullable();
         table.string('codigo_postal_fiscal', 10).nullable();
 
-        // Control de timbres (opcional, para futura facturación)
-        table.integer('timbres_asignados').unsigned().nullable().defaultTo(0);
-        table.integer('timbres_restantes').unsigned().nullable().defaultTo(0);
-
-        table.integer('emisor_id').unsigned().nullable()
-            .comment('Referencia opcional a configuración de emisor fiscal');
-
         table.integer('usuario_creacion').unsigned().nullable();
         table.integer('usuario_actualizacion').unsigned().nullable();
         table.timestamp('fecha_creacion').defaultTo(knex.fn.now());

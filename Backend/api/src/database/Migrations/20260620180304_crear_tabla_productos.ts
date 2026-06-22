@@ -58,6 +58,13 @@ export async function up(knex: Knex): Promise<void> {
         table.string('presentacion', 50).notNullable();
         table.timestamp('fecha_entrada').nullable();
 
+        table.integer('sucursal_id')
+            .unsigned()
+            .notNullable()
+            .references('sucursal_id')
+            .inTable('sucursales')
+            .onDelete('RESTRICT');
+
         table.jsonb('tags').nullable().defaultTo(knex.raw("'[]'::jsonb"));
 
         // Campos fiscales opcionales (sin FK a catálogos SAT por ahora)
