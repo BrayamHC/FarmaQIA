@@ -2,6 +2,11 @@
 @import "tailwindcss";
 @plugin "tailwindcss-primeui";
 
+
+
+/* ============================================================
+   TOKENS GLOBALES
+   ============================================================ */
 :root {
   --font-title: 'Manrope', sans-serif;
   --font-body: 'Inter', sans-serif;
@@ -29,6 +34,11 @@
   --radius-xl: 2rem;
 }
 
+
+
+/* ============================================================
+   RESET Y BASE
+   ============================================================ */
 html,
 body,
 #app {
@@ -44,49 +54,36 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 button,
 input,
 textarea,
-select {
-  font: inherit;
-}
+select { font: inherit; }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+a { color: inherit; text-decoration: none; }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-title);
   color: var(--color-text);
   margin: 0;
 }
 
-p {
-  margin: 0;
-}
+p { margin: 0; }
 
 ::selection {
   background: rgba(59, 130, 246, 0.14);
   color: var(--color-text);
 }
 
-.page-shell {
-  @apply min-h-screen bg-white text-slate-900;
-}
 
-.app-surface {
-  background: var(--color-surface);
-}
+
+/* ============================================================
+   UTILIDADES DE LAYOUT
+   ============================================================ */
+.page-shell  { @apply min-h-screen bg-white text-slate-900; }
+.app-surface { background: var(--color-surface); }
+.app-muted   { color: var(--color-text-secondary); }
 
 .card-base {
   @apply rounded-3xl border border-slate-200 bg-white;
@@ -99,48 +96,31 @@ p {
   box-shadow: var(--shadow-sm);
 }
 
-.section-title {
-  font-family: var(--font-title);
-  @apply text-lg font-bold text-slate-900;
-}
 
-.section-subtitle {
-  @apply text-sm text-slate-500;
-}
 
-.input-label {
-  @apply text-sm font-medium text-slate-700;
-}
+/* ============================================================
+   TIPOGRAFÍA DE COMPONENTES
+   ============================================================ */
+.section-title    { font-family: var(--font-title); @apply text-lg font-bold text-slate-900; }
+.section-subtitle { @apply text-sm text-slate-500; }
+.input-label      { @apply text-sm font-medium text-slate-700; }
+.kpi-title        { font-family: var(--font-title); @apply text-sm font-bold text-slate-500; }
+.kpi-value        { font-family: var(--font-title); @apply text-2xl font-extrabold tracking-tight text-slate-900; }
+.app-logo-title   { font-family: var(--font-title); @apply text-lg font-extrabold tracking-tight text-slate-900; }
 
-.kpi-title {
-  font-family: var(--font-title);
-  @apply text-sm font-bold text-slate-500;
-}
 
-.kpi-value {
-  font-family: var(--font-title);
-  @apply text-2xl font-extrabold tracking-tight text-slate-900;
-}
 
-.app-logo-title {
-  font-family: var(--font-title);
-  @apply text-lg font-extrabold tracking-tight text-slate-900;
-}
+/* ============================================================
+   BOTONES PRIMARIOS
+   ============================================================ */
+.app-primary-btn       { background: var(--color-primary); border-color: var(--color-primary); }
+.app-primary-btn:hover { background: #2563eb; border-color: #2563eb; }
 
-.app-muted {
-  color: var(--color-text-secondary);
-}
 
-.app-primary-btn {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-}
 
-.app-primary-btn:hover {
-  background: #2563eb;
-  border-color: #2563eb;
-}
-
+/* ============================================================
+   FONDO CUADRICULADO
+   ============================================================ */
 .farma-grid-bg {
   background-image:
     linear-gradient(to right, rgba(59, 130, 246, 0.06) 1px, transparent 1px),
@@ -148,6 +128,11 @@ p {
   background-size: 36px 36px;
 }
 
+
+
+/* ============================================================
+   TOOLTIP (PrimeVue)
+   ============================================================ */
 .p-tooltip .p-tooltip-text {
   background: #60A5FA;
   color: white;
@@ -158,36 +143,24 @@ p {
   box-shadow: 0 10px 24px rgba(59, 130, 246, 0.22);
 }
 
-.p-tooltip.p-tooltip-right .p-tooltip-arrow {
-  border-right-color: #60A5FA;
-}
+.p-tooltip.p-tooltip-right  .p-tooltip-arrow { border-right-color:  #60A5FA; }
+.p-tooltip.p-tooltip-left   .p-tooltip-arrow { border-left-color:   #60A5FA; }
+.p-tooltip.p-tooltip-top    .p-tooltip-arrow { border-top-color:    #60A5FA; }
+.p-tooltip.p-tooltip-bottom .p-tooltip-arrow { border-bottom-color: #60A5FA; }
 
-.p-tooltip.p-tooltip-left .p-tooltip-arrow {
-  border-left-color: #60A5FA;
-}
 
-.p-tooltip.p-tooltip-top .p-tooltip-arrow {
-  border-top-color: #60A5FA;
-}
 
-.p-tooltip.p-tooltip-bottom .p-tooltip-arrow {
-  border-bottom-color: #60A5FA;
-}
-
+/* ============================================================
+   SCROLLBAR PERSONALIZADO (.app-scroll)
+   Uso: class="app-scroll overflow-y-auto"
+   ============================================================ */
 .app-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--color-secondary) transparent;
 }
 
-.app-scroll::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
-}
-
-.app-scroll::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 9999px;
-}
+.app-scroll::-webkit-scrollbar       { width: 6px; height: 6px; }
+.app-scroll::-webkit-scrollbar-track { background: transparent; border-radius: 9999px; }
 
 .app-scroll::-webkit-scrollbar-thumb {
   background: var(--color-secondary);
@@ -201,101 +174,450 @@ p {
   border: 2px solid transparent;
   background-clip: padding-box;
 }
-/* Estilos base para PrimeVue DataTable */
-.p-datatable {
-  font-family: var(--font-body);
-}
 
-.p-datatable-wrapper table {
-  width: 100%;
-}
+
+
+/* ============================================================
+   DATATABLE — ESTILOS GLOBALES (PrimeVue)
+   ============================================================ */
+.p-datatable { font-family: var(--font-body); }
+
+.p-datatable-wrapper table { width: 100%; }
 
 .p-datatable-thead > tr > th {
   background: var(--color-surface);
   color: var(--color-text);
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid rgba(96, 165, 250, 0.18);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(96, 165, 250, 0.14);
+  white-space: nowrap;
 }
 
 .p-datatable-tbody > tr > td {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid rgba(96, 165, 250, 0.1);
+  padding: 0.72rem 1rem;
+  border-bottom: 1px solid rgba(96, 165, 250, 0.08);
   color: var(--color-text);
+  font-size: 0.875rem;
 }
 
-.p-datatable-tbody > tr:last-child > td {
-  border-bottom: none;
+.p-datatable-tbody > tr:last-child > td { border-bottom: none; }
+
+.p-datatable-tbody > tr:hover > td { background: rgba(59, 130, 246, 0.03); }
+
+.p-datatable-striped .p-datatable-tbody > tr:nth-child(even) > td {
+  background: rgba(248, 250, 252, 0.8);
 }
 
-.p-datatable-tbody > tr:hover {
+.p-datatable-striped .p-datatable-tbody > tr:nth-child(even):hover > td {
   background: rgba(59, 130, 246, 0.03);
 }
 
-.p-datatable-striped .p-datatable-tbody > tr:nth-child(even) {
-  background: var(--color-surface);
-}
+.p-datatable-tbody > tr > td button { cursor: pointer; }
+.p-datatable-tbody > tr > td button:hover { text-decoration: underline; }
 
-.p-datatable-striped .p-datatable-tbody > tr:nth-child(even):hover {
-  background: rgba(59, 130, 246, 0.04);
-}
+.p-datatable-emptymessage > td { padding: 0 !important; border: none !important; }
 
-/* Paginator */
+
+
+/* ============================================================
+   PAGINADOR — SIMPLE Y LIMPIO
+   ============================================================ */
 .p-paginator {
-  background: #fff;
-  padding: 0.75rem 1rem;
-  border-top: 1px solid rgba(96, 165, 250, 0.14);
-  border-radius: 0;
+  background: #fff !important;
+  padding: 0.75rem 1rem !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(226, 232, 240, 0.9) !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
 }
 
-.p-paginator .p-paginator-element {
-  border-radius: 0.5rem;
-  margin: 0 0.125rem;
-  min-width: 2.5rem;
-  height: 2.5rem;
+.p-paginator::before,
+.p-paginator::after {
+  display: none !important;
 }
 
-.p-paginator .p-paginator-element.p-paginator-current {
-  background: transparent;
-  color: var(--color-primary);
+.p-paginator *,
+.p-paginator .p-component,
+.p-paginator .p-button,
+.p-paginator .p-inputtext,
+.p-paginator .p-select,
+.p-paginator .p-select-label,
+.p-paginator .p-select-dropdown {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.p-paginator .p-paginator-element,
+.p-paginator button,
+.p-paginator .p-paginator-page,
+.p-paginator .p-paginator-first,
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-next,
+.p-paginator .p-paginator-last {
+  min-width: 2.1rem;
+  height: 2.1rem;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  color: var(--color-text-secondary);
+  border-radius: 9999px;
+  box-shadow: none !important;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.p-paginator .p-paginator-element:hover:not(:disabled),
+.p-paginator button:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.08) !important;
+  color: var(--color-primary) !important;
+}
+
+.p-paginator .p-paginator-page.p-highlight,
+.p-paginator .p-paginator-element.p-highlight {
+  background: rgba(59, 130, 246, 0.12) !important;
+  color: var(--color-primary) !important;
   font-weight: 700;
 }
 
-.p-paginator .p-paginator-element:hover {
-  background: rgba(59, 130, 246, 0.08);
+.p-paginator .p-paginator-element:focus,
+.p-paginator .p-paginator-element:focus-visible,
+.p-paginator button:focus,
+.p-paginator button:focus-visible,
+.p-paginator .p-paginator-page:focus,
+.p-paginator .p-paginator-page:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
-/* Drawer */
-.p-drawer {
-  border-radius: var(--radius-lg);
+.p-paginator .p-paginator-element:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
-.p-drawer .p-drawer-header {
-  background: linear-gradient(to right, var(--color-surface), transparent);
-  border-bottom: 1px solid var(--color-secondary);
-  padding: 1.25rem 1.5rem;
-}
-
-.p-drawer .p-drawer-content {
-  padding: 1.5rem;
-}
-
-.p-drawer .p-drawer-close {
+.p-paginator .p-paginator-current {
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
+  padding: 0 0.35rem;
 }
 
-.p-drawer .p-drawer-close:hover {
+.p-paginator .p-select {
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--color-text-secondary);
+  min-height: 2.1rem;
+}
+
+.p-paginator .p-select-label {
+  padding-block: 0 !important;
+}
+
+.p-paginator .p-select:focus,
+.p-paginator .p-select.p-focus,
+.p-paginator .p-select-focused {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.p-select-overlay {
+  background: #fff !important;
+  border: 1px solid rgba(96, 165, 250, 0.14) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.p-select-option.p-select-option-selected {
+  background: rgba(59, 130, 246, 0.08) !important;
+  color: var(--color-primary) !important;
+}
+
+.p-select-option:not(.p-select-option-selected):hover {
+  background: rgba(59, 130, 246, 0.05) !important;
+}
+
+
+
+/* ============================================================
+   FILTROS — INPUT DE BÚSQUEDA
+   ============================================================ */
+.farma-search-input {
+  width: 100%;
+  height: 42px;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 0 0.875rem 0 2.4rem;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.farma-search-input::placeholder {
+  color: #94a3b8;
+}
+
+.farma-search-input:focus {
+  outline: none;
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+.farma-search-icon {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.875rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+
+
+/* ============================================================
+   FILTROS — DATEPICKER (PrimeVue)
+   ============================================================ */
+.farma-datepicker .p-inputtext,
+.farma-datepicker .p-datepicker-input {
+  width: 100%;
+  height: 42px;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0 !important;
+  background: #fff !important;
+  padding: 0 2.75rem 0 0.875rem !important;
+  font-size: 0.875rem;
+  color: var(--color-text) !important;
+  box-shadow: none !important;
+}
+
+.farma-datepicker .p-inputtext:focus,
+.farma-datepicker .p-datepicker-input:focus {
+  outline: none !important;
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15) !important;
+}
+
+.farma-datepicker .p-datepicker-input-icon-container {
+  width: 2.5rem !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid #e2e8f0;
+  color: #94a3b8 !important;
+  border-top-right-radius: 0.75rem;
+  border-bottom-right-radius: 0.75rem;
+  background: #fff;
+}
+
+.farma-datepicker .p-datepicker-dropdown,
+.farma-datepicker .p-button {
+  width: 2.5rem !important;
+  min-width: 2.5rem !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #94a3b8 !important;
+  box-shadow: none !important;
+}
+
+.p-datepicker-panel {
+  background: #fff !important;
+  border: 1px solid rgba(96, 165, 250, 0.14) !important;
+  border-radius: 1rem !important;
+  box-shadow: var(--shadow-lg) !important;
+  padding: 0.85rem !important;
+  font-family: var(--font-body);
+}
+
+.p-datepicker-panel .p-datepicker-header {
+  background: transparent;
+  border-bottom: none;
+  padding-bottom: 0.5rem;
+}
+
+.p-datepicker-panel .p-datepicker-title {
+  font-family: var(--font-title);
+  font-weight: 700;
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.p-datepicker-panel .p-datepicker-prev-button,
+.p-datepicker-panel .p-datepicker-next-button {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  color: var(--color-text-secondary);
+  border: none;
+}
+
+.p-datepicker-panel .p-datepicker-prev-button:hover,
+.p-datepicker-panel .p-datepicker-next-button:hover {
+  background: rgba(59, 130, 246, 0.08);
   color: var(--color-primary);
 }
 
-/* Hover en botón SKU */
-.p-datatable-tbody > tr > td button {
-  cursor: pointer;
+.p-datepicker-panel .p-datepicker-day-view th {
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.4rem 0;
 }
 
-.p-datatable-tbody > tr > td button:hover {
-  text-decoration: underline;
+.p-datepicker-panel .p-datepicker-day-cell {
+  padding: 0.15rem;
+}
+
+.p-datepicker-panel .p-datepicker-day {
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 0.6rem;
+  font-size: 0.825rem;
+  color: var(--color-text);
+  transition: background 0.12s, color 0.12s;
+}
+
+.p-datepicker-panel .p-datepicker-day:hover {
+  background: rgba(59, 130, 246, 0.08);
+  color: var(--color-primary);
+}
+
+.p-datepicker-panel .p-datepicker-day.p-datepicker-day-selected {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.p-datepicker-panel .p-datepicker-today > .p-datepicker-day {
+  border: 1px solid var(--color-secondary);
+  font-weight: 700;
+}
+
+.p-datepicker-panel .p-datepicker-other-month {
+  color: #cbd5e1;
+}
+
+
+
+/* ============================================================
+   DRAWER (PrimeVue)
+   ============================================================ */
+.p-drawer            { border-radius: var(--radius-lg); }
+
+.p-drawer .p-drawer-header {
+  background: linear-gradient(to right, var(--color-surface), transparent);
+  border-bottom: 1px solid rgba(96, 165, 250, 0.14);
+  padding: 1.25rem 1.5rem;
+}
+
+.p-drawer .p-drawer-content { padding: 1.5rem; }
+
+.p-drawer .p-drawer-close       { color: var(--color-text-secondary); }
+.p-drawer .p-drawer-close:hover { color: var(--color-primary); }
+
+
+
+/* ============================================================
+   GESTOR — BARRA DE FILTROS
+   ============================================================ */
+.farma-filtros-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.farma-filtros-busqueda {
+  flex: 0 1 320px;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.farma-filtros-fecha {
+  flex: 0 0 180px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.farma-filtros-acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+.farma-btn-limpiar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.farma-btn-limpiar:hover {
+  background: #fff1f2;
+  border-color: #fecaca;
+  color: #ef4444;
+}
+
+.farma-btn-buscar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 42px;
+  padding: 0 1rem;
+  border-radius: 0.75rem;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 4px rgba(59, 130, 246, 0.25);
+  transition: background 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.farma-btn-buscar:hover {
+  background: #2563eb;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+@media (max-width: 639px) {
+  .farma-filtros-fecha {
+    flex: 1 1 140px;
+  }
+
+  .farma-filtros-acciones {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+  }
 }
