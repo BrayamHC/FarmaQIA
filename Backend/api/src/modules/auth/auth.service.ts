@@ -180,4 +180,69 @@ export class AuthService implements OnModuleInit, OnModuleDestroy {
     async verificarExistenciaUsuarioActivo(usuarioUuid: string): Promise<boolean> {
         return this.authRepoData.verificarExistenciaUsuarioActivo(usuarioUuid);
     }
+
+    // ── Sucursales en sesión ──────────────────────────────────────────────────────
+
+    async agregarSucursalPermitidaEnRedis(token: string, sucursal: {
+        sucursal_uuid: string;
+        sucursal_id: number;
+        nombre: string;
+        nombre_comercial: string | null;
+    }): Promise<void> {
+        try {
+            const sesion = await this.obtenerSesionDesdeRedis(token);
+            if (!sesion) throw new Error('Sesión no encontrada al agregar sucursal');
+
+            const yaExiste = sesion.sucursales_permitidas?.some(
+                (s: any) => s.sucursal_uuid === sucursal.sucursal_uuid,
+            );
+
+            if (!yaExiste) {
+                sesion.sucursales_permitidas = [
+                    ...(sesion.sucursales_permitidas ?? []),
+                    sucursal,
+                ];
+            }
+
+            // Preservar TTL restante — no resetear la expiración
+            const ttlRestante = await this.clienteRedis.ttl(`sesion:${token}`);
+            const ttl = ttlRestante > 0 ? ttlRestante : getRedisConfig().sessionTTL;
+
+            await this.clienteRedis.setex(`sesion:${token}`, ttl, JSON.stringify(sesion));
+
+            this.logger.debug(
+                `Sucursal agregada a sesión: ${sucursal.nombre} | Token: ${token.substring(0, 15)}...`,
+            );
+        } catch (error) {
+            this.logger.error('agregarSucursalPermitidaEnRedis', error);
+            throw new Error('Error al actualizar sucursales permitidas en sesión');
+        }
+    }
+
+    async actualizarSucursalSeleccionada(token: string, sucursal: {
+        sucursal_uuid: string;
+        sucursal_id: number;
+        nombre: string;
+        nombre_comercial: string | null;
+    }): Promise<void> {
+        try {
+            const sesion = await this.obtenerSesionDesdeRedis(token);
+            if (!sesion) throw new Error('Sesión no encontrada al seleccionar sucursal');
+
+            sesion.sucursal_seleccionada = sucursal;
+
+            // Preservar TTL restante — no resetear la expiración
+            const ttlRestante = await this.clienteRedis.ttl(`sesion:${token}`);
+            const ttl = ttlRestante > 0 ? ttlRestante : getRedisConfig().sessionTTL;
+
+            await this.clienteRedis.setex(`sesion:${token}`, ttl, JSON.stringify(sesion));
+
+            this.logger.debug(
+                `Sucursal seleccionada: ${sucursal.nombre} | Token: ${token.substring(0, 15)}...`,
+            );
+        } catch (error) {
+            this.logger.error('actualizarSucursalSeleccionada', error);
+            throw new Error('Error al actualizar sucursal seleccionada en sesión');
+        }
+    }
 }
