@@ -16,6 +16,13 @@ import { DatabaseModule } from './config/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuthMiddleware } from './middleware/auth.middleware';
 import { ProductosModule } from './modules/productos/productos.module';
+import { SucursalesModule } from './modules/sucursales/sucursales.module';
+import { ProveedoresModule } from './modules/proveedores/proveedores.module';
+import { ClientesModule } from './modules/clientes/clientes.module';
+import { AlmacenesModule } from './modules/almacenes/almacenes.module';
+import { OrdenesCompraModule } from './modules/ordenesCompra/ordenesCompra.module';
+import { CatalogosModule } from './modules/catalogos/catalogos.module';
+
 
 
 @Module({
@@ -28,6 +35,12 @@ import { ProductosModule } from './modules/productos/productos.module';
         DatabaseModule,
         AuthModule,
         ProductosModule,
+        SucursalesModule,
+        ProveedoresModule,
+        ClientesModule,
+        AlmacenesModule,
+        OrdenesCompraModule,
+        CatalogosModule,
         ThrottlerModule.forRoot([
             {
                 ttl: 60000,
