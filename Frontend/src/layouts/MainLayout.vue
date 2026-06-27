@@ -1,11 +1,9 @@
 <template>
   <div class="min-h-screen bg-slate-100">
-
     <!-- ── Header ──────────────────────────────────────────────────── -->
     <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div class="flex h-16 items-center justify-between px-4 sm:px-6">
-
-        <!-- Izquierda: hamburger + branding -->
+        <!-- Izquierda -->
         <div class="flex items-center gap-3">
           <button type="button"
             class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 lg:hidden"
@@ -19,42 +17,49 @@
           </div>
         </div>
 
-        <!-- Derecha: selector de sucursal + usuario -->
-        <div class="relative z-50 flex items-center gap-3">
-
-          <!-- ── Selector de sucursal ─────────────────────────── -->
+        <!-- Derecha -->
+        <div class="relative z-[60] flex items-center gap-3">
+          <!-- Selector sucursal -->
           <div class="relative">
             <button type="button"
               class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-sky-200 hover:bg-sky-50/50 hover:text-sky-700"
               @click="toggleSucursalMenu">
               <i class="pi pi-building text-sm text-slate-400"></i>
               <span class="hidden max-w-[120px] truncate sm:block">
-                {{ sucursalActual?.nombre ?? 'Sucursal' }}
+                {{ authStore.sucursalActiva?.nombre ?? 'Sucursal' }}
               </span>
               <i :class="[
                 sucursalMenuOpen ? 'pi pi-chevron-up text-sky-600' : 'pi pi-chevron-down text-slate-400',
                 'text-xs transition',
-              ]"></i>
+              ]" />
             </button>
 
             <transition name="dropdown">
               <div v-if="sucursalMenuOpen"
-                class="absolute right-0 top-[calc(100%+0.6rem)] z-50 w-52 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                class="absolute right-0 top-[calc(100%+0.6rem)] z-[70] w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
                 <p
                   class="border-b border-slate-100 px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
                   Sucursales
                 </p>
+
                 <ul class="px-2 py-2">
-                  <li v-for="s in sucursales" :key="s.id">
-                    <button type="button"
-                      class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition" :class="sucursalActual?.id === s.id
+                  <li v-for="s in authStore.sucursalesPermitidas" :key="s.sucursal_uuid">
+                    <button type="button" :disabled="cambiandoSucursal"
+                      class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition disabled:cursor-not-allowed disabled:opacity-60"
+                      :class="authStore.sucursalActiva?.sucursal_uuid === s.sucursal_uuid
                           ? 'bg-sky-50 font-semibold text-sky-700'
                           : 'text-slate-700 hover:bg-slate-50'
                         " @click="seleccionarSucursal(s)">
-                      <i class="pi pi-building text-xs"
-                        :class="sucursalActual?.id === s.id ? 'text-sky-500' : 'text-slate-400'"></i>
+                      <i class="pi pi-building text-xs" :class="authStore.sucursalActiva?.sucursal_uuid === s.sucursal_uuid
+                          ? 'text-sky-500'
+                          : 'text-slate-400'
+                        " />
                       <span class="truncate">{{ s.nombre }}</span>
-                      <i v-if="sucursalActual?.id === s.id" class="pi pi-check ml-auto text-xs text-sky-500"></i>
+
+                      <i v-if="authStore.sucursalActiva?.sucursal_uuid === s.sucursal_uuid"
+                        class="pi pi-check ml-auto text-xs text-sky-500" />
+
+                      <i v-else-if="cambiandoSucursal" class="pi pi-spin pi-spinner ml-auto text-xs text-slate-400" />
                     </button>
                   </li>
                 </ul>
@@ -62,31 +67,32 @@
             </transition>
           </div>
 
-          <!-- ── Usuario ──────────────────────────────────────── -->
+          <!-- Usuario -->
           <div class="relative">
             <button type="button"
               class="flex items-center gap-2.5 rounded-2xl py-1.5 pl-1.5 pr-3 transition hover:bg-slate-100"
               @click="togglePerfilMenu">
               <Avatar :label="inicialUsuario" shape="circle"
                 class="!h-9 !w-9 !bg-sky-100 !font-semibold !text-sky-700 ring-2 ring-white" />
+
               <div class="hidden min-w-0 text-left sm:block">
-                <p class="truncate text-sm font-semibold text-slate-800 leading-tight">
+                <p class="truncate text-sm font-semibold leading-tight text-slate-800">
                   {{ primerNombreUsuario }}
                 </p>
-                <p class="truncate text-[11px] text-slate-400 leading-tight">
+                <p class="truncate text-[11px] leading-tight text-slate-400">
                   {{ authStore.rolNombre || 'Sistema' }}
                 </p>
               </div>
+
               <i :class="[
                 perfilMenuOpen ? 'pi pi-chevron-up text-sky-600' : 'pi pi-chevron-down text-slate-400',
                 'text-xs transition',
-              ]"></i>
+              ]" />
             </button>
 
             <transition name="dropdown">
               <div v-if="perfilMenuOpen"
-                class="absolute right-0 top-[calc(100%+0.6rem)] z-50 w-[260px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-                <!-- Info del usuario -->
+                class="absolute right-0 top-[calc(100%+0.6rem)] z-[70] w-[260px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
                 <div class="flex items-center gap-3 px-4 py-4">
                   <Avatar :label="inicialUsuario" shape="circle"
                     class="!h-11 !w-11 !bg-sky-100 !font-semibold !text-sky-700 shrink-0" />
@@ -118,7 +124,6 @@
               </div>
             </transition>
           </div>
-
         </div>
       </div>
     </header>
@@ -130,8 +135,6 @@
       'w-24',
     ]" style="height: calc(100vh - 4rem);">
       <div class="flex h-full flex-col">
-
-        <!-- Dashboard + Home fijados arriba -->
         <div class="border-b border-slate-200 px-3 py-3">
           <div class="flex flex-col items-center gap-2">
             <RouterLink :to="dashboardItem.to" @click="sidebarOpen = false">
@@ -152,7 +155,6 @@
           </div>
         </div>
 
-        <!-- Módulos principales -->
         <nav class="flex-1 overflow-y-auto px-3 py-5">
           <ul class="flex flex-col items-center gap-2">
             <li v-for="item in sidebarMenuItems" :key="item.to">
@@ -167,7 +169,6 @@
           </ul>
         </nav>
 
-        <!-- Acciones inferiores -->
         <div class="border-t border-slate-200 bg-white px-3 py-4">
           <div class="flex flex-col items-center gap-2">
             <Button type="button" icon="pi pi-cog" severity="secondary" text aria-label="Configuración"
@@ -177,7 +178,6 @@
               v-tooltip.right="tooltipOptions('Cerrar sesión')" @click="handleLogout" />
           </div>
         </div>
-
       </div>
     </aside>
 
@@ -189,12 +189,12 @@
     </div>
 
     <!-- Overlay móvil sidebar -->
-    <div v-if="sidebarOpen" class="fixed inset-x-0 bottom-0 top-16 z-20 bg-slate-900/30 lg:hidden"
-      @click="sidebarOpen = false"></div>
+    <div v-if="sidebarOpen" class="fixed inset-x-0 bottom-0 top-16 z-50 bg-slate-900/30 lg:hidden"
+      @click="sidebarOpen = false" />
 
-    <!-- Overlay cierre de dropdowns -->
-    <div v-if="perfilMenuOpen || sucursalMenuOpen" class="fixed inset-0 z-40" @click="cerrarDropdowns"></div>
-
+    <!-- Overlay dropdowns -->
+    <div v-if="perfilMenuOpen || sucursalMenuOpen" class="fixed inset-x-0 bottom-0 top-16 z-[65]"
+      @click="cerrarDropdowns" />
   </div>
 </template>
 
@@ -209,29 +209,11 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-// ── UI state ────────────────────────────────────────────────────
 const sidebarOpen = ref(false);
 const perfilMenuOpen = ref(false);
 const sucursalMenuOpen = ref(false);
+const cambiandoSucursal = ref(false);
 
-// ── Sucursales ──────────────────────────────────────────────────
-// TODO: reemplazar con authStore.sucursales / authStore.sucursalActual
-// cuando el backend las exponga
-const sucursales = ref([
-  { id: 1, nombre: 'Matriz' },
-  { id: 2, nombre: 'Huejotzingo' },
-  { id: 3, nombre: 'Sonora' },
-  { id: 4, nombre: 'Parque' },
-]);
-const sucursalActual = ref(sucursales.value[0]);
-
-function seleccionarSucursal(s) {
-  sucursalActual.value = s;
-  sucursalMenuOpen.value = false;
-  // TODO: authStore.cambiarSucursal(s.id)
-}
-
-// ── Sidebar items ────────────────────────────────────────────────
 const dashboardItem = { label: 'Dashboard', to: '/dashboard', icon: 'pi pi-th-large' };
 const homeItem = { label: 'Inicio', to: '/home', icon: 'pi pi-home' };
 
@@ -243,17 +225,34 @@ const sidebarMenuItems = [
   { label: 'Usuarios', to: '/usuarios', icon: 'pi pi-users' },
 ];
 
-// ── Usuario ──────────────────────────────────────────────────────
 const primerNombreUsuario = computed(() => {
   const nombre = (authStore.nombreCompleto ?? '').trim();
   return nombre ? nombre.split(/\s+/)[0] : 'Usuario';
 });
 
-const inicialUsuario = computed(() =>
-  primerNombreUsuario.value.charAt(0).toUpperCase()
-);
+const inicialUsuario = computed(() => primerNombreUsuario.value.charAt(0).toUpperCase());
 
-// ── Helpers ──────────────────────────────────────────────────────
+async function seleccionarSucursal(sucursal) {
+  if (cambiandoSucursal.value) return;
+
+  if (authStore.sucursalActiva?.sucursal_uuid === sucursal.sucursal_uuid) {
+    sucursalMenuOpen.value = false;
+    return;
+  }
+
+  try {
+    cambiandoSucursal.value = true;
+    await authStore.cambiarSucursal(sucursal.sucursal_uuid);
+    sucursalMenuOpen.value = false;
+    perfilMenuOpen.value = false;
+    sidebarOpen.value = false;
+  } catch (error) {
+    console.error('Error al cambiar sucursal:', error);
+  } finally {
+    cambiandoSucursal.value = false;
+  }
+}
+
 function isActive(item) {
   if (item.to === '/home') return route.path === '/home';
   return route.path.startsWith(item.to);
@@ -280,7 +279,7 @@ async function goToProfile() {
 }
 
 async function handleLogout() {
-  perfilMenuOpen.value = false;
+  cerrarDropdowns();
   await authStore.logout();
   await router.push('/login');
 }
@@ -309,7 +308,7 @@ nav::-webkit-scrollbar {
 }
 
 nav::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, .35);
+  background: rgba(148, 163, 184, 0.35);
   border-radius: 9999px;
 }
 
@@ -319,13 +318,13 @@ nav::-webkit-scrollbar-track {
 
 .dropdown-enter-active,
 .dropdown-leave-active {
-  transition: all .18s ease;
+  transition: all 0.18s ease;
 }
 
 .dropdown-enter-from,
 .dropdown-leave-to {
   opacity: 0;
-  transform: translateY(-6px) scale(.98);
+  transform: translateY(-6px) scale(0.98);
 }
 
 .dropdown-enter-to,
