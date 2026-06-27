@@ -5,6 +5,13 @@ import dashboardRoutes from '@/modules/dashboard/dashboard.routes';
 import homeRoutes from '@/modules/home/home.routes';
 import ventasRoutes from '@/modules/ventas/ventas.routes';
 import inventarioRoutes from '@/modules/inventario/inventario.routes';
+import productosRoutes from '../modules/productos/productos.routes';
+import comprasRoutes from '../modules/compras/compras.routes';
+import almacenesRoutes from '../modules/almacenes/almacenes.routes';
+import proveedoresRoutes from '../modules/proveedores/proveedores.routes';
+import clientesRoutes from '../modules/clientes/clientes.routes';
+
+
 // ── Placeholder — eliminar cuando el módulo esté implementado ────
 const placeholderView = (title) => ({
   name: `${title}Placeholder`,
@@ -29,42 +36,11 @@ const routes = [
       ...dashboardRoutes,
       ...ventasRoutes,
       ...inventarioRoutes,
-
-      // ── Compras ─────────────────────────────────────────────
-      {
-        path: 'compras',
-        children: [
-          { path: '', name: 'Compras', component: placeholderView('Compras'), meta: { requiresAuth: true, title: 'Compras | FarmaQ IA' } },
-          // { path: 'ordenes',      name: 'OrdenesDeCompra', component: () => import('@/modules/compras/views/Ordenes.view.vue'),      meta: { requiresAuth: true, title: 'Órdenes de compra | FarmaQ IA' } },
-          // { path: 'proveedores',  name: 'Proveedores',     component: () => import('@/modules/compras/views/Proveedores.view.vue'),  meta: { requiresAuth: true, title: 'Proveedores | FarmaQ IA'        } },
-          // { path: 'recepciones',  name: 'Recepciones',     component: () => import('@/modules/compras/views/Recepciones.view.vue'),  meta: { requiresAuth: true, title: 'Recepciones | FarmaQ IA'        } },
-          // { path: 'devoluciones', name: 'Devoluciones',    component: () => import('@/modules/compras/views/Devoluciones.view.vue'), meta: { requiresAuth: true, title: 'Devoluciones | FarmaQ IA'       } },
-        ],
-      },
-
-      // ── Reportes ─────────────────────────────────────────────
-      {
-        path: 'reportes',
-        children: [
-          { path: '', name: 'Reportes', component: placeholderView('Reportes'), meta: { requiresAuth: true, title: 'Reportes | FarmaQ IA' } },
-          // { path: 'ventas',      name: 'ReportesVentas',      component: () => import('@/modules/reportes/views/Ventas.view.vue'),      meta: { requiresAuth: true, title: 'Reportes Ventas | FarmaQ IA'      } },
-          // { path: 'compras',     name: 'ReportesCompras',     component: () => import('@/modules/reportes/views/Compras.view.vue'),     meta: { requiresAuth: true, title: 'Reportes Compras | FarmaQ IA'     } },
-          // { path: 'inventario',  name: 'ReportesInventario',  component: () => import('@/modules/reportes/views/Inventario.view.vue'),  meta: { requiresAuth: true, title: 'Reportes Inventario | FarmaQ IA'  } },
-          // { path: 'caducidades', name: 'ReportesCaducidades', component: () => import('@/modules/reportes/views/Caducidades.view.vue'), meta: { requiresAuth: true, title: 'Reportes Caducidades | FarmaQ IA' } },
-        ],
-      },
-
-      // ── Usuarios ─────────────────────────────────────────────
-      {
-        path: 'usuarios',
-        children: [
-          { path: '', name: 'Usuarios', component: placeholderView('Usuarios'), meta: { requiresAuth: true, title: 'Usuarios | FarmaQ IA' } },
-          // { path: 'cuentas',    name: 'Cuentas',    component: () => import('@/modules/usuarios/views/Cuentas.view.vue'),    meta: { requiresAuth: true, title: 'Cuentas | FarmaQ IA'    } },
-          // { path: 'roles',      name: 'Roles',      component: () => import('@/modules/usuarios/views/Roles.view.vue'),      meta: { requiresAuth: true, title: 'Roles | FarmaQ IA'      } },
-          // { path: 'permisos',   name: 'Permisos',   component: () => import('@/modules/usuarios/views/Permisos.view.vue'),   meta: { requiresAuth: true, title: 'Permisos | FarmaQ IA'   } },
-          // { path: 'sucursales', name: 'Sucursales', component: () => import('@/modules/usuarios/views/Sucursales.view.vue'), meta: { requiresAuth: true, title: 'Sucursales | FarmaQ IA' } },
-        ],
-      },
+      ...productosRoutes,
+      ...comprasRoutes,
+      ...almacenesRoutes,
+      ...proveedoresRoutes,
+      ...clientesRoutes,
     ],
   },
 
