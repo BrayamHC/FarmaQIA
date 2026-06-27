@@ -19,9 +19,11 @@ export class AuthCoordinator {
 
         await this.authService.cerrarSesionPrevia(usuario.usuario_id);
 
+        const sucursalesPermitidas = await this.authService.obtenerSucursalesPermitidas(usuario.usuario_id,);
+
         const token = this.authService.generarTokenSesion();
 
-        await this.authService.guardarSesionEnRedis(token, usuario);
+        await this.authService.guardarSesionEnRedis(token, usuario, sucursalesPermitidas);
 
         this.logger.log(`Sesión iniciada correctamente para: ${usuario.email}`);
 
@@ -37,6 +39,7 @@ export class AuthCoordinator {
                     rol: usuario.rol,
                     permisos: usuario.permisos,
                 },
+                sucursales_permitidas: sucursalesPermitidas
             },
         };
     }

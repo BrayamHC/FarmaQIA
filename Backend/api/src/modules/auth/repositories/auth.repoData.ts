@@ -94,4 +94,17 @@ export class AuthRepoData {
             throw error;
         }
     }
+
+    async obtenerSucursalesPermitidas(usuario_id: number) {
+        return await this.knex('rel_sucursales_usuarios as r')
+            .select(
+                's.sucursal_uuid',
+                's.sucursal_id',
+                's.nombre',
+                's.nombre_comercial',
+            )
+            .join('sucursales as s', 'r.sucursal_id', 's.sucursal_id')
+            .where('r.usuario_id', usuario_id)
+            .where('s.status', 'activo');   // hardcoded, nunca entra una inactiva
+    }
 }

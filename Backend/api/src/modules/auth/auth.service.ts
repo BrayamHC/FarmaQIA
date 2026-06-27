@@ -82,10 +82,7 @@ export class AuthService implements OnModuleInit, OnModuleDestroy {
             nombre_completo: usuario.nombre_completo,
             email: usuario.email,
             rol: {
-                rol_id: usuario.rol_id,
-                rol_uuid: usuario.rol_uuid,
-                nombre: usuario.rol_nombre,
-                codigo: usuario.rol_codigo,
+                rol: usuario.rol,
             },
             permisos,
         };
@@ -121,7 +118,11 @@ export class AuthService implements OnModuleInit, OnModuleDestroy {
         await this.clienteRedis.del(`usuario_sesion:${usuarioId}`);
     }
 
-    async guardarSesionEnRedis(token: string, usuario: any): Promise<void> {
+    async guardarSesionEnRedis(
+        token: string,
+        usuario: any,
+        sucursalesPermitidas: any[] = [],
+    ): Promise<void> {
         const ttl = getRedisConfig().sessionTTL;
 
         const datosSesion = {
@@ -134,6 +135,7 @@ export class AuthService implements OnModuleInit, OnModuleDestroy {
             },
             rol: usuario.rol,
             permisos: usuario.permisos,
+            sucursales_permitidas: sucursalesPermitidas,
             fecha_creacion: new Date().toISOString(),
         };
 
@@ -243,6 +245,20 @@ export class AuthService implements OnModuleInit, OnModuleDestroy {
         } catch (error) {
             this.logger.error('actualizarSucursalSeleccionada', error);
             throw new Error('Error al actualizar sucursal seleccionada en sesión');
+        }
+    }
+
+    async obtenerSucursalesPermitidas(usuario_id: number) {
+        try {
+            return await this.authRepoData.obtenerSucursalesPermitidas(usuario_id);
+
+        } catch (error) {
+
+            this.logger.warn(
+                `No se pudieron obtener sucursales del usuario ${usuario_id}`,
+            );
+
+            return [];
         }
     }
 }
