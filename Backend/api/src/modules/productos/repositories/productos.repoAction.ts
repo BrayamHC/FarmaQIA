@@ -1,12 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Knex } from 'knex';
 import { DatabaseQueryException } from 'src/common/exceptions/technical.exception';
-
+import { DATABASE_CONNECTION } from 'src/config/database.constants';
 @Injectable()
 export class ProductosRepoAction {
     private readonly logger = new Logger(ProductosRepoAction.name);
 
-    constructor(@Inject('DATABASE_CONNECTION') private readonly knex: Knex) { }
+    constructor(@Inject(DATABASE_CONNECTION) private readonly knex: Knex) { }
 
     async insertarProducto(nuevoProducto: any): Promise<any> {
         const trx = await this.knex.transaction();

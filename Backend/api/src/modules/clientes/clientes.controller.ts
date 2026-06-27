@@ -1,13 +1,5 @@
 import {
-    Body,
-    Controller,
-    Get,
-    Param,
-    ParseUUIDPipe,
-    Patch,
-    Post,
-    Put,
-    Query,
+    Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ClientesService } from './clientes.service';

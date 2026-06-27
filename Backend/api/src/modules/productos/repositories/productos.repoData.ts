@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Knex } from 'knex';
+import { DATABASE_CONNECTION } from 'src/config/database.constants';
 import { ProductosRepoHelper } from './productos.repoHelper';
 import { FiltrosProductosDTO } from '../dto/productos.dto';
 import { DatabaseQueryException } from 'src/common/exceptions/technical.exception';
@@ -9,11 +10,10 @@ export class ProductosRepoData {
     private readonly logger = new Logger(ProductosRepoData.name);
 
     constructor(
-        @Inject('DATABASE_CONNECTION') private readonly knex: Knex,
+        @Inject(DATABASE_CONNECTION) private readonly knex: Knex,
         private readonly helper: ProductosRepoHelper,
     ) { }
 
-    // ── Lookups ──────────────────────────────────────────────────────────────
     async obtenerPorSKU(sku: string, sucursalId: number) {
         return this.knex('productos as p')
             .select('p.sku')
@@ -44,29 +44,15 @@ export class ProductosRepoData {
             .first();
     }
 
-    // ── Lista ────────────────────────────────────────────────────────────────
     async obtenerProductos(filtros: FiltrosProductosDTO, sucursalId: number) {
         try {
-            const { page = 1, limit = 20 } = filtros;
-            const offset = (page - 1) * limit;
+            const filtrosEfectivos = {
+                ...filtros,
+                page: filtros?.page ?? 1,
+                limit: filtros?.limit ?? 20,
+            };
 
-            const baseQuery = () =>
-                this.knex('productos as p')
-                    .leftJoin('rel_proveedores_productos as rpp', 'rpp.producto_id', 'p.producto_id')
-                    .leftJoin('proveedores as pr', 'pr.proveedor_id', 'rpp.proveedor_id')
-                    .leftJoin('cat_categorias_subcategorias as c', 'c.categoria_id', 'p.categoria_id')
-                    .leftJoin('cat_unidades_medida as um', 'um.unidad_medida_id', 'p.unidad_medida_id')
-                    .where('p.sucursal_id', sucursalId);
-
-            const countQuery = baseQuery()
-                .clone()
-                .count('p.producto_id as total')
-                .first();
-
-            this.helper.aplicarFiltros(countQuery as any, filtros);
-
-            const dataQuery = baseQuery()
-                .clone()
+            const query = this.knex('productos as p')
                 .select(
                     'p.producto_uuid',
                     'p.sku',
@@ -88,26 +74,40 @@ export class ProductosRepoData {
                     'c.nombre as categoria',
                     'pr.nombre_comercial as proveedor',
                 )
-                .limit(limit)
-                .offset(offset);
+                .leftJoin('rel_proveedores_productos as rpp', 'rpp.producto_id', 'p.producto_id')
+                .leftJoin('proveedores as pr', 'pr.proveedor_id', 'rpp.proveedor_id')
+                .leftJoin('cat_categorias_subcategorias as c', 'c.categoria_id', 'p.categoria_id')
+                .leftJoin('cat_unidades_medida as um', 'um.unidad_medida_id', 'p.unidad_medida_id')
+                .where('p.sucursal_id', sucursalId);
 
-            this.helper.aplicarFiltros(dataQuery, filtros);
+            this.helper.aplicarFiltros(query, filtrosEfectivos);
+            this.helper.aplicarOrden(query, filtrosEfectivos);
+            this.helper.aplicarPaginacion(
+                query,
+                filtrosEfectivos.page,
+                filtrosEfectivos.limit,
+            );
 
-            const [countResult, productos] = await Promise.all([
-                countQuery,
-                dataQuery,
+            const queryCount = this.knex('productos as p')
+                .count({ total: 'p.producto_id' })
+                .leftJoin('rel_proveedores_productos as rpp', 'rpp.producto_id', 'p.producto_id')
+                .leftJoin('proveedores as pr', 'pr.proveedor_id', 'rpp.proveedor_id')
+                .leftJoin('cat_categorias_subcategorias as c', 'c.categoria_id', 'p.categoria_id')
+                .leftJoin('cat_unidades_medida as um', 'um.unidad_medida_id', 'p.unidad_medida_id')
+                .where('p.sucursal_id', sucursalId);
+
+            this.helper.aplicarFiltros(queryCount, filtrosEfectivos);
+
+            const [productos, [conteo]] = await Promise.all([
+                query,
+                queryCount as Promise<Array<{ total: string | number }>>,
             ]);
 
-            const total = Number((countResult as any)?.total ?? 0);
-
             return {
-                productos: productos.map((p: any) => ({
-                    ...p,
-                    tags: this.parsearJSON(p.tags, []),
-                })),
-                total,
-                page,
-                limit,
+                productos,
+                total: Number(conteo?.total ?? 0),
+                page: filtrosEfectivos.page,
+                limit: filtrosEfectivos.limit,
             };
         } catch (error) {
             this.logger.error('obtenerProductos', error);
@@ -115,7 +115,6 @@ export class ProductosRepoData {
         }
     }
 
-    // ── Detalle ──────────────────────────────────────────────────────────────
     async obtenerProductoPorUUID(uuid: string, sucursalId: number) {
         try {
             const producto = await this.knex('productos as p')
@@ -169,8 +168,6 @@ export class ProductosRepoData {
 
             return {
                 ...producto,
-                tags: this.parsearJSON(producto.tags, []),
-                temperatura: this.parsearJSON(producto.temperatura, null),
                 precios: producto.precios ?? [],
                 lotes: producto.lotes ?? [],
                 stock: producto.stock ?? [],
@@ -179,12 +176,5 @@ export class ProductosRepoData {
             this.logger.error('obtenerProductoPorUUID', error);
             throw new DatabaseQueryException('Error al obtener producto');
         }
-    }
-
-    // ── Utils privados ───────────────────────────────────────────────────────
-    private parsearJSON<T>(valor: any, fallback: T): T {
-        if (valor === null || valor === undefined) return fallback;
-        if (typeof valor === 'object') return valor as T;
-        try { return JSON.parse(valor); } catch { return fallback; }
     }
 }
