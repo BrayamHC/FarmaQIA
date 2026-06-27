@@ -67,11 +67,6 @@ export async function up(knex: Knex): Promise<void> {
 
         table.jsonb('tags').nullable().defaultTo(knex.raw("'[]'::jsonb"));
 
-        // Campos fiscales opcionales (sin FK a catálogos SAT por ahora)
-        table.integer('objeto_impuesto_id').unsigned().nullable();
-        table.integer('tasa_cuota_id').unsigned().nullable();
-        table.integer('clave_prod_serv_id').unsigned().nullable();
-
         table.integer('usuario_creacion').unsigned().nullable();
         table.integer('usuario_actualizacion').unsigned().nullable();
         table.timestamp('fecha_creacion').defaultTo(knex.fn.now());
