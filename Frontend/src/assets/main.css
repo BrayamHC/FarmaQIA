@@ -347,6 +347,32 @@ p { margin: 0; }
   background: rgba(59, 130, 246, 0.05) !important;
 }
 
+.farma-paginator :deep(.p-paginator-current) {
+  margin: 0 0.5rem;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .farma-paginator-wrap {
+    padding: 0.75rem;
+  }
+
+  .farma-paginator :deep(.p-paginator) {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 0.5rem;
+  }
+
+  .farma-paginator :deep(.p-paginator-current) {
+    width: 100%;
+    text-align: center;
+    order: -1;
+    margin: 0 0 0.25rem 0;
+  }
+}
 
 
 /* ============================================================
