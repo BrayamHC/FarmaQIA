@@ -52,21 +52,42 @@ export class ProveedoresService {
         return this.repoData.obtenerProveedorPorRFC(rfc);
     }
 
+    // ── Crear ─────────────────────────────────────────────────────────────────
     async crearProveedor(data: CrearProveedorDTO, user: any) {
         try {
             if (data.rfc) {
                 const existeProveedor = await this.obtenerProveedorPorRFC(data.rfc);
+
                 if (existeProveedor) {
-                    throw new ConflictException(`El proveedor con RFC '${data.rfc}' ya existe`);
+                    throw new ConflictException(
+                        `El proveedor con RFC '${data.rfc}' ya existe`,
+                    );
                 }
             }
 
-            const proveedor = this.proveedorBO.armarInsertProveedor(data, user.usuario_id);
-            return await this.repoAction.insertarProveedor(proveedor);
+            const proveedorData = this.proveedorBO.armarInsertProveedor(
+                data,
+                user.usuario_id,
+            );
+
+            const proveedorUUID = await this.repoAction.insertarProveedor(proveedorData);
+
+            return {
+                meta: {
+                    message: 'Proveedor creado correctamente',
+                },
+            };
+
         } catch (error) {
-            if (error instanceof ConflictException) throw error;
+            if (error instanceof ConflictException) {
+                throw error;
+            }
+
             this.logger.error('crearProveedor', error);
-            throw new DatabaseQueryException('Error al crear proveedor');
+
+            throw new DatabaseQueryException(
+                'Error al crear proveedor',
+            );
         }
     }
 
