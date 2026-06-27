@@ -33,6 +33,14 @@ export class CatalogosController {
         return { tipos_documentos: tipos };
     }
 
+    @Get('categoras-subcategorias')
+    @ApiOperation({ summary: 'Obtener categorías y subcategorías' })
+    async obtenerCategoriasSub(@Query() filtros: FiltrosUnidadesMedidaDTO) {
+        const categorias = await this.catalogosService.obtenerCategoriasSub(filtros);
+        return { categorias: categorias };
+    }
+
+
     @Get('unidades-medida')
     @ApiOperation({ summary: 'Obtener unidades de medida' })
     async obtenerUnidadesMedida(@Query() filtros: FiltrosUnidadesMedidaDTO) {

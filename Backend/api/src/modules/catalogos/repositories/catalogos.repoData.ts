@@ -61,6 +61,47 @@ export class CatalogosRepoData {
         }
     }
 
+
+    async obtenerCategoriasSub(filtros: any) {
+        try {
+            let query = this.knex('cat_categorias_subcategorias as c')
+                .leftJoin(
+                    'cat_categorias_subcategorias as p',
+                    'p.categoria_id',
+                    'c.padre_id'
+                )
+                .select(
+                    'c.categoria_id',
+                    'c.categoria_uuid',
+                    'c.nombre as nombre_categoria',
+                    'c.padre_id',
+                    'p.categoria_id as categoria_padre_id',
+                    'p.categoria_uuid as categoria_padre_uuid',
+                    'p.nombre as nombre_categoria_padre',
+                    this.knex.raw(`
+                    CASE 
+                        WHEN c.padre_id IS NULL THEN 'CATEGORIA'
+                        ELSE 'SUBCATEGORIA'
+                    END as tipo
+                `),
+                    'c.fecha_creacion',
+                    'c.fecha_actualizacion'
+                )
+                .orderBy('c.nombre', 'asc');
+
+            // si tienes filtros específicos
+            // query = this.helper.aplicarFiltrosCategorias(query, filtros);
+
+            return await query;
+
+        } catch (error) {
+            this.logger.error('obtenerCategoriasSub', error);
+            throw new DatabaseQueryException(
+                'Error al obtener categorías y subcategorías'
+            );
+        }
+    }
+
     async obtenerTipoDocumentoPorUUID(uuid: string) {
         try {
             return await this.knex('cat_tipos_documentos as td')

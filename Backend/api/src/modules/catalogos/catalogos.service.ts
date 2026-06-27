@@ -222,4 +222,13 @@ export class CatalogosService {
             throw new DatabaseQueryException('Error al obtener unidades de medida');
         }
     }
+
+    async obtenerCategoriasSub(filtros: any) {
+        try {
+            return await this.repoData.obtenerCategoriasSub(filtros);
+        } catch (error) {
+            this.logger.error('obtenerCategoriasSub', error);
+            throw new DatabaseQueryException('Error al obtener unidades de medida');
+        }
+    }
 }
