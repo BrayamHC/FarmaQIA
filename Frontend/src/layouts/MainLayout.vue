@@ -18,9 +18,9 @@
         </div>
 
         <!-- Derecha -->
-        <div class="relative z-[60] flex items-center gap-3">
+        <div class="flex items-center gap-3">
           <!-- Selector sucursal -->
-          <div class="relative">
+          <div class="relative" ref="sucursalRef">
             <button type="button"
               class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-sky-200 hover:bg-sky-50/50 hover:text-sky-700"
               @click="toggleSucursalMenu">
@@ -29,14 +29,16 @@
                 {{ authStore.sucursalActiva?.nombre ?? 'Sucursal' }}
               </span>
               <i :class="[
-                sucursalMenuOpen ? 'pi pi-chevron-up text-sky-600' : 'pi pi-chevron-down text-slate-400',
+                sucursalMenuOpen
+                  ? 'pi pi-chevron-up text-sky-600'
+                  : 'pi pi-chevron-down text-slate-400',
                 'text-xs transition',
               ]" />
             </button>
 
             <transition name="dropdown">
               <div v-if="sucursalMenuOpen"
-                class="absolute right-0 top-[calc(100%+0.6rem)] z-[70] w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                class="absolute right-0 top-[calc(100%+0.6rem)] z-50 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
                 <p
                   class="border-b border-slate-100 px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
                   Sucursales
@@ -44,22 +46,33 @@
 
                 <ul class="px-2 py-2">
                   <li v-for="s in authStore.sucursalesPermitidas" :key="s.sucursal_uuid">
-                    <button type="button" :disabled="cambiandoSucursal"
-                      class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition disabled:cursor-not-allowed disabled:opacity-60"
+                    <button type="button" :disabled="sucursalCambiandoUuid !== null"
+                      class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition disabled:cursor-not-allowed"
                       :class="authStore.sucursalActiva?.sucursal_uuid === s.sucursal_uuid
                           ? 'bg-sky-50 font-semibold text-sky-700'
                           : 'text-slate-700 hover:bg-slate-50'
                         " @click="seleccionarSucursal(s)">
-                      <i class="pi pi-building text-xs" :class="authStore.sucursalActiva?.sucursal_uuid === s.sucursal_uuid
+                      <!-- Icono edificio -->
+                      <i class="pi pi-building text-xs shrink-0" :class="authStore.sucursalActiva?.sucursal_uuid === s.sucursal_uuid
                           ? 'text-sky-500'
                           : 'text-slate-400'
                         " />
-                      <span class="truncate">{{ s.nombre }}</span>
 
-                      <i v-if="authStore.sucursalActiva?.sucursal_uuid === s.sucursal_uuid"
-                        class="pi pi-check ml-auto text-xs text-sky-500" />
+                      <!-- Nombre -->
+                      <span class="flex-1 truncate">{{ s.nombre }}</span>
 
-                      <i v-else-if="cambiandoSucursal" class="pi pi-spin pi-spinner ml-auto text-xs text-slate-400" />
+                      <!-- Estado: loader solo en la que se está cambiando -->
+                      <template v-if="sucursalCambiandoUuid === s.sucursal_uuid">
+                        <i class="pi pi-spin pi-spinner ml-auto text-xs text-sky-400 shrink-0" />
+                      </template>
+
+                      <!-- Palomita solo en la activa (y no cargando) -->
+                      <template v-else-if="
+                        authStore.sucursalActiva?.sucursal_uuid === s.sucursal_uuid &&
+                        sucursalCambiandoUuid === null
+                      ">
+                        <i class="pi pi-check ml-auto text-xs text-sky-500 shrink-0" />
+                      </template>
                     </button>
                   </li>
                 </ul>
@@ -68,7 +81,7 @@
           </div>
 
           <!-- Usuario -->
-          <div class="relative">
+          <div class="relative" ref="perfilRef">
             <button type="button"
               class="flex items-center gap-2.5 rounded-2xl py-1.5 pl-1.5 pr-3 transition hover:bg-slate-100"
               @click="togglePerfilMenu">
@@ -85,14 +98,16 @@
               </div>
 
               <i :class="[
-                perfilMenuOpen ? 'pi pi-chevron-up text-sky-600' : 'pi pi-chevron-down text-slate-400',
+                perfilMenuOpen
+                  ? 'pi pi-chevron-up text-sky-600'
+                  : 'pi pi-chevron-down text-slate-400',
                 'text-xs transition',
               ]" />
             </button>
 
             <transition name="dropdown">
               <div v-if="perfilMenuOpen"
-                class="absolute right-0 top-[calc(100%+0.6rem)] z-[70] w-[260px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                class="absolute right-0 top-[calc(100%+0.6rem)] z-50 w-[260px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
                 <div class="flex items-center gap-3 px-4 py-4">
                   <Avatar :label="inicialUsuario" shape="circle"
                     class="!h-11 !w-11 !bg-sky-100 !font-semibold !text-sky-700 shrink-0" />
@@ -133,22 +148,24 @@
       'fixed left-0 top-16 z-40 border-r border-slate-200 bg-white transition-transform duration-300 lg:translate-x-0',
       sidebarOpen ? 'translate-x-0' : '-translate-x-full',
       'w-24',
-    ]" style="height: calc(100vh - 4rem);">
+    ]" style="height: calc(100vh - 4rem)">
       <div class="flex h-full flex-col">
         <div class="border-b border-slate-200 px-3 py-3">
           <div class="flex flex-col items-center gap-2">
             <RouterLink :to="dashboardItem.to" @click="sidebarOpen = false">
-              <div class="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-medium transition"
-                :class="isActive(dashboardItem) ? 'bg-sky-50 text-sky-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
-                v-tooltip.right="tooltipOptions(dashboardItem.label)">
+              <div class="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-medium transition" :class="isActive(dashboardItem)
+                  ? 'bg-sky-50 text-sky-700'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                " v-tooltip.right="tooltipOptions(dashboardItem.label)">
                 <i :class="[dashboardItem.icon, 'text-lg']"></i>
               </div>
             </RouterLink>
 
             <RouterLink :to="homeItem.to" @click="sidebarOpen = false">
-              <div class="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-medium transition"
-                :class="isActive(homeItem) ? 'bg-sky-50 text-sky-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
-                v-tooltip.right="tooltipOptions(homeItem.label)">
+              <div class="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-medium transition" :class="isActive(homeItem)
+                  ? 'bg-sky-50 text-sky-700'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                " v-tooltip.right="tooltipOptions(homeItem.label)">
                 <i :class="[homeItem.icon, 'text-lg']"></i>
               </div>
             </RouterLink>
@@ -160,8 +177,10 @@
             <li v-for="item in sidebarMenuItems" :key="item.to">
               <RouterLink :to="item.to" @click="sidebarOpen = false">
                 <div class="flex h-12 w-12 items-center justify-center rounded-xl text-sm font-medium transition"
-                  :class="isActive(item) ? 'bg-sky-50 text-sky-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'"
-                  v-tooltip.right="tooltipOptions(item.label)">
+                  :class="isActive(item)
+                      ? 'bg-sky-50 text-sky-700'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    " v-tooltip.right="tooltipOptions(item.label)">
                   <i :class="[item.icon, 'text-lg']"></i>
                 </div>
               </RouterLink>
@@ -189,17 +208,14 @@
     </div>
 
     <!-- Overlay móvil sidebar -->
-    <div v-if="sidebarOpen" class="fixed inset-x-0 bottom-0 top-16 z-50 bg-slate-900/30 lg:hidden"
+    <div v-if="sidebarOpen" class="fixed inset-x-0 bottom-0 top-16 z-[35] bg-slate-900/30 lg:hidden"
       @click="sidebarOpen = false" />
-
-    <!-- Overlay dropdowns -->
-    <div v-if="perfilMenuOpen || sucursalMenuOpen" class="fixed inset-x-0 bottom-0 top-16 z-[65]"
-      @click="cerrarDropdowns" />
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue';
+import { onClickOutside } from '@vueuse/core';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import Avatar from 'primevue/avatar';
@@ -209,11 +225,26 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
+// ── Estado UI ────────────────────────────────────────────────────────
 const sidebarOpen = ref(false);
 const perfilMenuOpen = ref(false);
 const sucursalMenuOpen = ref(false);
-const cambiandoSucursal = ref(false);
 
+/**
+ * UUID de la sucursal que está siendo procesada.
+ * null  → ninguna cargando.
+ * <uuid> → solo esa fila muestra spinner.
+ */
+const sucursalCambiandoUuid = ref(null);
+
+// ── Refs para onClickOutside ─────────────────────────────────────────
+const sucursalRef = ref(null);
+const perfilRef = ref(null);
+
+onClickOutside(sucursalRef, () => { sucursalMenuOpen.value = false; });
+onClickOutside(perfilRef, () => { perfilMenuOpen.value = false; });
+
+// ── Menú items ───────────────────────────────────────────────────────
 const dashboardItem = { label: 'Dashboard', to: '/dashboard', icon: 'pi pi-th-large' };
 const homeItem = { label: 'Inicio', to: '/home', icon: 'pi pi-home' };
 
@@ -225,31 +256,35 @@ const sidebarMenuItems = [
   { label: 'Usuarios', to: '/usuarios', icon: 'pi pi-users' },
 ];
 
+// ── Computeds ────────────────────────────────────────────────────────
 const primerNombreUsuario = computed(() => {
   const nombre = (authStore.nombreCompleto ?? '').trim();
   return nombre ? nombre.split(/\s+/)[0] : 'Usuario';
 });
 
-const inicialUsuario = computed(() => primerNombreUsuario.value.charAt(0).toUpperCase());
+const inicialUsuario = computed(() =>
+  primerNombreUsuario.value.charAt(0).toUpperCase()
+);
 
+// ── Acciones ─────────────────────────────────────────────────────────
 async function seleccionarSucursal(sucursal) {
-  if (cambiandoSucursal.value) return;
-
+  // Ya es la activa → solo cierra
   if (authStore.sucursalActiva?.sucursal_uuid === sucursal.sucursal_uuid) {
     sucursalMenuOpen.value = false;
     return;
   }
 
+  // Alguna otra sucursal ya está cambiando → ignorar
+  if (sucursalCambiandoUuid.value !== null) return;
+
   try {
-    cambiandoSucursal.value = true;
+    sucursalCambiandoUuid.value = sucursal.sucursal_uuid; // solo esta fila carga
     await authStore.cambiarSucursal(sucursal.sucursal_uuid);
     sucursalMenuOpen.value = false;
-    perfilMenuOpen.value = false;
-    sidebarOpen.value = false;
   } catch (error) {
     console.error('Error al cambiar sucursal:', error);
   } finally {
-    cambiandoSucursal.value = false;
+    sucursalCambiandoUuid.value = null;
   }
 }
 
@@ -268,18 +303,14 @@ function toggleSucursalMenu() {
   sucursalMenuOpen.value = !sucursalMenuOpen.value;
 }
 
-function cerrarDropdowns() {
-  perfilMenuOpen.value = false;
-  sucursalMenuOpen.value = false;
-}
-
 async function goToProfile() {
   perfilMenuOpen.value = false;
   await router.push('/perfil');
 }
 
 async function handleLogout() {
-  cerrarDropdowns();
+  perfilMenuOpen.value = false;
+  sucursalMenuOpen.value = false;
   await authStore.logout();
   await router.push('/login');
 }
