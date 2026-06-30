@@ -192,15 +192,17 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Paginator from 'primevue/paginator';
 import { useClientesStore } from '../clientesStore';
+import { useAuthStore } from '@/modules/auth/authStore';
 
 const router = useRouter();
 const clientesStore = useClientesStore();
+const authStore = useAuthStore();
 
 const filtros = ref({
   q: '',
@@ -219,6 +221,7 @@ const clientesTabla = computed(() =>
   clientesStore.cargando ? [] : (clientesStore.clientes ?? [])
 );
 
+// ── Helpers ──────────────────────────────────────────────────────────
 function capitalizar(valor) {
   if (!valor) return '—';
   return String(valor).charAt(0).toUpperCase() + String(valor).slice(1);
@@ -242,6 +245,7 @@ function formatearFechaTexto(value) {
   });
 }
 
+// ── Carga y filtros ──────────────────────────────────────────────────
 async function cargarClientes() {
   await clientesStore.obtenerClientes({
     page: paginaActual.value,
@@ -257,9 +261,7 @@ async function cargarClientes() {
 
 function onBuscarInput() {
   clearTimeout(busquedaTimeout);
-  busquedaTimeout = setTimeout(() => {
-    aplicarFiltros();
-  }, 350);
+  busquedaTimeout = setTimeout(() => aplicarFiltros(), 350);
 }
 
 async function aplicarFiltros() {
@@ -268,12 +270,7 @@ async function aplicarFiltros() {
 }
 
 async function limpiarTodo() {
-  filtros.value = {
-    q: '',
-    nombre: '',
-    rfc: '',
-    status: '',
-  };
+  filtros.value = { q: '', nombre: '', rfc: '', status: '' };
   first.value = 0;
   await cargarClientes();
 }
@@ -285,16 +282,10 @@ async function onPage(event) {
 }
 
 async function confirmarCambioStatus(cliente, status) {
-  const etiquetas = {
-    activo: 'activar',
-    inactivo: 'desactivar',
-    eliminado: 'eliminar',
-  };
-
+  const etiquetas = { activo: 'activar', inactivo: 'desactivar', eliminado: 'eliminar' };
   const confirmado = window.confirm(
     `¿Deseas ${etiquetas[status]} el cliente "${cliente.nombre}"?`
   );
-
   if (!confirmado) return;
 
   try {
@@ -303,6 +294,21 @@ async function confirmarCambioStatus(cliente, status) {
   } catch (_error) { }
 }
 
+// ── Reacción al cambio de sucursal ───────────────────────────────────
+// Cuando el usuario selecciona otra sucursal desde el header, el watch
+// detecta el nuevo UUID, resetea la paginación a la primera página y
+// recarga la lista de clientes sin necesidad de recargar la vista.
+// La guarda `nueva === anterior` evita recargas innecesarias al montar.
+watch(
+  () => authStore.sucursalActiva?.sucursal_uuid,
+  async (nueva, anterior) => {
+    if (!nueva || nueva === anterior) return;
+    first.value = 0;
+    await cargarClientes();
+  }
+);
+
+// ── Ciclo de vida ────────────────────────────────────────────────────
 onMounted(async () => {
   await cargarClientes();
 });
