@@ -6,7 +6,7 @@
         <i class="pi pi-chevron-right text-[10px]"></i>
         <RouterLink to="/ventas" class="transition hover:text-slate-600">Ventas</RouterLink>
         <i class="pi pi-chevron-right text-[10px]"></i>
-        <RouterLink to="/clientes" class="transition hover:text-slate-600">Clientes</RouterLink>
+        <RouterLink to="/ventas/clientes" class="transition hover:text-slate-600">Clientes</RouterLink>
         <i class="pi pi-chevron-right text-[10px]"></i>
         <span class="font-medium text-blue-600">Crear cliente</span>
       </nav>
@@ -28,7 +28,7 @@
         </div>
 
         <div class="flex items-center gap-2 self-start lg:self-auto">
-          <button type="button" class="farma-btn farma-btn-ghost" @click="router.push('/clientes')">
+          <button type="button" class="farma-btn farma-btn-ghost" @click="router.push('/ventas/clientes')">
             <i class="pi pi-times text-xs"></i>
             <span>Cancelar</span>
           </button>
