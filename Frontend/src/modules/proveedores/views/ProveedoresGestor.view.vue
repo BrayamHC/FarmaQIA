@@ -24,14 +24,16 @@
           </div>
         </div>
 
-        <button class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm
-  font-medium text-white shadow-sm transition hover:bg-blue-700" @click="router.push({ name: 'CrearProveedor' })">
+        <button
+          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"
+          @click="router.push({ name: 'CrearProveedor' })">
           <i class="pi pi-plus text-sm"></i>
           <span>Nuevo proveedor</span>
         </button>
       </div>
     </header>
 
+    <!-- Filtros -->
     <div class="farma-filtros-bar">
       <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
         <div class="xl:col-span-2">
@@ -83,10 +85,11 @@
       </div>
     </div>
 
+    <!-- Tabla -->
     <article class="card-base farma-table-shell flex min-h-0 flex-1 flex-col">
       <div class="farma-table-content app-scroll flex-1 min-h-0">
         <DataTable :value="proveedoresTabla" scrollable scrollHeight="flex" dataKey="proveedor_uuid"
-          :tableStyle="{ minWidth: '1200px' }" :loading="proveedoresStore.cargando" stripedRows
+          :tableStyle="{ minWidth: '900px' }" :loading="proveedoresStore.cargando" stripedRows
           class="proveedores-table h-full">
           <template #empty>
             <div class="flex flex-col items-center justify-center py-16 text-center">
@@ -102,87 +105,69 @@
             </div>
           </template>
 
+          <!-- Proveedor — columna clickeable igual que SKU en productos -->
           <Column field="nombre" header="Proveedor" style="width: 240px">
-            <template #body="slotProps">
-              <div>
-                <p class="text-sm font-semibold text-slate-800">{{ slotProps.data.nombre || '—' }}</p>
-                <p class="text-xs text-slate-400">{{ slotProps.data.nombre_comercial || 'Sin nombre comercial' }}</p>
-              </div>
+            <template #body="{ data }">
+              <button class="text-left transition hover:underline" @click="irAlDetalle(data.proveedor_uuid)">
+                <p class="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                  {{ data.nombre || '—' }}
+                </p>
+                <p class="text-xs text-slate-400">
+                  {{ data.nombre_comercial || 'Sin nombre comercial' }}
+                </p>
+              </button>
             </template>
           </Column>
 
+          <!-- RFC -->
           <Column field="rfc" header="RFC" style="width: 150px">
-            <template #body="slotProps">
-              <span class="text-sm text-slate-600">{{ slotProps.data.rfc || '—' }}</span>
+            <template #body="{ data }">
+              <span class="text-sm text-slate-600">{{ data.rfc || '—' }}</span>
             </template>
           </Column>
 
-          <Column field="contacto_nombre" header="Contacto" style="width: 200px">
-            <template #body="slotProps">
+          <!-- Contacto -->
+          <Column field="contacto_nombre" header="Contacto" style="width: 210px">
+            <template #body="{ data }">
               <div>
-                <p class="text-sm text-slate-700">{{ slotProps.data.contacto_nombre || '—' }}</p>
-                <p class="text-xs text-slate-400">{{ slotProps.data.contacto_email || 'Sin email' }}</p>
+                <p class="text-sm text-slate-700">{{ data.contacto_nombre || '—' }}</p>
+                <p class="text-xs text-slate-400">{{ data.contacto_email || 'Sin email' }}</p>
               </div>
             </template>
           </Column>
 
+          <!-- Teléfono -->
           <Column field="contacto_telefono" header="Teléfono" style="width: 150px">
-            <template #body="slotProps">
-              <span class="text-sm text-slate-600">{{ slotProps.data.contacto_telefono || '—' }}</span>
+            <template #body="{ data }">
+              <span class="text-sm text-slate-600">{{ data.contacto_telefono || '—' }}</span>
             </template>
           </Column>
 
-          <Column field="dias_credito" header="Crédito" style="width: 120px">
-            <template #body="slotProps">
+          <!-- Crédito -->
+          <Column field="dias_credito" header="Crédito" style="width: 110px">
+            <template #body="{ data }">
               <span class="text-sm font-medium text-slate-700">
-                {{ Number(slotProps.data.dias_credito || 0) }} días
+                {{ Number(data.dias_credito || 0) }} días
               </span>
             </template>
           </Column>
 
+          <!-- Status -->
           <Column field="status" header="Status" style="width: 120px">
-            <template #body="slotProps">
+            <template #body="{ data }">
               <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
-                :class="statusClass(slotProps.data.status)">
-                {{ capitalizar(slotProps.data.status) }}
+                :class="statusClass(data.status)">
+                {{ capitalizar(data.status) }}
               </span>
             </template>
           </Column>
 
-          <Column field="fecha_creacion" header="Creación" style="width: 140px">
-            <template #body="slotProps">
+          <!-- Fecha creación -->
+          <Column field="fecha_creacion" header="Creación" style="width: 130px">
+            <template #body="{ data }">
               <span class="text-xs text-slate-500">
-                {{ formatearFechaTexto(slotProps.data.fecha_creacion) }}
+                {{ formatearFechaTexto(data.fecha_creacion) }}
               </span>
-            </template>
-          </Column>
-
-          <Column header="Acciones" style="width: 180px">
-            <template #body="slotProps">
-              <div class="flex items-center gap-2">
-                <RouterLink :to="`/proveedores/${slotProps.data.proveedor_uuid}/editar`"
-                  class="farma-action-btn text-blue-600 hover:bg-blue-50" title="Editar proveedor">
-                  <i class="pi pi-pencil"></i>
-                </RouterLink>
-
-                <button v-if="slotProps.data.status === 'activo'"
-                  class="farma-action-btn text-amber-600 hover:bg-amber-50" title="Desactivar"
-                  @click="confirmarCambioStatus(slotProps.data, 'inactivo')">
-                  <i class="pi pi-ban"></i>
-                </button>
-
-                <button v-if="slotProps.data.status === 'inactivo'"
-                  class="farma-action-btn text-emerald-600 hover:bg-emerald-50" title="Activar"
-                  @click="confirmarCambioStatus(slotProps.data, 'activo')">
-                  <i class="pi pi-check-circle"></i>
-                </button>
-
-                <button v-if="slotProps.data.status !== 'eliminado'"
-                  class="farma-action-btn text-rose-600 hover:bg-rose-50" title="Eliminar"
-                  @click="confirmarCambioStatus(slotProps.data, 'eliminado')">
-                  <i class="pi pi-trash"></i>
-                </button>
-              </div>
             </template>
           </Column>
         </DataTable>
@@ -199,8 +184,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import { RouterLink } from 'vue-router';
-import { useRouter } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Paginator from 'primevue/paginator';
@@ -227,6 +211,12 @@ const proveedoresTabla = computed(() =>
   proveedoresStore.cargando ? [] : (proveedoresStore.proveedores ?? [])
 );
 
+// ── Navegación ──────────────────────────────────────────────────────
+function irAlDetalle(uuid) {
+  if (uuid) router.push({ name: 'DetalleProveedor', params: { uuid } });
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────
 function capitalizar(valor) {
   if (!valor) return '—';
   return String(valor).charAt(0).toUpperCase() + String(valor).slice(1);
@@ -250,6 +240,7 @@ function formatearFechaTexto(value) {
   });
 }
 
+// ── Carga y filtros ──────────────────────────────────────────────────
 async function cargarProveedores() {
   await proveedoresStore.obtenerProveedores({
     page: paginaActual.value,
@@ -264,9 +255,7 @@ async function cargarProveedores() {
 
 function onBuscarInput() {
   clearTimeout(busquedaTimeout);
-  busquedaTimeout = setTimeout(() => {
-    aplicarFiltros();
-  }, 350);
+  busquedaTimeout = setTimeout(() => aplicarFiltros(), 350);
 }
 
 async function aplicarFiltros() {
@@ -275,13 +264,7 @@ async function aplicarFiltros() {
 }
 
 async function limpiarTodo() {
-  filtros.value = {
-    q: '',
-    nombre: '',
-    nombre_comercial: '',
-    rfc: '',
-    status: '',
-  };
+  filtros.value = { q: '', nombre: '', nombre_comercial: '', rfc: '', status: '' };
   first.value = 0;
   await cargarProveedores();
 }
@@ -292,32 +275,8 @@ async function onPage(event) {
   await cargarProveedores();
 }
 
-async function confirmarCambioStatus(proveedor, status) {
-  const etiquetas = {
-    activo: 'activar',
-    inactivo: 'desactivar',
-    eliminado: 'eliminar',
-  };
-
-  const confirmado = window.confirm(
-    `¿Deseas ${etiquetas[status]} el proveedor "${proveedor.nombre}"?`
-  );
-
-  if (!confirmado) return;
-
-  try {
-    await proveedoresStore.cambiarStatusProveedor(proveedor.proveedor_uuid, status);
-    await cargarProveedores();
-  } catch (_error) { }
-}
-
-onMounted(async () => {
-  await cargarProveedores();
-});
-
-onBeforeUnmount(() => {
-  clearTimeout(busquedaTimeout);
-});
+onMounted(async () => await cargarProveedores());
+onBeforeUnmount(() => clearTimeout(busquedaTimeout));
 </script>
 
 <style scoped>
@@ -440,8 +399,7 @@ onBeforeUnmount(() => {
 }
 
 .farma-btn-limpiar,
-.farma-btn-buscar,
-.farma-action-btn {
+.farma-btn-buscar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -474,11 +432,6 @@ onBeforeUnmount(() => {
 
 .farma-btn-buscar:hover {
   background: #1d4ed8;
-}
-
-.farma-action-btn {
-  width: 34px;
-  height: 34px;
 }
 
 .farma-paginator-wrap {
