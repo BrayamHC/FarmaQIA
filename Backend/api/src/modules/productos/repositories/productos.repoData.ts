@@ -177,4 +177,14 @@ export class ProductosRepoData {
             throw new DatabaseQueryException('Error al obtener producto');
         }
     }
+
+    async obtenerAlmacenPorUUID(almacenUuid: string, sucursalId: number) {
+        return this.knex('almacenes')
+            .select('almacen_id', 'almacen_uuid', 'nombre', 'sucursal_id')
+            .where({
+                almacen_uuid: almacenUuid,
+                sucursal_id: sucursalId,
+            })
+            .first();
+    }
 }

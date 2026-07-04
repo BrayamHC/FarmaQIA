@@ -12,6 +12,8 @@ import {
     ProductoResponseDTO,
     ProductosListaResponseDTO,
     CrearProductoResponseDTO,
+    AltaLoteStockResponseDTO,
+    AltaLoteStockDTO,
 } from './dto/productos.dto';
 import { ProductosCoordinator } from './productos.coordinator';
 
@@ -77,5 +79,18 @@ export class ProductosController {
         @Sucursal('sucursal_id') sucursalId: number,
     ) {
         return this.coordinator.cambiarStatus(uuid, dto.status, sucursalId);
+    }
+
+
+    @Post(':uuid/lotes')
+    @ApiOperation({ summary: 'Registrar un nuevo lote y sumar stock al almacén' })
+    @ZodSerializerDto(AltaLoteStockResponseDTO)
+    async altaLoteStock(
+        @Param('uuid', ParseUUIDPipe) uuid: string,
+        @Body() dto: AltaLoteStockDTO,
+        @User() usuario: any,
+        @Sucursal('sucursal_id') sucursalId: number,
+    ): Promise<AltaLoteStockResponseDTO> {
+        return this.coordinator.altaLoteStock(uuid, dto, usuario, sucursalId);
     }
 }

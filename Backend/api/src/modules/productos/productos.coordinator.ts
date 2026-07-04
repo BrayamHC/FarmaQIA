@@ -7,7 +7,7 @@ import {
 
 import { ProductosService } from './productos.service';
 import { ProductosBO } from './repositories/productos.bo';
-import { CrearProductoDTO, ActualizarProductoDTO } from './dto/productos.dto';
+import { CrearProductoDTO, ActualizarProductoDTO, AltaLoteStockDTO } from './dto/productos.dto';
 import { ResourceNotFoundException, DuplicateResourceException } from 'src/common/exceptions/business.exception';
 
 @Injectable()
@@ -112,6 +112,46 @@ export class ProductosCoordinator {
         return {
             meta: { message: `Status actualizado a '${nuevoStatus}' correctamente` },
             producto: actualizado,
+        };
+    }
+
+    async altaLoteStock(productoUuid: string, dto: AltaLoteStockDTO, usuario: any, sucursalId: number,) {
+
+        const producto = await this.service.obtenerProductoPorUUID(productoUuid, sucursalId);
+        if (!producto) throw new ResourceNotFoundException('Producto', productoUuid);
+
+        if (producto.status === 'eliminado') {
+            throw new UnprocessableEntityException(
+                `El producto '${producto.sku}' está eliminado y no puede recibir stock.`,
+            );
+        }
+
+        const almacen = await this.service.resolverAlmacen(dto.almacen_uuid, sucursalId);
+        if (!almacen) throw new ResourceNotFoundException('Almacén', dto.almacen_uuid);
+
+        let proveedor_id: number | null = null;
+        if (dto.proveedor_uuid) {
+            const proveedor = await this.service.resolverProveedor(dto.proveedor_uuid);
+            if (!proveedor) throw new ResourceNotFoundException('Proveedor', dto.proveedor_uuid);
+            proveedor_id = proveedor.proveedor_id;
+        }
+
+        const payload = this.bo.prepararAltaLoteStock(
+            {
+                ...dto,
+                producto_id: producto.producto_id,
+                almacen_id: almacen.almacen_id,
+                proveedor_id,
+            },
+            usuario,
+        );
+
+        const resultado = await this.service.altaLoteStock(payload);
+
+        return {
+            meta: { message: 'Lote registrado y stock actualizado correctamente' },
+            lote: resultado.lote,
+            stock_almacen: resultado.stock_almacen,
         };
     }
 }

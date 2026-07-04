@@ -85,4 +85,83 @@ export class ProductosRepoAction {
             throw new DatabaseQueryException('Error al cambiar status del producto');
         }
     }
+
+    async altaLoteStock(payload: { lote: any; stock: any }): Promise<any> {
+        const trx = await this.knex.transaction();
+
+        try {
+            const { lote: lotePayload, stock: stockPayload } = payload;
+
+            // 1. Crear siempre el lote
+            const [lote] = await trx('lotes')
+                .insert(lotePayload)
+                .returning([
+                    'lote_id',
+                    'lote_uuid',
+                    'codigo_lote',
+                    'cantidad_actual',
+                    'fecha_caducidad',
+                    'status',
+                ]);
+
+            // 2. Buscar stock_almacen existente por producto_id + almacen_id
+            const stockExistente = await trx('stock_almacen')
+                .where({
+                    producto_id: stockPayload.producto_id,
+                    almacen_id: stockPayload.almacen_id,
+                })
+                .first();
+
+            let stockActualizado;
+
+            if (stockExistente) {
+                // 3a. Ya existe → sumar cantidad
+                [stockActualizado] = await trx('stock_almacen')
+                    .where('stock_almacen_id', stockExistente.stock_almacen_id)
+                    .update({
+                        stock_actual: this.knex.raw('stock_actual + ?', [stockPayload.cantidad_ingresada]),
+                        stock_minimo: stockPayload.stock_minimo ?? stockExistente.stock_minimo,
+                        stock_maximo: stockPayload.stock_maximo ?? stockExistente.stock_maximo,
+                        usuario_actualizacion: stockPayload.usuario_id,
+                        fecha_actualizacion: new Date(),
+                    })
+                    .returning([
+                        'stock_almacen_id',
+                        'stock_almacen_uuid',
+                        'stock_actual',
+                        'stock_minimo',
+                        'stock_maximo',
+                    ]);
+            } else {
+                // 3b. No existe → crear registro nuevo
+                [stockActualizado] = await trx('stock_almacen')
+                    .insert({
+                        producto_id: stockPayload.producto_id,
+                        almacen_id: stockPayload.almacen_id,
+                        stock_actual: stockPayload.cantidad_ingresada,
+                        stock_minimo: stockPayload.stock_minimo ?? 0,
+                        stock_maximo: stockPayload.stock_maximo ?? null,
+                        usuario_creacion: stockPayload.usuario_id,
+                        usuario_actualizacion: null,
+                        fecha_creacion: new Date(),
+                        fecha_actualizacion: null,
+                    })
+                    .returning([
+                        'stock_almacen_id',
+                        'stock_almacen_uuid',
+                        'stock_actual',
+                        'stock_minimo',
+                        'stock_maximo',
+                    ]);
+            }
+
+            await trx.commit();
+
+            return { lote, stock_almacen: stockActualizado };
+        } catch (error) {
+            await trx.rollback();
+            this.logger.error('altaLoteStock', error);
+            throw new DatabaseQueryException('Error al registrar lote y actualizar stock');
+        }
+    }
 }

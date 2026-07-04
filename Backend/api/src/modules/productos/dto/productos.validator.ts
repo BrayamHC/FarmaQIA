@@ -192,6 +192,43 @@ export const CrearProductoResponseSchema = z.object({
     }),
 });
 
+export const AltaLoteStockSchema = z.object({
+    almacen_uuid: z.string().uuid('UUID de almacén inválido'),
+    codigo_lote: z.string().min(1, 'El código de lote es obligatorio').max(100),
+    cantidad_actual: z.coerce.number().positive('La cantidad debe ser mayor a 0'),
+    fecha_caducidad: z
+        .string()
+        .regex(/^\d{4}[-\/]\d{2}[-\/]\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD)')
+        .transform((f) => f.replace(/\//g, '-')),
+    fecha_fabricacion: z
+        .string()
+        .regex(/^\d{4}[-\/]\d{2}[-\/]\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD)')
+        .transform((f) => f.replace(/\//g, '-'))
+        .optional(),
+    costo_unitario_compra: z.coerce.number().min(0).default(0),
+    proveedor_uuid: z.string().uuid('UUID del proveedor inválido').optional(),
+    stock_minimo: z.coerce.number().min(0).optional(),
+    stock_maximo: z.coerce.number().min(0).optional(),
+});
+
+export const AltaLoteStockResponseSchema = z.object({
+    meta: z.object({ message: z.string() }),
+    lote: z.object({
+        lote_uuid: z.string().uuid(),
+        codigo_lote: z.string(),
+        cantidad_actual: z.number(),
+        fecha_caducidad: z.coerce.date(),
+        status: z.string(),
+    }),
+    stock_almacen: z.object({
+        stock_almacen_uuid: z.string().uuid(),
+        stock_actual: z.number(),
+        stock_minimo: z.number().nullable(),
+        stock_maximo: z.number().nullable(),
+    }),
+});
+
+
 // ─────────────────────────────────────────────
 // TIPOS INFERIDOS
 // ─────────────────────────────────────────────
@@ -199,3 +236,4 @@ export type CrearProducto = z.infer<typeof CrearProductoSchema>;
 export type ActualizarProducto = z.infer<typeof ActualizarProductoSchema>;
 export type FiltrosProductos = z.infer<typeof FiltrosProductosSchema>;
 export type ProductoResponse = z.infer<typeof ProductoResponseSchema>;
+export type AltaLoteStock = z.infer<typeof AltaLoteStockSchema>;

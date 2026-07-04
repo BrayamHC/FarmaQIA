@@ -80,4 +80,32 @@ export class ProductosBO {
         if (Array.isArray(tags)) return tags.map((t) => t.trim());
         return tags.split(',').map((t) => t.trim());
     }
+
+    prepararAltaLoteStock(datos: any, usuario: any) {
+        return {
+            lote: {
+                codigo_lote: datos.codigo_lote,
+                cantidad_actual: Number(datos.cantidad_actual),
+                fecha_fabricacion: datos.fecha_fabricacion ? new Date(datos.fecha_fabricacion) : null,
+                fecha_caducidad: new Date(datos.fecha_caducidad),
+                costo_unitario_compra: Number(datos.costo_unitario_compra ?? 0),
+                status: 'activo',
+                almacen_id: datos.almacen_id,
+                producto_id: datos.producto_id,
+                proveedor_id: datos.proveedor_id ?? null,
+                usuario_creacion: usuario.usuario_id,
+                usuario_actualizacion: null,
+                fecha_creacion: new Date(),
+                fecha_actualizacion: null,
+            },
+            stock: {
+                producto_id: datos.producto_id,
+                almacen_id: datos.almacen_id,
+                cantidad_ingresada: Number(datos.cantidad_actual),
+                stock_minimo: datos.stock_minimo,
+                stock_maximo: datos.stock_maximo,
+                usuario_id: usuario.usuario_id,
+            },
+        };
+    }
 }

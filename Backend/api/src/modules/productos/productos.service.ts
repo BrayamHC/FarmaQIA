@@ -73,4 +73,16 @@ export class ProductosService {
     async cambiarStatus(uuid: string, status: string) {
         return this.repoAction.cambiarStatus(uuid, status);
     }
+
+    async obtenerAlmacenPorUUID(uuid: string, sucursalId: number) {
+        return this.repoData.obtenerAlmacenPorUUID(uuid, sucursalId);
+    }
+
+    async resolverAlmacen(uuid: string, sucursalId: number) {
+        return this.repoData.obtenerAlmacenPorUUID(uuid, sucursalId);
+    }
+
+    async altaLoteStock(payload: any) {
+        return this.repoAction.altaLoteStock(payload);
+    }
 }
