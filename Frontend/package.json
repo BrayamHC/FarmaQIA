@@ -12,7 +12,8 @@
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
-    "format": "prettier --write --experimental-cli src/"
+    "format": "prettier --write --experimental-cli src/",
+    "start": "serve -s dist -l $PORT"
   },
   "dependencies": {
     "@primeuix/themes": "^2.0.3",
@@ -25,7 +26,8 @@
     "primevue": "^4.5.5",
     "tailwindcss-primeui": "^0.6.1",
     "vue": "^3.5.32",
-    "vue-router": "^5.0.4"
+    "vue-router": "^5.0.4",
+    "serve": "^14.2.1"
   },
   "devDependencies": {
     "@primevue/auto-import-resolver": "^4.5.5",
