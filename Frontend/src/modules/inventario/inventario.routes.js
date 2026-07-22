@@ -20,6 +20,15 @@ const inventarioRoutes = [
           title: 'Productos | FarmaQ IA',
         },
       },
+      {
+        path: 'lotes',
+        name: 'LotesGestor',
+        component: () => import('./lotes/views/LotesGestor.view.vue'),
+        meta: {
+          requiresAuth: true,
+          title: 'Lotes | FarmaQ IA',
+        },
+      },
     ],
   },
 ];
