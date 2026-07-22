@@ -173,6 +173,36 @@ export const useVentasStore = defineStore('ventas', () => {
     return Number(producto.precio_publico ?? 0);
   }
 
+  function obtenerStockLista(producto) {
+    if (!producto) return null;
+
+    if (producto.stock_disponible != null) {
+      return Number(producto.stock_disponible ?? 0);
+    }
+
+    if (producto?.stock?.total != null) {
+      return Number(producto.stock.total ?? 0);
+    }
+
+    if (Array.isArray(producto?.stock?.almacenes)) {
+      return producto.stock.almacenes.reduce(
+        (acc, item) => acc + Number(item?.stock ?? 0),
+        0,
+      );
+    }
+
+    if (Array.isArray(producto?.lotes)) {
+      return normalizarLotes(producto).reduce(
+        (acc, lote) => acc + Number(lote.cantidad_actual ?? 0),
+        0,
+      );
+    }
+
+    return producto.stock_actual != null
+      ? Number(producto.stock_actual ?? 0)
+      : null;
+  }
+
   function obtenerStockDisponibleProducto(producto) {
     if (!producto) return 0;
 
@@ -472,6 +502,7 @@ export const useVentasStore = defineStore('ventas', () => {
     normalizarLotes,
     obtenerStockDisponibleProducto,
     obtenerPrecioUnitario,
+    obtenerStockLista,
 
     obtenerProductosPOS,
     buscarProductosPOS,
