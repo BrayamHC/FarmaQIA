@@ -4,18 +4,24 @@ export const productosService = {
   async obtenerProductos(params = {}) {
     const limit = Number(params.limit ?? 10);
     const page = Number(params.page ?? 1);
+
     const termino = String(params.busqueda ?? '').trim();
+    const nombre = String(params.nombre ?? '').trim();
+    const sku = String(params.sku ?? '').trim();
+    const upc = String(params.upc ?? '').trim();
 
     const { data } = await api.get('/productos', {
       params: {
         page,
         limit,
-        nombre: termino || undefined,
-        sku: termino || undefined,
-        upc: termino || undefined,
+        nombre: nombre || (termino ? termino : undefined),
+        sku: sku || undefined,
+        upc: upc || undefined,
         status: params.status || undefined,
-        fecha_inicio: params.fecha_inicio || undefined,
-        fecha_fin: params.fecha_fin || undefined,
+        cat_uuid: params.cat_uuid || undefined,
+        prov_uuid: params.prov_uuid || undefined,
+        con_lote: typeof params.con_lote === 'boolean' ? params.con_lote : undefined,
+        presentacion: params.presentacion || undefined,
         sort: params.sort || undefined,
       },
     });
@@ -59,10 +65,7 @@ export const productosService = {
   },
 
   async cambiarStatusLote(productoUuid, loteUuid, payload) {
-    const { data } = await api.patch(
-      `/productos/${productoUuid}/lotes/${loteUuid}/status`,
-      payload,
-    );
+    const { data } = await api.patch(`/productos/${productoUuid}/lotes/${loteUuid}/status`, payload);
     return data;
   },
 

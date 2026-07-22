@@ -300,7 +300,6 @@ export const useProductosStore = defineStore('productos', () => {
       if (productoDetalle.value?.producto_uuid === productoUuid) {
         await Promise.all([
           obtenerProductoDetalle(productoUuid),
-          obtenerStockProducto(productoUuid),
           obtenerLotesProducto(productoUuid),
         ]);
       }
@@ -327,7 +326,6 @@ export const useProductosStore = defineStore('productos', () => {
 
       await Promise.all([
         obtenerProductoDetalle(productoUuid),
-        obtenerStockProducto(productoUuid),
         obtenerLotesProducto(productoUuid),
       ]);
 

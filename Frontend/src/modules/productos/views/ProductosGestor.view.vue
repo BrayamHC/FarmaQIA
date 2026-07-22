@@ -734,7 +734,7 @@
     </Dialog>
 
     <Dialog v-model:visible="dialogStockVisible" modal :closable="!productosStore.guardandoStock"
-      :style="{ width: '58rem' }" :pt="{
+      :dismissableMask="!productosStore.guardandoStock" :draggable="false" :style="{ width: 'min(54rem, 96vw)' }" :pt="{
         root: { class: 'farma-dialog-root farma-dialog-stock' },
         mask: { class: 'farma-dialog-mask' },
         header: { style: 'display:none' },
@@ -742,12 +742,12 @@
         footer: { style: 'display:none' },
       }">
       <div class="farma-stock-layout">
-        <div class="flex items-start gap-4 border-b border-slate-100 px-6 py-5 shrink-0">
-          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100">
+        <div class="farma-stock-header">
+          <div class="farma-stock-header__icon">
             <i class="pi pi-box text-xl text-blue-600"></i>
           </div>
 
-          <div class="min-w-0">
+          <div class="min-w-0 flex-1">
             <h3 class="text-base font-bold text-slate-900">Alta de stock</h3>
             <p class="mt-1 text-sm leading-relaxed text-slate-500">
               Registra un nuevo lote de entrada para
@@ -757,93 +757,155 @@
           </div>
         </div>
 
-        <div class="farma-stock-body app-scroll px-6 py-5">
-          <div class="grid grid-cols-1 gap-x-5 gap-y-4 md:grid-cols-2">
-            <div class="farma-field">
-              <label class="mb-1.5 block text-xs font-medium text-slate-500">
-                Almacén <span class="text-rose-500">*</span>
-              </label>
-              <Select v-model="formStock.almacen_uuid" :options="productosStore.almacenesOptions" optionLabel="label"
-                optionValue="value" placeholder="Selecciona un almacén" filter showClear appendTo="self"
-                :loading="productosStore.cargandoCatalogosStock"
-                class="farma-select-field farma-select-editing w-full" />
-            </div>
-
-            <div class="farma-field">
-              <label class="mb-1.5 block text-xs font-medium text-slate-500">
-                Código lote <span class="text-rose-500">*</span>
-              </label>
-              <InputText v-model="formStock.codigo_lote" class="farma-primevue-input farma-input-editing w-full"
-                placeholder="Ej. L-2026-001" :maxlength="50" />
-            </div>
-
-            <div class="farma-field">
-              <label class="mb-1.5 block text-xs font-medium text-slate-500">
-                Cantidad actual <span class="text-rose-500">*</span>
-              </label>
-              <InputNumber v-model="formStock.cantidad_actual" class="w-full"
-                inputClass="farma-primevue-input farma-input-editing w-full" :min="1" placeholder="0" />
-            </div>
-
-            <div class="farma-field">
-              <label class="mb-1.5 block text-xs font-medium text-slate-500">
-                Fecha caducidad <span class="text-rose-500">*</span>
-              </label>
-              <div class="farma-datepicker-click" @click="abrirCalendario(fechaCaducidadStockRef)">
-                <DatePicker ref="fechaCaducidadStockRef" v-model="formStock.fecha_caducidad" placeholder="YYYY-MM-DD"
-                  dateFormat="yy-mm-dd" showIcon iconDisplay="input" manualInput showOnFocus appendTo="self"
-                  inputClass="farma-datepicker-input" class="w-full farma-datepicker"
-                  @update:modelValue="sincronizarInput(fechaCaducidadStockRef, formStock.fecha_caducidad)" />
+        <div class="farma-stock-body">
+          <section class="farma-stock-product-card">
+            <div class="farma-stock-product-card__media">
+              <img v-if="productoDetalle?.url_imagen" :src="productoDetalle.url_imagen" :alt="productoDetalle?.nombre"
+                class="h-full w-full object-cover" />
+              <div v-else class="farma-stock-product-card__placeholder">
+                <i class="pi pi-image text-xl text-slate-300"></i>
               </div>
             </div>
 
-            <div class="farma-field">
-              <label class="mb-1.5 block text-xs font-medium text-slate-500">Fecha fabricación</label>
-              <div class="farma-datepicker-click" @click="abrirCalendario(fechaFabricacionStockRef)">
-                <DatePicker ref="fechaFabricacionStockRef" v-model="formStock.fecha_fabricacion"
-                  placeholder="YYYY-MM-DD" dateFormat="yy-mm-dd" showIcon iconDisplay="input" manualInput showOnFocus
-                  appendTo="self" inputClass="farma-datepicker-input" class="w-full farma-datepicker"
-                  @update:modelValue="sincronizarInput(fechaFabricacionStockRef, formStock.fecha_fabricacion)" />
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="farma-stock-chip farma-stock-chip--blue">
+                  {{ productoDetalle?.sku || 'Sin SKU' }}
+                </span>
+
+                <span v-if="productoDetalle?.categoria" class="farma-stock-chip farma-stock-chip--slate">
+                  {{ productoDetalle.categoria }}
+                </span>
+
+                <span v-if="productoDetalle?.con_lote" class="farma-stock-chip farma-stock-chip--emerald">
+                  Con lote
+                </span>
+              </div>
+
+              <h4 class="mt-3 truncate text-base font-bold text-slate-900">
+                {{ productoDetalle?.nombre || 'Producto sin nombre' }}
+              </h4>
+
+              <p class="mt-1 line-clamp-2 text-sm text-slate-500">
+                {{ productoDetalle?.descripcion || 'Sin descripción registrada.' }}
+              </p>
+
+              <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div class="farma-stock-mini-card">
+                  <p class="farma-stock-mini-card__label">Stock actual</p>
+                  <p class="farma-stock-mini-card__value text-blue-600">
+                    {{ productoDetalle?.stock?.total ?? 0 }}
+                  </p>
+                </div>
+
+                <div class="farma-stock-mini-card">
+                  <p class="farma-stock-mini-card__label">Presentación</p>
+                  <p class="farma-stock-mini-card__value text-slate-800">
+                    {{ productoDetalle?.presentacion || 'Sin presentación' }}
+                  </p>
+                </div>
+
+                <div class="farma-stock-mini-card">
+                  <p class="farma-stock-mini-card__label">Precio público</p>
+                  <p class="farma-stock-mini-card__value text-slate-800">
+                    {{ formatearMoneda(productoDetalle?.precio_publico) }}
+                  </p>
+                </div>
               </div>
             </div>
+          </section>
 
-            <div class="farma-field">
-              <label class="mb-1.5 block text-xs font-medium text-slate-500">Costo unitario compra</label>
-              <InputNumber v-model="formStock.costo_unitario_compra" class="w-full"
-                inputClass="farma-primevue-input farma-input-editing w-full" mode="currency" currency="MXN"
-                locale="es-MX" :min="0" placeholder="$0.00" />
+          <section class="farma-stock-form-card">
+            <div class="farma-stock-form-card__head">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Registro del lote
+              </p>
+              <h4 class="mt-1 text-lg font-semibold text-slate-900">
+                Datos de entrada
+              </h4>
             </div>
 
-            <div class="farma-field md:col-span-2">
-              <label class="mb-1.5 block text-xs font-medium text-slate-500">Proveedor</label>
-              <Select v-model="formStock.proveedor_uuid" :options="productosStore.proveedoresOptions"
-                optionLabel="label" optionValue="value" placeholder="Selecciona un proveedor" filter showClear
-                appendTo="self" :loading="productosStore.cargandoCatalogosStock"
-                class="farma-select-field farma-select-editing farma-select-proveedor w-full" />
-            </div>
+            <div class="grid grid-cols-1 gap-x-5 gap-y-4 md:grid-cols-2">
+              <div class="farma-field">
+                <label class="mb-1.5 block text-xs font-medium text-slate-500">
+                  Almacén <span class="text-rose-500">*</span>
+                </label>
+                <Select v-model="formStock.almacen_uuid" :options="productosStore.almacenesOptions" optionLabel="label"
+                  optionValue="value" placeholder="Selecciona un almacén" filter showClear appendTo="self"
+                  :loading="productosStore.cargandoCatalogosStock"
+                  class="farma-select-field farma-select-editing w-full" />
+              </div>
 
-            <div class="farma-field">
-              <label class="mb-1.5 block text-xs font-medium text-slate-500">Stock mínimo</label>
-              <InputNumber v-model="formStock.stock_minimo" class="w-full"
-                inputClass="farma-primevue-input farma-input-editing w-full" :min="0" placeholder="0" />
-            </div>
+              <div class="farma-field">
+                <label class="mb-1.5 block text-xs font-medium text-slate-500">
+                  Código de lote <span class="text-rose-500">*</span>
+                </label>
+                <InputText v-model="formStock.codigo_lote" class="farma-primevue-input farma-input-editing w-full"
+                  placeholder="Ej. L-2026-001" :maxlength="50" />
+              </div>
 
-            <div class="farma-field">
-              <label class="mb-1.5 block text-xs font-medium text-slate-500">Stock máximo</label>
-              <InputNumber v-model="formStock.stock_maximo" class="w-full"
-                inputClass="farma-primevue-input farma-input-editing w-full" :min="0" placeholder="0" />
+              <div class="farma-field">
+                <label class="mb-1.5 block text-xs font-medium text-slate-500">
+                  Cantidad de entrada <span class="text-rose-500">*</span>
+                </label>
+                <InputNumber v-model="formStock.cantidad_actual" class="w-full"
+                  inputClass="farma-primevue-input farma-input-editing w-full" :min="1" placeholder="0" />
+              </div>
+
+              <div class="farma-field">
+                <label class="mb-1.5 block text-xs font-medium text-slate-500">
+                  Fecha de caducidad <span class="text-rose-500">*</span>
+                </label>
+                <div class="farma-datepicker-click" @click="abrirCalendario(fechaCaducidadStockRef)">
+                  <DatePicker ref="fechaCaducidadStockRef" v-model="formStock.fecha_caducidad" placeholder="YYYY-MM-DD"
+                    dateFormat="yy-mm-dd" showIcon iconDisplay="input" manualInput showOnFocus appendTo="self"
+                    inputClass="farma-datepicker-input" class="w-full farma-datepicker"
+                    @update:modelValue="sincronizarInput(fechaCaducidadStockRef, formStock.fecha_caducidad)" />
+                </div>
+              </div>
+
+              <div class="farma-field">
+                <label class="mb-1.5 block text-xs font-medium text-slate-500">
+                  Fecha de fabricación
+                </label>
+                <div class="farma-datepicker-click" @click="abrirCalendario(fechaFabricacionStockRef)">
+                  <DatePicker ref="fechaFabricacionStockRef" v-model="formStock.fecha_fabricacion"
+                    placeholder="YYYY-MM-DD" dateFormat="yy-mm-dd" showIcon iconDisplay="input" manualInput showOnFocus
+                    appendTo="self" inputClass="farma-datepicker-input" class="w-full farma-datepicker"
+                    @update:modelValue="sincronizarInput(fechaFabricacionStockRef, formStock.fecha_fabricacion)" />
+                </div>
+              </div>
+
+              <div class="farma-field">
+                <label class="mb-1.5 block text-xs font-medium text-slate-500">
+                  Costo unitario de compra
+                </label>
+                <InputNumber v-model="formStock.costo_unitario_compra" class="w-full"
+                  inputClass="farma-primevue-input farma-input-editing w-full" mode="currency" currency="MXN"
+                  locale="es-MX" :min="0" placeholder="$0.00" />
+              </div>
+
+              <div class="farma-field md:col-span-2">
+                <label class="mb-1.5 block text-xs font-medium text-slate-500">
+                  Proveedor
+                </label>
+                <Select v-model="formStock.proveedor_uuid" :options="productosStore.proveedoresOptions"
+                  optionLabel="label" optionValue="value" placeholder="Selecciona un proveedor" filter showClear
+                  appendTo="self" :loading="productosStore.cargandoCatalogosStock"
+                  class="farma-select-field farma-select-editing farma-select-proveedor w-full" />
+              </div>
             </div>
-          </div>
+          </section>
         </div>
 
-        <div class="flex items-center justify-end gap-4 border-t border-slate-100 px-6 py-4 shrink-0">
+        <div class="farma-stock-footer">
           <Button label="Cancelar" :disabled="productosStore.guardandoStock"
-            class="!rounded-lg !bg-slate-100 !border !border-slate-300 !text-slate-700 hover:!bg-slate-200 !px-4 !py-2 !text-sm"
+            class="!rounded-xl !bg-slate-100 !border !border-slate-300 !text-slate-700 hover:!bg-slate-200 !px-4 !py-2.5 !text-sm"
             @click="dialogStockVisible = false" />
           <Button :label="productosStore.guardandoStock ? 'Guardando...' : 'Registrar alta'"
             :loading="productosStore.guardandoStock"
             :disabled="productosStore.cargandoCatalogosStock || !stockFormValido"
-            class="!rounded-lg !px-4 !py-2 !text-sm !text-white !bg-blue-600 !border-blue-600 hover:!bg-blue-700"
+            class="!rounded-xl !px-4 !py-2.5 !text-sm !text-white !bg-blue-600 !border-blue-600 hover:!bg-blue-700"
             @click="guardarAltaStock" />
         </div>
       </div>
@@ -1708,6 +1770,13 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* ── Datepicker filtros ── */
 .farma-datepicker-click {
   width: 100%;
@@ -1970,14 +2039,142 @@ table {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: 100%;
+  max-height: 90vh;
+  background: #ffffff;
+}
+
+.farma-stock-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.96) 0%, rgba(255, 255, 255, 1) 100%);
+  flex-shrink: 0;
+}
+
+.farma-stock-header__icon {
+  display: flex;
+  height: 3rem;
+  width: 3rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  background: #dbeafe;
+  box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.35);
 }
 
 .farma-stock-body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  overflow-x: visible;
+  overflow-x: hidden;
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.farma-stock-product-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(191, 219, 254, 0.7);
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.05);
+  margin-bottom: 1rem;
+}
+
+.farma-stock-product-card__media {
+  width: 5.25rem;
+  height: 5.25rem;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid #dbeafe;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.farma-stock-product-card__placeholder {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+}
+
+.farma-stock-form-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 1.25rem;
+  background: #ffffff;
+  padding: 1.25rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.farma-stock-form-card__head {
+  margin-bottom: 1rem;
+}
+
+.farma-stock-mini-card {
+  border-radius: 0.95rem;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: rgba(255, 255, 255, 0.88);
+  padding: 0.8rem 0.9rem;
+}
+
+.farma-stock-mini-card__label {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.farma-stock-mini-card__value {
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  line-height: 1.2rem;
+  font-weight: 700;
+}
+
+.farma-stock-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.6875rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.farma-stock-chip--blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.farma-stock-chip--slate {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.farma-stock-chip--emerald {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.farma-stock-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem 1.25rem;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+  flex-shrink: 0;
 }
 
 .farma-field {
@@ -2036,6 +2233,38 @@ table {
     text-align: center;
     order: -1;
     margin: 0 0 0.25rem 0;
+  }
+
+  .farma-stock-header {
+    padding: 1rem;
+  }
+
+  .farma-stock-body {
+    padding: 1rem;
+  }
+
+  .farma-stock-product-card {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .farma-stock-product-card__media {
+    width: 4.5rem;
+    height: 4.5rem;
+  }
+
+  .farma-stock-form-card {
+    padding: 1rem;
+  }
+
+  .farma-stock-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    padding: 1rem;
+  }
+
+  .farma-stock-footer :deep(.p-button) {
+    width: 100%;
   }
 }
 
@@ -2102,13 +2331,13 @@ table {
 
 /* ── Dialog stock ── */
 :global(.farma-dialog-stock) {
-  width: min(58rem, 96vw) !important;
+  width: min(54rem, 96vw) !important;
   max-width: 96vw !important;
-  max-height: 92vh !important;
-  min-height: 46rem !important;
+  max-height: 90vh !important;
+  min-height: auto !important;
   display: flex !important;
   flex-direction: column !important;
-  overflow: visible !important;
+  overflow: hidden !important;
 }
 
 :global(.farma-dialog-stock .p-dialog-content) {
@@ -2116,37 +2345,26 @@ table {
   background: #ffffff !important;
   flex: 1 1 auto !important;
   min-height: 0 !important;
-  height: 100% !important;
   overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
 }
 
-:global(.farma-dialog-stock .app-scroll) {
-  min-height: 0 !important;
-  overflow-y: auto !important;
-  overflow-x: visible !important;
-}
-
-:global(.farma-dialog-stock .p-dialog-content::-webkit-scrollbar),
-:global(.farma-dialog-stock .app-scroll::-webkit-scrollbar) {
+:global(.farma-dialog-stock .farma-stock-body::-webkit-scrollbar) {
   width: 6px;
   height: 6px;
 }
 
-:global(.farma-dialog-stock .p-dialog-content::-webkit-scrollbar-thumb),
-:global(.farma-dialog-stock .app-scroll::-webkit-scrollbar-thumb) {
+:global(.farma-dialog-stock .farma-stock-body::-webkit-scrollbar-thumb) {
   background: rgba(100, 116, 139, 0.45);
   border-radius: 9999px;
 }
 
-:global(.farma-dialog-stock .p-dialog-content::-webkit-scrollbar-track),
-:global(.farma-dialog-stock .app-scroll::-webkit-scrollbar-track) {
+:global(.farma-dialog-stock .farma-stock-body::-webkit-scrollbar-track) {
   background: transparent;
 }
 
-:global(.farma-dialog-stock .p-dialog-content),
-:global(.farma-dialog-stock .app-scroll) {
+:global(.farma-dialog-stock .farma-stock-body) {
   scrollbar-width: thin;
   scrollbar-color: rgba(100, 116, 139, 0.45) transparent;
 }
@@ -2300,15 +2518,9 @@ table {
 
 /* ── Responsive dialog stock ── */
 @media (max-width: 768px) {
-  .farma-stock-body {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
   :global(.farma-dialog-stock) {
     width: 96vw !important;
-    max-height: 94vh !important;
-    min-height: auto !important;
+    max-height: 92vh !important;
     border-radius: 1rem !important;
   }
 
