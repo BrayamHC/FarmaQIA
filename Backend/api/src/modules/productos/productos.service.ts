@@ -85,4 +85,14 @@ export class ProductosService {
     async altaLoteStock(payload: any) {
         return this.repoAction.altaLoteStock(payload);
     }
+
+    async obtenerLotesProducto(uuid: string, sucursalId: number) {
+        const producto = await this.repoData.obtenerProductoBasicoPorUUID(uuid, sucursalId);
+
+        if (!producto) {
+            throw new ResourceNotFoundException('Producto', uuid);
+        }
+
+        return this.repoData.obtenerLotesProducto(producto.producto_id);
+    }
 }

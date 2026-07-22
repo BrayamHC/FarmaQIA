@@ -84,7 +84,6 @@ export class ProductosController {
 
     @Post(':uuid/lotes')
     @ApiOperation({ summary: 'Registrar un nuevo lote y sumar stock al almacén' })
-    @ZodSerializerDto(AltaLoteStockResponseDTO)
     async altaLoteStock(
         @Param('uuid', ParseUUIDPipe) uuid: string,
         @Body() dto: AltaLoteStockDTO,
@@ -92,5 +91,14 @@ export class ProductosController {
         @Sucursal('sucursal_id') sucursalId: number,
     ): Promise<AltaLoteStockResponseDTO> {
         return this.coordinator.altaLoteStock(uuid, dto, usuario, sucursalId);
+    }
+
+    @Get(':uuid/lotes')
+    @ApiOperation({ summary: 'Obtener los lotes de un producto' })
+    async obtenerLotesProducto(
+        @Param('uuid', ParseUUIDPipe) uuid: string,
+        @Sucursal('sucursal_id') sucursalId: number,
+    ) {
+        return this.service.obtenerLotesProducto(uuid, sucursalId);
     }
 }

@@ -73,6 +73,11 @@ export class ProductosRepoData {
                     'um.clave as clave_unidad_medida',
                     'c.nombre as categoria',
                     'pr.nombre_comercial as proveedor',
+                    this.knex.raw(`(
+                    SELECT COALESCE(SUM(sa.stock_actual), 0)
+                    FROM stock_almacen AS sa
+                    WHERE sa.producto_id = p.producto_id
+                ) AS stock_total`),
                 )
                 .leftJoin('rel_proveedores_productos as rpp', 'rpp.producto_id', 'p.producto_id')
                 .leftJoin('proveedores as pr', 'pr.proveedor_id', 'rpp.proveedor_id')
@@ -104,7 +109,10 @@ export class ProductosRepoData {
             ]);
 
             return {
-                productos,
+                productos: (productos ?? []).map((producto) => ({
+                    ...producto,
+                    stock_total: Number(producto.stock_total ?? 0),
+                })),
                 total: Number(conteo?.total ?? 0),
                 page: filtrosEfectivos.page,
                 limit: filtrosEfectivos.limit,
@@ -183,6 +191,49 @@ export class ProductosRepoData {
             .select('almacen_id', 'almacen_uuid', 'nombre', 'sucursal_id')
             .where({
                 almacen_uuid: almacenUuid,
+                sucursal_id: sucursalId,
+            })
+            .first();
+    }
+
+    async obtenerLotesProducto(productoId: number) {
+        return this.knex('lotes as l')
+            .select(
+                'l.lote_uuid',
+                'l.codigo_lote',
+                'l.cantidad_actual',
+                'l.fecha_fabricacion',
+                'l.fecha_caducidad',
+                'l.costo_unitario_compra',
+                'l.status',
+                'a.almacen_uuid',
+                'a.nombre as almacen',
+                'l.fecha_creacion',
+                'l.fecha_actualizacion',
+            )
+            .leftJoin('almacenes as a', 'a.almacen_id', 'l.almacen_id')
+            .where('l.producto_id', productoId)
+            .orderBy([
+                {
+                    column: 'l.fecha_caducidad',
+                    order: 'asc',
+                },
+                {
+                    column: 'l.fecha_creacion',
+                    order: 'desc',
+                },
+            ]);
+    }
+
+    async obtenerProductoBasicoPorUUID(uuid: string, sucursalId: number) {
+        return this.knex('productos')
+            .select(
+                'producto_id',
+                'producto_uuid',
+                'nombre',
+            )
+            .where({
+                producto_uuid: uuid,
                 sucursal_id: sucursalId,
             })
             .first();

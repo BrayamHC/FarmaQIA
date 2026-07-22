@@ -207,8 +207,6 @@ export const AltaLoteStockSchema = z.object({
         .optional(),
     costo_unitario_compra: z.coerce.number().min(0).default(0),
     proveedor_uuid: z.string().uuid('UUID del proveedor inválido').optional(),
-    stock_minimo: z.coerce.number().min(0).optional(),
-    stock_maximo: z.coerce.number().min(0).optional(),
 });
 
 export const AltaLoteStockResponseSchema = z.object({
@@ -223,8 +221,6 @@ export const AltaLoteStockResponseSchema = z.object({
     stock_almacen: z.object({
         stock_almacen_uuid: z.string().uuid(),
         stock_actual: z.number(),
-        stock_minimo: z.number().nullable(),
-        stock_maximo: z.number().nullable(),
     }),
 });
 
