@@ -53,11 +53,12 @@ export class ClientesController {
         @Sucursal('sucursal_id') sucursalId: number,
         @User() user: any,
     ) {
-        const cliente = await this.clientesService.crearCliente(body, sucursalId, user);
+        await this.clientesService.crearCliente(body, sucursalId, user);
         return {
             success: true,
             message: 'Cliente creado exitosamente',
-        };       }
+        };
+    }
 
     @Put(':cliente_uuid')
     @ApiOperation({ summary: 'Actualizar cliente' })
@@ -67,13 +68,16 @@ export class ClientesController {
         @Sucursal('sucursal_id') sucursalId: number,
         @User() user: any,
     ) {
-        const cliente = await this.clientesService.actualizarCliente(
+        await this.clientesService.actualizarCliente(
             cliente_uuid,
             body,
             sucursalId,
             user,
         );
-        return { cliente };
+        return {
+            success: true,
+            message: 'Cliente actualizado exitosamente',
+        };
     }
 
     @Patch(':cliente_uuid/status')
@@ -84,12 +88,15 @@ export class ClientesController {
         @Sucursal('sucursal_id') sucursalId: number,
         @User() user: any,
     ) {
-        const cliente = await this.clientesService.cambiarStatusCliente(
+        await this.clientesService.cambiarStatusCliente(
             cliente_uuid,
             body.status,
             sucursalId,
             user,
         );
-        return { cliente };
+        return {
+            success: true,
+            message: 'Status actualizado exitosamente',
+        };
     }
 }

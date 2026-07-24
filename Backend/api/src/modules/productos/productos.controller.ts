@@ -54,8 +54,12 @@ export class ProductosController {
         @Body() dto: CrearProductoDTO,
         @User() usuario: any,
         @Sucursal('sucursal_id') sucursalId: number,
-    ): Promise<CrearProductoResponseDTO> {
-        return this.coordinator.crearProducto(dto, usuario, sucursalId);
+    ) {
+        await this.coordinator.crearProducto(dto, usuario, sucursalId);
+        return {
+            success: true,
+            message: 'Producto creado exitosamente',
+        };
     }
 
     // ── Actualizar ───────────────────────────────────────────────────────────
@@ -67,7 +71,11 @@ export class ProductosController {
         @User() usuario: any,
         @Sucursal('sucursal_id') sucursalId: number,
     ) {
-        return this.coordinator.actualizarProducto(uuid, dto, usuario, sucursalId);
+        await this.coordinator.actualizarProducto(uuid, dto, usuario, sucursalId);
+        return {
+            success: true,
+            message: 'Producto actualizado exitosamente',
+        };
     }
 
     // ── Cambiar status ───────────────────────────────────────────────────────
@@ -78,10 +86,14 @@ export class ProductosController {
         @Body() dto: CambiarStatusProductoDTO,
         @Sucursal('sucursal_id') sucursalId: number,
     ) {
-        return this.coordinator.cambiarStatus(uuid, dto.status, sucursalId);
+        await this.coordinator.cambiarStatus(uuid, dto.status, sucursalId);
+        return {
+            success: true,
+            message: 'Status actualizado exitosamente',
+        };
     }
 
-
+    // ── Alta lote ────────────────────────────────────────────────────────────
     @Post(':uuid/lotes')
     @ApiOperation({ summary: 'Registrar un nuevo lote y sumar stock al almacén' })
     async altaLoteStock(
@@ -89,8 +101,12 @@ export class ProductosController {
         @Body() dto: AltaLoteStockDTO,
         @User() usuario: any,
         @Sucursal('sucursal_id') sucursalId: number,
-    ): Promise<AltaLoteStockResponseDTO> {
-        return this.coordinator.altaLoteStock(uuid, dto, usuario, sucursalId);
+    ) {
+        await this.coordinator.altaLoteStock(uuid, dto, usuario, sucursalId);
+        return {
+            success: true,
+            message: 'Lote registrado exitosamente',
+        };
     }
 
     @Get(':uuid/lotes')

@@ -43,8 +43,11 @@ export class ProveedoresController {
         @Body() body: CrearProveedorDTO,
         @User() user: any,
     ) {
-        const proveedor = await this.proveedoresService.crearProveedor(body, user);
-        return { proveedor };
+        await this.proveedoresService.crearProveedor(body, user);
+        return {
+            success: true,
+            message: 'Proveedor creado exitosamente',
+        };
     }
 
     @Put(':uuid')
@@ -54,8 +57,11 @@ export class ProveedoresController {
         @Body() body: ActualizarProveedorDTO,
         @User() user: any,
     ) {
-        const proveedor = await this.proveedoresService.actualizarProveedor(uuid, body, user);
-        return { proveedor };
+        await this.proveedoresService.actualizarProveedor(uuid, body, user);
+        return {
+            success: true,
+            message: 'Proveedor actualizado exitosamente',
+        };
     }
 
     @Patch(':uuid/status')
@@ -65,11 +71,14 @@ export class ProveedoresController {
         @Body() body: CambiarStatusProveedorDTO,
         @User() user: any,
     ) {
-        const proveedor = await this.proveedoresService.cambiarStatusProveedor(
+        await this.proveedoresService.cambiarStatusProveedor(
             uuid,
             body.status,
             user,
         );
-        return { proveedor };
+        return {
+            success: true,
+            message: 'Status actualizado exitosamente',
+        };
     }
 }

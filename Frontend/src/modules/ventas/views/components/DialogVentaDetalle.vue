@@ -1,14 +1,9 @@
 <template>
-  <Dialog
-    :visible="visible"
-    modal
-    :closable="true"
-    :draggable="false"
-    :style="{ width: 'min(1100px, 96vw)' }"
-    class="venta-detalle-dialog"
-    @update:visible="emit('update:visible', $event)"
-    @hide="onHide"
-  >
+  <Dialog :visible="visible" modal :closable="true" :draggable="false" :style="{ width: 'min(1100px, 96vw)' }" :pt="{
+    root: { class: 'venta-detalle-root' },
+    mask: { class: 'venta-detalle-mask' },
+    content: { class: 'venta-detalle-content' },
+  }" @update:visible="emit('update:visible', $event)" @hide="onHide">
     <template #header>
       <div class="flex min-w-0 flex-1 items-start gap-3">
         <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 shadow-sm shadow-blue-200/70">
@@ -21,10 +16,8 @@
               Detalle de venta
             </h3>
 
-            <span
-              class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
-              :class="statusClass(venta?.status)"
-            >
+            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
+              :class="statusClass(venta?.status)">
               {{ capitalizar(venta?.status) }}
             </span>
           </div>
@@ -45,7 +38,7 @@
       </div>
     </section>
 
-    <section v-else-if="venta" class="flex max-h-[78vh] flex-col gap-4 overflow-hidden">
+    <section v-else-if="venta" class="venta-detalle-scroll flex flex-col gap-4">
       <article class="dialog-hero">
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div class="venta-kpi">
@@ -125,7 +118,7 @@
             </div>
 
             <div class="info-item">
-              <span class="info-item__label">UUID</span>
+              <span class="info-item__label">Folio Cliente</span>
               <span class="info-item__value break-all">{{ venta?.cliente?.cliente_uuid || '—' }}</span>
             </div>
           </div>
@@ -145,16 +138,6 @@
             <div class="info-item">
               <span class="info-item__label">Nombre</span>
               <span class="info-item__value">{{ venta?.almacen?.nombre || '—' }}</span>
-            </div>
-
-            <div class="info-item">
-              <span class="info-item__label">Dirección</span>
-              <span class="info-item__value">{{ venta?.almacen?.direccion || '—' }}</span>
-            </div>
-
-            <div class="info-item">
-              <span class="info-item__label">UUID</span>
-              <span class="info-item__value break-all">{{ venta?.almacen?.almacen_uuid || '—' }}</span>
             </div>
           </div>
         </article>
@@ -188,7 +171,7 @@
         </article>
       </div>
 
-      <article class="card-detalle min-h-0 flex-1 overflow-hidden">
+      <article class="card-detalle">
         <div class="card-detalle__header">
           <div class="flex items-center gap-2">
             <i class="pi pi-list text-sm text-blue-600"></i>
@@ -200,14 +183,9 @@
           </span>
         </div>
 
-        <div class="min-h-0 flex-1 overflow-auto">
-          <DataTable
-            :value="venta.partidas || []"
-            responsiveLayout="scroll"
-            stripedRows
-            class="ventas-partidas-table"
-            :tableStyle="{ minWidth: '880px' }"
-          >
+        <div class="partidas-table-wrap">
+          <DataTable :value="venta.partidas || []" responsiveLayout="scroll" stripedRows class="ventas-partidas-table"
+            :tableStyle="{ minWidth: '880px' }">
             <template #empty>
               <div class="py-10 text-center text-sm text-slate-500">
                 No hay partidas registradas.
@@ -366,30 +344,67 @@ function formatearFechaHora(value) {
 </script>
 
 <style scoped>
-.venta-detalle-dialog :deep(.p-dialog-mask) {
+:global(.venta-detalle-mask) {
   background: rgba(15, 23, 42, 0.42) !important;
   backdrop-filter: blur(6px) !important;
   -webkit-backdrop-filter: blur(6px) !important;
 }
 
-.venta-detalle-dialog :deep(.p-dialog) {
+:global(.venta-detalle-root) {
   border-radius: 1.25rem !important;
   border: 1px solid rgba(226, 232, 240, 0.95) !important;
   background: #ffffff !important;
   box-shadow: 0 24px 70px rgba(15, 23, 42, 0.18) !important;
   overflow: hidden !important;
+  max-height: min(90vh, 900px) !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
-.venta-detalle-dialog :deep(.p-dialog-header) {
+:global(.venta-detalle-root .p-dialog-header) {
   padding: 1rem 1.25rem 0.75rem 1.25rem !important;
   background: #ffffff !important;
   border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+  flex-shrink: 0 !important;
 }
 
-.venta-detalle-dialog :deep(.p-dialog-content) {
+:global(.venta-detalle-content) {
   padding: 1rem 1.25rem 1.25rem 1.25rem !important;
   background: #f8fafc !important;
   overflow: hidden !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* única área de scroll: todo el contenido del detalle (KPIs, info, partidas...) */
+.venta-detalle-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.25rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.45) transparent;
+}
+
+.venta-detalle-scroll::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.venta-detalle-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.venta-detalle-scroll::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.45);
+  border-radius: 9999px;
+}
+
+.venta-detalle-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 0.65);
 }
 
 .dialog-hero {
@@ -459,6 +474,29 @@ function formatearFechaHora(value) {
   border-radius: 0.9rem;
   background: #f8fafc;
   border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+/* la tabla de partidas tiene su propio scroll horizontal para
+   no romper el layout en pantallas angostas, pero su alto es
+   natural (no se recorta), ya que quien scrollea verticalmente
+   es .venta-detalle-scroll */
+.partidas-table-wrap {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.45) transparent;
+}
+
+.partidas-table-wrap::-webkit-scrollbar {
+  height: 7px;
+}
+
+.partidas-table-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.partidas-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.45);
+  border-radius: 9999px;
 }
 
 .ventas-partidas-table :deep(.p-datatable) {

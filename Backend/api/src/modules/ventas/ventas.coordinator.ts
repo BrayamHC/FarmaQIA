@@ -19,6 +19,13 @@ type ProductoRelacionado = {
     status?: string | null;
 };
 
+type ClienteRelacionado = {
+    cliente_id: number;
+    cliente_uuid?: string | null;
+    nombre?: string;
+    status?: string | null;
+};
+
 type DetalleVentaInput = {
     producto_uuid?: string | null;
     lote_uuid?: string | null;
@@ -59,7 +66,7 @@ export class VentasCoordinator {
             throw new BadRequestException('El almacén es obligatorio para registrar la venta.');
         }
 
-        const cliente_id = body?.cliente_id ? Number(body.cliente_id) : null;
+        const cliente_uuid = body?.cliente_uuid ? String(body.cliente_uuid) : null;
         const detalles = Array.isArray(body?.partidas) ? body.partidas : [];
 
         if (!detalles.length) {
@@ -75,16 +82,23 @@ export class VentasCoordinator {
             throw new NotFoundException('No se encontró el almacén seleccionado.');
         }
 
-        let cliente = null;
+        let cliente: ClienteRelacionado | null = null;
+        let cliente_id: number | null = null;
 
-        if (cliente_id) {
-            cliente = await this.ventasService.obtenerClienteParaVenta({
-                cliente_id,
+        if (cliente_uuid) {
+            cliente = await this.ventasService.obtenerClienteParaVentaUuid({
+                cliente_uuid,
                 sucursal_id,
-            });
+            }) as ClienteRelacionado | null;
 
             if (!cliente) {
                 throw new NotFoundException('No se encontró el cliente seleccionado.');
+            }
+
+            cliente_id = Number(cliente.cliente_id);
+
+            if (!cliente_id) {
+                throw new BadRequestException('No fue posible resolver el id del cliente seleccionado.');
             }
         }
 

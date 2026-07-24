@@ -96,7 +96,8 @@
       </div>
 
       <div v-if="mensajeError"
-        class="mt-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+        class="mt-2 inline-flex items-center rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-medium text-rose-700">
+        <i class="pi pi-exclamation-circle mr-1.5 text-[10px]"></i>
         {{ mensajeError }}
       </div>
     </div>
@@ -320,7 +321,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { usePosStore } from './posStore'
 import DialogBuscarProducto from './dialogs/DialogBuscarProducto.vue'
@@ -405,6 +406,40 @@ function formatFecha(fecha) {
 function calcularImporteItem(item) {
   return Number(item?.cantidad ?? 0) * Number(item?.preciounitario ?? item?.precio_unitario ?? 0)
 }
+
+function obtenerAlmacenKey(almacen) {
+  return (
+    almacen?.almacen_uuid ||
+    almacen?.almacenuuid ||
+    almacen?.id ||
+    almacen?.uuid ||
+    null
+  )
+}
+
+function reiniciarVentaPorCambioDeAlmacen() {
+  store.limpiarCarrito()
+  productoPendiente.value = null
+  lotePendiente.value = null
+  dialogLote.value = false
+  dialogAlmacen.value = false
+  dialogCobrar.value = false
+  scanQuery.value = ''
+  mensajeError.value = 'La venta actual se reinició porque cambió el almacén seleccionado.'
+  enfocarBuscador()
+}
+
+watch(
+  () => obtenerAlmacenKey(almacenSeleccionado.value),
+  (nuevoAlmacenKey, anteriorAlmacenKey) => {
+    if (!anteriorAlmacenKey) return
+    if (!nuevoAlmacenKey) return
+    if (nuevoAlmacenKey === anteriorAlmacenKey) return
+    if (carritoVacio.value) return
+
+    reiniciarVentaPorCambioDeAlmacen()
+  },
+)
 
 function aumentarCantidad(item) {
   limpiarMensajeError()
@@ -612,9 +647,6 @@ function onLimpiarCliente() {
 }
 
 async function onConfirmarVenta({ payload }) {
-  // El store ya se encarga de: registrar la venta, notificar éxito/error
-  // (vía notificacionesStore) y limpiar carrito/búsquedas al terminar,
-  // conservando el almacén y el cliente seleccionados.
   try {
     await store.crearVenta(payload)
 
@@ -625,8 +657,6 @@ async function onConfirmarVenta({ payload }) {
     limpiarMensajeError()
     enfocarBuscador()
   } catch (error) {
-    // El error ya se notificó desde el store; sólo evitamos cerrar el
-    // diálogo de cobro para que el usuario pueda reintentar.
     console.error('Error registrando venta:', error)
   }
 }

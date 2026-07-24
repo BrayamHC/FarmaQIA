@@ -77,11 +77,6 @@ export const usePosStore = defineStore('pos', () => {
     return Math.max(1, Math.ceil(Number(totalProductos.value ?? 0) / limite))
   })
 
-  // Productos listos para vender:
-  // - Si hay un almacén seleccionado, sólo se muestran productos que traen
-  //   lotes con stock EN ESE ALMACÉN (evita seleccionar un lote de otro almacén).
-  // - Sin importar el almacén, si el producto no tiene stock disponible,
-  //   simplemente no se muestra (no se lista deshabilitado).
   const productosDisponiblesVenta = computed(() => {
     const lista = Array.isArray(productos.value) ? productos.value : []
 
@@ -120,6 +115,34 @@ export const usePosStore = defineStore('pos', () => {
       clave: almacen?.clave ?? '',
       status: almacen?.status ?? 'activo',
       sucursal: almacen?.sucursal ?? null,
+    }
+  }
+
+  function normalizarCliente(cliente) {
+    if (!cliente) return null
+
+    const clienteId = Number(
+      cliente?.cliente_id ??
+      cliente?.clienteid ??
+      cliente?.id ??
+      0,
+    )
+
+    const clienteUuid = cliente?.cliente_uuid ?? cliente?.clienteuuid ?? null
+
+    return {
+      ...cliente,
+      cliente_id: esEnteroPositivo(clienteId) ? clienteId : null,
+      clienteid: esEnteroPositivo(clienteId) ? clienteId : null,
+      id: esEnteroPositivo(clienteId) ? clienteId : null,
+      cliente_uuid: clienteUuid,
+      clienteuuid: clienteUuid,
+      nombre: cliente?.nombre ?? cliente?.razon_social ?? 'Cliente',
+      razon_social: cliente?.razon_social ?? cliente?.nombre ?? '',
+      email: cliente?.email ?? '',
+      telefono: cliente?.telefono ?? '',
+      rfc: cliente?.rfc ?? '',
+      status: cliente?.status ?? 'activo',
     }
   }
 
@@ -180,9 +203,6 @@ export const usePosStore = defineStore('pos', () => {
     eliminarBorradorVentaPOS()
   }
 
-  // Al finalizar una venta exitosa: limpia carrito y resultados de búsqueda,
-  // pero mantiene el almacén y el cliente seleccionados (siguen vigentes
-  // para la próxima venta en la misma caja).
   function limpiarEstadoPOSTrasVenta() {
     limpiarBusquedaProductos()
     limpiarBusquedaClientes()
@@ -246,10 +266,6 @@ export const usePosStore = defineStore('pos', () => {
 
     const lotes = normalizarLotes(producto)
 
-    // Con un almacén seleccionado, el stock SIEMPRE se calcula a partir de los
-    // lotes que vienen en la respuesta (ya filtrados por ese almacén en el backend).
-    // No usamos los totales planos (stocktotal, etc.) porque esos reflejan
-    // existencias globales de todos los almacenes, no las de este almacén.
     if (almacenSeleccionado.value) {
       return lotes.reduce((acumulado, lote) => acumulado + Number(lote.cantidadactual ?? 0), 0)
     }
@@ -277,6 +293,13 @@ export const usePosStore = defineStore('pos', () => {
   }
 
   async function obtenerProductosPOS(params = {}) {
+    if (!almacenSeleccionado.value) {
+      productos.value = []
+      totalProductos.value = 0
+      pageProductos.value = 1
+      return { productos: [], total: 0, page: 1, limit: params.limit ?? limitProductos.value }
+    }
+
     cargandoProductos.value = true
 
     try {
@@ -298,8 +321,6 @@ export const usePosStore = defineStore('pos', () => {
         page: Number(params.page ?? pageProductos.value ?? 1),
         limit: Number(params.limit ?? limitProductos.value ?? 20),
         status: params.status ?? filtrosProductos.value.status ?? 'activo',
-        // OJO: productosService espera con_lote y almacen_id (snake_case exacto),
-        // no conlote/almacenid.
         con_lote: conLote,
         almacen_id: esEnteroPositivo(almacenId) ? almacenId : undefined,
         sort: params.sort ?? filtrosProductos.value.sort ?? undefined,
@@ -438,7 +459,14 @@ export const usePosStore = defineStore('pos', () => {
 
       const response = await clientesService.obtenerClientes(requestParams)
 
-      clientes.value = response?.clientes ?? response?.data?.clientes ?? response?.data ?? []
+      clientes.value = Array.isArray(response?.clientes)
+        ? response.clientes.map((cliente) => normalizarCliente(cliente))
+        : Array.isArray(response?.data?.clientes)
+          ? response.data.clientes.map((cliente) => normalizarCliente(cliente))
+          : Array.isArray(response?.data)
+            ? response.data.map((cliente) => normalizarCliente(cliente))
+            : []
+
       totalClientes.value = Number(response?.total ?? response?.meta?.total ?? 0)
       filtrosClientes.value = requestParams
 
@@ -493,7 +521,7 @@ export const usePosStore = defineStore('pos', () => {
   }
 
   function seleccionarCliente(cliente) {
-    clienteSeleccionado.value = cliente ?? null
+    clienteSeleccionado.value = normalizarCliente(cliente)
   }
 
   function limpiarClienteSeleccionado() {
@@ -699,7 +727,7 @@ export const usePosStore = defineStore('pos', () => {
       }
 
       almacenSeleccionado.value = normalizarAlmacen(parsed?.almacenSeleccionado)
-      clienteSeleccionado.value = parsed?.clienteSeleccionado ?? null
+      clienteSeleccionado.value = normalizarCliente(parsed?.clienteSeleccionado)
       carrito.value = Array.isArray(parsed?.carrito) ? parsed.carrito : []
 
       return true
@@ -731,7 +759,7 @@ export const usePosStore = defineStore('pos', () => {
       eliminarBorradorVentaPOS()
       limpiarEstadoPOSTrasVenta()
 
-      notificacionesStore?.mostrarExito?.(
+      notificacionesStore?.success?.(
         response?.message || 'Venta registrada correctamente.',
       )
 
@@ -739,10 +767,9 @@ export const usePosStore = defineStore('pos', () => {
     } catch (error) {
       console.error('Error creando venta:', error)
 
-      notificacionesStore?.mostrarError?.(
+      notificacionesStore?.error?.(
         error?.response?.data?.message || 'No fue posible registrar la venta.',
       )
-
       throw error
     } finally {
       cargando.value = false
@@ -789,6 +816,7 @@ export const usePosStore = defineStore('pos', () => {
     limpiarEstadoPOS,
     limpiarEstadoPOSTrasVenta,
     normalizarAlmacen,
+    normalizarCliente,
     normalizarLotes,
     obtenerPrecioUnitario,
     obtenerStockLista,

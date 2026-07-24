@@ -17,6 +17,10 @@ export class VentasService {
         return this.repoData.obtenerClientePorId(input.cliente_id, input.sucursal_id);
     }
 
+    async obtenerClienteParaVentaUuid(input: { cliente_uuid: string; sucursal_id: number }) {
+        return this.repoData.obtenerClientePorUuid(input.cliente_uuid, input.sucursal_id);
+    }
+
     async obtenerAlmacenParaVenta(input: { almacen_id: number; sucursal_id: number }) {
         return this.repoData.obtenerAlmacenPorId(input.almacen_id, input.sucursal_id);
     }

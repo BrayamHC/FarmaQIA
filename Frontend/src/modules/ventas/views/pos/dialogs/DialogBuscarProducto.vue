@@ -47,20 +47,21 @@
 
         <button v-for="f in filtrosRapidos" :key="f.value" type="button"
           class="rounded-full border px-3 py-1 text-xs font-medium transition" :class="filtroActivo === f.value
-              ? 'border-blue-300 bg-blue-50 text-blue-700'
-              : 'border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600'
+            ? 'border-blue-300 bg-blue-50 text-blue-700'
+            : 'border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600'
             " @click="onCambiarFiltro(f.value)">
           {{ f.label }}
         </button>
       </div>
 
-      <div v-if="!store.almacenSeleccionado"
+      <!-- <div v-if="!store.almacenSeleccionado"
         class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
         Selecciona un almacén para ver únicamente las existencias disponibles en él.
-      </div>
+      </div> -->
 
       <div v-if="mensajeError"
-        class="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+        class="mt-2 inline-flex items-center rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-medium text-rose-700">
+        <i class="pi pi-exclamation-circle mr-1.5 text-[10px]"></i>
         {{ mensajeError }}
       </div>
     </div>
@@ -244,6 +245,12 @@ watch(visible, async (v) => {
   await nextTick()
   inputRef.value?.focus()
 
+  // ← VALIDACIÓN: sin almacén no se busca
+  if (!store.almacenSeleccionado) {
+    mensajeError.value = 'Debes seleccionar un almacén antes de buscar productos.'
+    return
+  }
+
   if (busqueda.value) {
     await buscar()
   } else {
@@ -259,6 +266,12 @@ watch(
   () => props.terminoInicial,
   async (valor) => {
     if (!visible.value) return
+
+    // ← VALIDACIÓN: sin almacén no se busca
+    if (!store.almacenSeleccionado) {
+      mensajeError.value = 'Debes seleccionar un almacén antes de buscar productos.'
+      return
+    }
 
     busqueda.value = String(valor ?? '').trim()
 
@@ -279,6 +292,14 @@ function limpiarMensajeError() {
   mensajeError.value = ''
 }
 
+function validarAlmacenRequerido() {
+  if (!store.almacenSeleccionado) {
+    mensajeError.value = 'Debes seleccionar un almacén antes de buscar productos.'
+    return false
+  }
+  return true
+}
+
 function onInput() {
   limpiarMensajeError()
   clearTimeout(inputTimeout)
@@ -294,6 +315,7 @@ async function onCambiarFiltro(valor) {
 }
 
 async function buscar() {
+  if (!validarAlmacenRequerido()) return
   limpiarMensajeError()
 
   const q = String(busqueda.value ?? '').trim()
@@ -317,11 +339,13 @@ async function buscar() {
 }
 
 async function cambiarPagina(nuevaPagina) {
+  if (!validarAlmacenRequerido()) return
   limpiarMensajeError()
   await store.cambiarPaginaProductos(nuevaPagina)
 }
 
 async function onCambiarLimite(nuevoLimite) {
+  if (!validarAlmacenRequerido()) return
   limpiarMensajeError()
   await store.cambiarLimiteProductos(Number(nuevoLimite))
 }
@@ -353,6 +377,7 @@ function cerrar() {
   mensajeError.value = ''
   store.limpiarBusquedaProductos()
 }
+
 function formatMoneda(valor) {
   return Number(valor ?? 0).toLocaleString('es-MX', {
     style: 'currency',

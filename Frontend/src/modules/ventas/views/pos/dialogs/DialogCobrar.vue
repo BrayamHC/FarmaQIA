@@ -7,6 +7,7 @@
       header: { style: 'display:none' },
       content: { class: 'farma-dialog-content farma-pos-dialog-content' },
     }">
+    <!-- ── Header ─────────────────────────────────────────────────────────── -->
     <div class="flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5">
       <div class="flex items-center gap-3">
         <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 shadow-sm">
@@ -26,69 +27,91 @@
       </button>
     </div>
 
+    <!-- ── Cuerpo ──────────────────────────────────────────────────────────── -->
     <div class="space-y-5 bg-white px-6 py-5">
-      <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
-        <p class="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">Resumen</p>
 
-        <div class="space-y-1.5 text-sm">
-          <div class="flex justify-between text-slate-600">
-            <span>Cliente</span>
-            <span class="font-medium text-slate-800">{{ nombreCliente }}</span>
-          </div>
-
-          <div class="flex justify-between text-slate-600">
-            <span>Artículos</span>
-            <span class="font-medium text-slate-800">{{ totalArticulos }}</span>
-          </div>
-
-          <div class="flex justify-between text-slate-600">
-            <span>Subtotal</span>
-            <span class="font-medium text-slate-800">{{ formatMoneda(subtotal) }}</span>
-          </div>
-
-          <div class="mt-2 flex justify-between border-t border-dashed border-slate-200 pt-2">
-            <span class="font-bold text-slate-900">Total</span>
-            <span class="text-xl font-extrabold text-blue-600">{{ formatMoneda(total) }}</span>
-          </div>
-        </div>
+      <!-- ── Mensaje de error (mismo patrón que buscar productos) ── -->
+      <div v-if="mensajeError"
+        class="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <i class="pi pi-exclamation-circle mt-0.5 shrink-0"></i>
+        <span>{{ mensajeError }}</span>
       </div>
 
-      <div>
-        <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Método de pago</p>
+      <!-- ── Contenido principal (solo si no hay error bloqueante) ── -->
+      <template v-if="!errorBloqueante">
 
-        <div class="grid grid-cols-3 gap-2">
-          <button v-for="m in metodosPago" :key="m.value" type="button"
-            class="flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition" :class="metodoPago === m.value
-                ? 'border-blue-400 bg-blue-50 text-blue-700'
-                : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50/40'
-              " @click="metodoPago = m.value">
-            <i :class="[m.icon, 'text-xl']"></i>
-            <span class="text-xs font-semibold">{{ m.label }}</span>
-          </button>
+        <!-- Resumen -->
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+          <p class="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+            Resumen
+          </p>
+
+          <div class="space-y-1.5 text-sm">
+            <div class="flex justify-between text-slate-600">
+              <span>Cliente</span>
+              <span class="font-medium text-slate-800">{{ nombreCliente }}</span>
+            </div>
+
+            <div class="flex justify-between text-slate-600">
+              <span>Artículos</span>
+              <span class="font-medium text-slate-800">{{ totalArticulos }}</span>
+            </div>
+
+            <div class="flex justify-between text-slate-600">
+              <span>Subtotal</span>
+              <span class="font-medium text-slate-800">{{ formatMoneda(subtotal) }}</span>
+            </div>
+
+            <div class="mt-2 flex justify-between border-t border-dashed border-slate-200 pt-2">
+              <span class="font-bold text-slate-900">Total</span>
+              <span class="text-xl font-extrabold text-blue-600">{{ formatMoneda(total) }}</span>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div v-if="metodoPago === 'efectivo'">
-        <label class="mb-1.5 block text-xs font-medium text-slate-500">Monto recibido</label>
+        <!-- Método de pago -->
+        <div>
+          <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Método de pago
+          </p>
 
-        <input ref="montoInputRef" v-model.number="montoRecibido" type="number" min="0" step="0.01"
-          class="w-full rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 outline-none transition focus:border-blue-400 focus:shadow-[0_0_0_4px_rgba(59,130,246,0.1)]"
-          placeholder="$0.00" />
-
-        <div v-if="montoRecibido >= total"
-          class="mt-2 flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-2.5">
-          <span class="text-sm text-emerald-700">Cambio</span>
-          <span class="text-base font-extrabold text-emerald-700">
-            {{ formatMoneda(cambio) }}
-          </span>
+          <div class="grid grid-cols-3 gap-2">
+            <button v-for="m in metodosPago" :key="m.value" type="button"
+              class="flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition" :class="metodoPago === m.value
+                  ? 'border-blue-400 bg-blue-50 text-blue-700'
+                  : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50/40'
+                " @click="metodoPago = m.value">
+              <i :class="[m.icon, 'text-xl']"></i>
+              <span class="text-xs font-semibold">{{ m.label }}</span>
+            </button>
+          </div>
         </div>
 
-        <p v-else class="mt-2 text-xs font-medium text-rose-500">
-          El monto recibido debe cubrir el total.
-        </p>
-      </div>
+        <!-- Monto efectivo -->
+        <div v-if="metodoPago === 'efectivo'">
+          <label class="mb-1.5 block text-xs font-medium text-slate-500">Monto recibido</label>
+
+          <input ref="montoInputRef" v-model.number="montoRecibido" type="number" min="0" step="0.01"
+            class="w-full rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 outline-none transition focus:border-blue-400 focus:shadow-[0_0_0_4px_rgba(59,130,246,0.1)]"
+            placeholder="$0.00" />
+
+          <div v-if="montoRecibido >= total"
+            class="mt-2 flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-2.5">
+            <span class="text-sm text-emerald-700">Cambio</span>
+            <span class="text-base font-extrabold text-emerald-700">
+              {{ formatMoneda(cambio) }}
+            </span>
+          </div>
+
+          <p v-else class="mt-2 text-xs font-medium text-rose-500">
+            El monto recibido debe cubrir el total.
+          </p>
+        </div>
+
+      </template>
     </div>
 
+    <!-- ── Footer ─────────────────────────────────────────────────────────── -->
     <div class="flex items-center justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4">
       <button type="button"
         class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
@@ -146,12 +169,15 @@ const visible = ref(props.modelValue)
 const metodoPago = ref('efectivo')
 const montoRecibido = ref(0)
 const montoInputRef = ref(null)
+const mensajeError = ref('')
 
 const metodosPago = [
   { value: 'efectivo', label: 'Efectivo', icon: 'pi pi-wallet' },
   { value: 'tarjeta', label: 'Tarjeta', icon: 'pi pi-credit-card' },
   { value: 'transferencia', label: 'Transferencia', icon: 'pi pi-send' },
 ]
+
+// ─── Watchers ────────────────────────────────────────────────────────────────
 
 watch(
   () => props.modelValue,
@@ -163,15 +189,33 @@ watch(
 watch(visible, async (v) => {
   emit('update:modelValue', v)
 
-  if (v) {
-    metodoPago.value = 'efectivo'
-    montoRecibido.value = Number(props.total ?? 0)
+  if (!v) return
 
-    await nextTick()
-    montoInputRef.value?.focus?.()
-    montoInputRef.value?.select?.()
+  // Reset de estado
+  metodoPago.value = 'efectivo'
+  montoRecibido.value = Number(props.total ?? 0)
+  mensajeError.value = ''
+
+  await nextTick()
+
+  // ← VALIDACIÓN: sin cliente no se puede cobrar
+  if (!props.cliente) {
+    mensajeError.value = 'Debes seleccionar un cliente antes de proceder al cobro.'
+    return
   }
+
+  montoInputRef.value?.focus?.()
+  montoInputRef.value?.select?.()
 })
+
+// ─── Computed ─────────────────────────────────────────────────────────────────
+
+/**
+ * true cuando el error es bloqueante y debe ocultar el formulario de cobro.
+ * Aplica solo al error de cliente faltante; errores de validación de pago
+ * no bloquean el formulario porque se resuelven inline.
+ */
+const errorBloqueante = computed(() => !props.cliente)
 
 const nombreCliente = computed(() => {
   return (
@@ -187,6 +231,8 @@ const cambio = computed(() => {
 })
 
 const puedeConfirmar = computed(() => {
+  // Bloquear si no hay cliente
+  if (!props.cliente) return false
   if (!props.carrito?.length) return false
   if (!metodoPago.value) return false
 
@@ -196,6 +242,8 @@ const puedeConfirmar = computed(() => {
 
   return true
 })
+
+// ─── Acciones ─────────────────────────────────────────────────────────────────
 
 function confirmar() {
   if (!puedeConfirmar.value) return
@@ -225,6 +273,7 @@ function confirmar() {
 
 function cerrar() {
   visible.value = false
+  mensajeError.value = ''
 }
 
 function formatMoneda(valor) {

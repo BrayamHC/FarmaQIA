@@ -1,4 +1,3 @@
-
 <template>
   <section class="flex h-[calc(100vh-8rem)] flex-col gap-4">
     <header class="flex flex-col gap-3">
@@ -29,13 +28,8 @@
       <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
         <div>
           <label class="input-label text-xs font-medium text-slate-500">Folio</label>
-          <input
-            v-model="filtros.folio"
-            type="text"
-            placeholder="VTA-PUE-000001"
-            class="farma-input"
-            @input="onBuscarInput"
-          />
+          <input v-model="filtros.folio" type="text" placeholder="VTA-PUE-000001" class="farma-input"
+            @input="onBuscarInput" />
         </div>
 
         <div>
@@ -60,22 +54,12 @@
 
         <div>
           <label class="input-label text-xs font-medium text-slate-500">Fecha inicio</label>
-          <input
-            v-model="filtros.fecha_inicio"
-            type="date"
-            class="farma-input"
-            @change="aplicarFiltros"
-          />
+          <input v-model="filtros.fecha_inicio" type="date" class="farma-input" @change="aplicarFiltros" />
         </div>
 
         <div>
           <label class="input-label text-xs font-medium text-slate-500">Fecha fin</label>
-          <input
-            v-model="filtros.fecha_fin"
-            type="date"
-            class="farma-input"
-            @change="aplicarFiltros"
-          />
+          <input v-model="filtros.fecha_fin" type="date" class="farma-input" @change="aplicarFiltros" />
         </div>
 
         <div>
@@ -104,16 +88,8 @@
 
     <article class="card-base farma-table-shell flex min-h-0 flex-1 flex-col">
       <div class="farma-table-content app-scroll flex-1 min-h-0">
-        <DataTable
-          :value="ventasTabla"
-          scrollable
-          scrollHeight="flex"
-          dataKey="venta_uuid"
-          :tableStyle="{ minWidth: '960px' }"
-          :loading="ventasStore.cargando"
-          stripedRows
-          class="ventas-table h-full"
-        >
+        <DataTable :value="ventasTabla" scrollable scrollHeight="flex" dataKey="venta_uuid"
+          :tableStyle="{ minWidth: '960px' }" :loading="ventasStore.cargando" stripedRows class="ventas-table h-full">
           <template #empty>
             <div class="flex flex-col items-center justify-center py-16 text-center">
               <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
@@ -178,10 +154,8 @@
 
           <Column field="status" header="Status" style="width: 120px">
             <template #body="{ data }">
-              <span
-                class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
-                :class="statusClass(data.status)"
-              >
+              <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
+                :class="statusClass(data.status)">
                 {{ capitalizar(data.status) }}
               </span>
             </template>
@@ -198,25 +172,14 @@
       </div>
 
       <footer class="farma-paginator-wrap shrink-0">
-        <Paginator
-          :first="first"
-          :rows="rows"
-          :totalRecords="totalRegistros"
-          :rowsPerPageOptions="[10, 20, 30]"
+        <Paginator :first="first" :rows="rows" :totalRecords="totalRegistros" :rowsPerPageOptions="[10, 20, 30]"
           template="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink RowsPerPageDropdown"
-          currentPageReportTemplate="{first} - {last} de {totalRecords}"
-          class="farma-paginator"
-          @page="onPage"
-        />
+          currentPageReportTemplate="{first} - {last} de {totalRecords}" class="farma-paginator" @page="onPage" />
       </footer>
     </article>
 
-    <DialogVentaDetalle
-      v-model:visible="mostrarDialogDetalle"
-      :venta="ventasStore.ventaDetalle"
-      :cargando="ventasStore.cargandoDetalle"
-      @hide="onCerrarDetalle"
-    />
+    <DialogVentaDetalle v-model:visible="mostrarDialogDetalle" :venta="ventasStore.ventaDetalle"
+      :cargando="ventasStore.cargandoDetalle" @hide="onCerrarDetalle" />
   </section>
 </template>
 
