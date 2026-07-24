@@ -7,11 +7,12 @@
       header: { style: 'display:none' },
       content: { class: 'farma-dialog-content farma-pos-dialog-content' },
     }">
-    <div class="flex items-center justify-between border-b border-slate-100 px-6 py-5 bg-white">
+    <div class="flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5">
       <div class="flex items-center gap-3">
         <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 shadow-sm">
           <i class="pi pi-users text-white"></i>
         </div>
+
         <div>
           <h2 class="text-base font-bold text-slate-900">Seleccionar cliente</h2>
           <p class="text-xs text-slate-400">Busca o deja sin cliente (público general)</p>
@@ -25,9 +26,10 @@
       </button>
     </div>
 
-    <div class="border-b border-slate-100 px-6 py-4 bg-white">
+    <div class="border-b border-slate-100 bg-white px-6 py-4">
       <div class="relative">
-        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i>
+
         <input ref="inputRef" v-model="busqueda" type="text" placeholder="Nombre, RFC o teléfono..."
           class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:bg-white focus:shadow-[0_0_0_4px_rgba(59,130,246,0.1)]"
           autocomplete="off" @input="onInput" />
@@ -39,16 +41,17 @@
         <i class="pi pi-spin pi-spinner text-xl text-blue-400"></i>
       </div>
 
-      <div v-else-if="!store.clientes.length" class="flex flex-col items-center justify-center py-10">
+      <div v-else-if="!clientes.length" class="flex flex-col items-center justify-center py-10">
         <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
           <i class="pi pi-users text-2xl text-slate-300"></i>
         </div>
+
         <p class="text-sm font-medium text-slate-500">
           {{ busqueda ? 'Sin resultados para la búsqueda' : 'Escribe para buscar clientes' }}
         </p>
       </div>
 
-      <button v-for="cliente in store.clientes" :key="cliente.cliente_uuid" type="button"
+      <button v-for="cliente in clientes" :key="obtenerKeyCliente(cliente)" type="button"
         class="flex w-full items-center gap-4 px-6 py-3.5 text-left transition hover:bg-blue-50/50"
         @click="seleccionar(cliente)">
         <div
@@ -69,7 +72,7 @@
       </button>
     </div>
 
-    <div class="flex items-center justify-between border-t border-slate-100 px-6 py-4 bg-white">
+    <div class="flex items-center justify-between border-t border-slate-100 bg-white px-6 py-4">
       <button type="button"
         class="flex items-center gap-2 text-sm font-medium text-rose-500 transition hover:text-rose-600"
         @click="limpiar">
@@ -87,9 +90,9 @@
 </template>
 
 <script setup>
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import Dialog from 'primevue/dialog'
-import { useVentasStore } from '../../../ventasStore'
+import { usePosStore } from '../posStore'
 
 const props = defineProps({
   modelValue: {
@@ -100,12 +103,16 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'seleccionar', 'limpiar'])
 
-const store = useVentasStore()
+const store = usePosStore()
 
 const visible = ref(props.modelValue)
 const busqueda = ref('')
 const inputRef = ref(null)
-let timeout = null
+let inputTimeout = null
+
+const clientes = computed(() => {
+  return Array.isArray(store.clientes) ? store.clientes : []
+})
 
 watch(
   () => props.modelValue,
@@ -117,21 +124,41 @@ watch(
 watch(visible, async (v) => {
   emit('update:modelValue', v)
 
-  if (v) {
-    busqueda.value = ''
-    store.limpiarBusquedaClientes()
-    await store.obtenerClientesPOS({ limit: 20 })
-    await nextTick()
-    inputRef.value?.focus()
-  }
+  if (!v) return
+
+  busqueda.value = ''
+  store.limpiarBusquedaClientes()
+
+  await nextTick()
+  inputRef.value?.focus()
+
+  await store.obtenerClientesPOS({
+    page: 1,
+    limit: 20,
+  })
 })
 
 function onInput() {
-  clearTimeout(timeout)
-  timeout = setTimeout(async () => {
-    const q = String(busqueda.value ?? '').trim()
-    await store.buscarClientesPOS(q, { limit: 20 })
+  clearTimeout(inputTimeout)
+  inputTimeout = setTimeout(() => {
+    buscar()
   }, 350)
+}
+
+async function buscar() {
+  const q = String(busqueda.value ?? '').trim()
+
+  if (!q) {
+    await store.obtenerClientesPOS({
+      page: 1,
+      limit: 20,
+    })
+    return
+  }
+
+  await store.buscarClientesPOS(q, {
+    limit: 20,
+  })
 }
 
 function seleccionar(cliente) {
@@ -146,33 +173,44 @@ function limpiar() {
 
 function cerrar() {
   visible.value = false
+  busqueda.value = ''
+  store.limpiarBusquedaClientes()
 }
 
-function nombreCliente(cliente = {}) {
+function nombreCliente(cliente) {
   return (
-    cliente.nombre_completo ||
-    cliente.nombre ||
-    cliente.razon_social ||
+    cliente?.nombre_completo ||
+    cliente?.nombre ||
+    cliente?.razon_social ||
     'Cliente'
   )
 }
 
-function detalleSecundario(cliente = {}) {
+function detalleSecundario(cliente) {
   return (
-    cliente.rfc ||
-    cliente.telefono ||
-    cliente.correo ||
+    cliente?.rfc ||
+    cliente?.telefono ||
+    cliente?.correo ||
+    cliente?.email ||
     'Sin datos adicionales'
   )
 }
 
-function iniciales(nombre = '') {
-  return String(nombre)
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join('')
-    .toUpperCase()
+function iniciales(nombre) {
+  const texto = String(nombre ?? '').trim()
+  if (!texto) return 'CL'
+
+  const partes = texto.split(/\s+/).filter(Boolean)
+  return partes.slice(0, 2).map((p) => p.charAt(0).toUpperCase()).join('')
+}
+
+function obtenerKeyCliente(cliente) {
+  return (
+    cliente?.cliente_uuid ??
+    cliente?.clienteuuid ??
+    cliente?.id ??
+    cliente?.rfc ??
+    nombreCliente(cliente)
+  )
 }
 </script>

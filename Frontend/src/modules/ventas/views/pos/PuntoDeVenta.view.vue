@@ -1,3 +1,4 @@
+<!-- Frontend/src/modules/ventas/views/pos/PuntoDeVenta.view.vue -->
 <template>
   <section
     class="pos-root flex h-[calc(100vh-4rem)] min-h-0 max-h-[calc(94vh-4rem)] flex-col overflow-hidden bg-slate-50">
@@ -32,6 +33,14 @@
             <p class="text-[11px] font-bold text-emerald-700">Activa y lista</p>
           </div>
 
+          <button class="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition" :class="almacenSeleccionado
+            ? 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100'
+            : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'" @click="abrirDialogAlmacenManual">
+            <i class="pi pi-building text-xs"></i>
+            <span class="max-w-[160px] truncate font-medium">{{ nombreAlmacenSeleccionado }}</span>
+            <i class="pi pi-chevron-down text-[10px]"></i>
+          </button>
+
           <button class="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition" :class="clienteSeleccionado
             ? 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
             : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'" @click="dialogClientes = true">
@@ -56,6 +65,7 @@
       <div class="flex items-center gap-3">
         <div class="relative min-w-0 flex-1">
           <i class="pi pi-barcode absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
           <input ref="buscadorRef" v-model="scanQuery" type="text"
             placeholder="Escanea código de barras o escribe SKU, UPC o nombre..."
             class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:bg-white focus:shadow-[0_0_0_4px_rgba(59,130,246,0.1)]"
@@ -96,9 +106,10 @@
         <div class="pos-main-panel flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-white">
           <div class="shrink-0 border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white px-4 py-2.5">
             <div
-              class="grid grid-cols-[1fr_120px_90px_120px_44px] gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              class="grid grid-cols-[1fr_120px_120px_90px_120px_44px] gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
               <span>Producto</span>
               <span>Lote</span>
+              <span>Almacén</span>
               <span class="text-center">Cantidad</span>
               <span class="text-right">Importe</span>
               <span></span>
@@ -121,15 +132,15 @@
 
             <TransitionGroup v-else name="carrito-item" tag="div">
               <div v-for="item in carrito" :key="item._key"
-                class="grid grid-cols-[1fr_120px_90px_120px_44px] items-center gap-2 border-b border-slate-100 px-4 py-2.5 transition hover:bg-slate-50/70">
+                class="grid grid-cols-[1fr_120px_120px_90px_120px_44px] items-center gap-2 border-b border-slate-100 px-4 py-2.5 transition hover:bg-slate-50/70">
                 <div class="min-w-0">
                   <p class="truncate text-sm font-semibold text-slate-800">
-                    {{ item.producto.nombre }}
+                    {{ item.producto?.nombre || 'Producto' }}
                   </p>
 
                   <div class="mt-1 flex flex-wrap items-center gap-2">
                     <span class="font-mono text-[11px] text-slate-400">
-                      {{ item.producto.sku || 'Sin SKU' }}
+                      {{ item.producto?.sku || 'Sin SKU' }}
                     </span>
 
                     <span v-if="item.producto?.presentacion"
@@ -143,11 +154,12 @@
                   <div v-if="item.lote" class="flex flex-col gap-1">
                     <span
                       class="truncate rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                      {{ item.lote.codigo_lote || item.lote.clave || 'Sin lote' }}
+                      {{ item.lote.codigo_lote || item.lote.codigolote || 'Sin lote' }}
                     </span>
 
-                    <span v-if="item.lote?.fecha_caducidad" class="truncate text-[10px] text-amber-700">
-                      {{ formatFecha(item.lote.fecha_caducidad) }}
+                    <span v-if="item.lote?.fecha_caducidad || item.lote?.fechacaducidad"
+                      class="truncate text-[10px] text-amber-700">
+                      {{ formatFecha(item.lote.fecha_caducidad || item.lote.fechacaducidad) }}
                     </span>
                   </div>
 
@@ -156,36 +168,47 @@
                   </span>
                 </div>
 
+                <div class="min-w-0">
+                  <span v-if="item.almacen_nombre || item.almacennombre"
+                    class="truncate rounded-full bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-700">
+                    {{ item.almacen_nombre || item.almacennombre }}
+                  </span>
+
+                  <span v-else class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                    Sin almacén
+                  </span>
+                </div>
+
                 <div class="flex items-center justify-center gap-1">
-                  <button
+                  <button type="button"
                     class="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-blue-300 hover:text-blue-600"
-                    @click="store.actualizarCantidadProducto(item._key, item.cantidad - 1)">
+                    @click="disminuirCantidad(item)">
                     <i class="pi pi-minus text-[10px]"></i>
                   </button>
 
                   <input :value="item.cantidad" type="number" min="1"
                     class="w-10 rounded-xl border border-slate-200 bg-white py-1.5 text-center text-sm font-semibold text-slate-800 outline-none focus:border-blue-400 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.1)]"
-                    @change="store.actualizarCantidadProducto(item._key, Number($event.target.value))" />
+                    @change="onCambiarCantidad(item, $event)" />
 
-                  <button
+                  <button type="button"
                     class="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-blue-300 hover:text-blue-600"
-                    @click="store.actualizarCantidadProducto(item._key, item.cantidad + 1)">
+                    @click="aumentarCantidad(item)">
                     <i class="pi pi-plus text-[10px]"></i>
                   </button>
                 </div>
 
                 <div class="text-right">
                   <p class="text-sm font-bold text-slate-800">
-                    {{ formatMoneda(item.cantidad * (item.precio_unitario ?? 0)) }}
+                    {{ formatMoneda(calcularImporteItem(item)) }}
                   </p>
                   <p class="text-[10px] text-slate-400">
-                    {{ formatMoneda(item.precio_unitario ?? 0) }} c/u
+                    {{ formatMoneda(item.precio_unitario ?? item.preciounitario ?? 0) }} c/u
                   </p>
                 </div>
 
-                <button
+                <button type="button"
                   class="flex h-9 w-9 items-center justify-center rounded-2xl text-slate-300 transition hover:bg-rose-50 hover:text-rose-500"
-                  @click="store.eliminarProductoDelCarrito(item._key)">
+                  @click="eliminarItem(item)">
                   <i class="pi pi-trash text-sm"></i>
                 </button>
               </div>
@@ -204,9 +227,7 @@
               </div>
 
               <div class="min-w-0">
-                <p class="truncate text-sm font-semibold text-slate-800">
-                  {{ nombreClienteSeleccionado }}
-                </p>
+                <p class="truncate text-sm font-semibold text-slate-800">{{ nombreClienteSeleccionado }}</p>
                 <p class="text-[11px] text-slate-400">Seleccionado desde el buscador</p>
               </div>
             </div>
@@ -232,7 +253,9 @@
                 class="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100/60 p-3.5 shadow-sm shadow-blue-100/70">
                 <div class="flex items-start justify-between gap-3">
                   <div>
-                    <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">Total a cobrar</p>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-500">
+                      Total a cobrar
+                    </p>
                     <p class="mt-0.5 text-2xl font-black tracking-tight text-blue-700">
                       {{ formatMoneda(totalGeneral) }}
                     </p>
@@ -286,221 +309,344 @@
     </div>
 
     <DialogBuscarProducto v-model="dialogBuscar" :termino-inicial="scanQuery" @seleccionar="onProductoSeleccionado" />
-
     <DialogSeleccionarLote v-model="dialogLote" :producto="productoPendiente" @confirmar="onLoteSeleccionado" />
-
+    <DialogSeleccionarAlmacen v-model="dialogAlmacen" :producto="productoPendiente" :lote="lotePendiente"
+      @confirmar="onAlmacenSeleccionado" />
     <DialogSeleccionarCliente v-model="dialogClientes" @seleccionar="onClienteSeleccionado"
       @limpiar="onLimpiarCliente" />
-
     <DialogCobrar v-model="dialogCobrar" :carrito="carrito" :total="totalGeneral" :subtotal="subtotal"
       :total-articulos="totalArticulos" :cliente="clienteSeleccionado" @confirmar="onConfirmarVenta" />
   </section>
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
-import { RouterLink } from 'vue-router';
-import { useVentasStore } from '../../ventasStore';
-import DialogBuscarProducto from './dialogs/DialogBuscarProducto.vue';
-import DialogSeleccionarLote from './dialogs/DialogSeleccionarLote.vue';
-import DialogSeleccionarCliente from './dialogs/DialogSeleccionarCliente.vue';
-import DialogCobrar from './dialogs/DialogCobrar.vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
+import { usePosStore } from './posStore'
+import DialogBuscarProducto from './dialogs/DialogBuscarProducto.vue'
+import DialogSeleccionarLote from './dialogs/DialogSeleccionarLote.vue'
+import DialogSeleccionarAlmacen from './dialogs/DialogSeleccionarAlmacen.vue'
+import DialogSeleccionarCliente from './dialogs/DialogSeleccionarCliente.vue'
+import DialogCobrar from './dialogs/DialogCobrar.vue'
 
-const store = useVentasStore();
+const store = usePosStore()
 
-const buscadorRef = ref(null);
-const scanQuery = ref('');
-const dialogBuscar = ref(false);
-const dialogLote = ref(false);
-const dialogClientes = ref(false);
-const dialogCobrar = ref(false);
-const productoPendiente = ref(null);
-const mensajeError = ref('');
-let scanTimeout = null;
+const buscadorRef = ref(null)
+const scanQuery = ref('')
+const dialogBuscar = ref(false)
+const dialogLote = ref(false)
+const dialogAlmacen = ref(false)
+const dialogClientes = ref(false)
+const dialogCobrar = ref(false)
+const productoPendiente = ref(null)
+const lotePendiente = ref(null)
+const mensajeError = ref('')
+let scanTimeout = null
 
-const carrito = computed(() => store.carrito);
-const carritoVacio = computed(() => store.carritoVacio);
-const totalArticulos = computed(() => store.totalArticulos);
-const subtotal = computed(() => store.subtotal);
-const totalGeneral = computed(() => store.totalGeneral);
-const clienteSeleccionado = computed(() => store.clienteSeleccionado);
+const carrito = computed(() => store.carrito)
+const carritoVacio = computed(() => store.carritoVacio)
+const totalArticulos = computed(() => store.totalArticulos)
+const subtotal = computed(() => store.subtotal)
+const totalGeneral = computed(() => store.totalGeneral)
+const clienteSeleccionado = computed(() => store.clienteSeleccionado)
+const almacenSeleccionado = computed(() => store.almacenSeleccionado)
 
 const nombreClienteSeleccionado = computed(() => {
-  const cliente = clienteSeleccionado.value;
+  const cliente = clienteSeleccionado.value
+
   return (
     cliente?.nombre_completo ||
     cliente?.nombre ||
     cliente?.razon_social ||
     'Público en general'
-  );
-});
+  )
+})
+
+const nombreAlmacenSeleccionado = computed(() => {
+  const almacen = almacenSeleccionado.value
+
+  return (
+    almacen?.nombre ||
+    almacen?.almacen_nombre ||
+    'Seleccionar almacén'
+  )
+})
 
 function limpiarMensajeError() {
-  mensajeError.value = '';
+  mensajeError.value = ''
 }
 
 function enfocarBuscador() {
-  nextTick(() => buscadorRef.value?.focus());
-}
-
-function onScanInput() {
-  limpiarMensajeError();
-  clearTimeout(scanTimeout);
-
-  scanTimeout = setTimeout(() => {
-    const q = scanQuery.value.trim();
-    if (q.length >= 3) buscarProductoRapido(q);
-  }, 400);
-}
-
-async function onScanEnter() {
-  const q = scanQuery.value.trim();
-  if (!q) return;
-  await buscarProductoRapido(q);
-}
-
-async function buscarProductoRapido(termino) {
-  limpiarMensajeError();
-
-  try {
-    const resultados = await store.buscarProductoParaPOS(termino);
-
-    if (!resultados.length) {
-      mensajeError.value = 'No se encontraron productos con ese criterio.';
-      dialogBuscar.value = true;
-      return;
-    }
-
-    if (resultados.length === 1) {
-      await onProductoSeleccionado(resultados[0]);
-      return;
-    }
-
-    dialogBuscar.value = true;
-  } catch (error) {
-    console.error('Error buscando producto en POS:', error);
-    mensajeError.value = 'Ocurrió un error al buscar el producto.';
-  }
-}
-
-async function onProductoSeleccionado(producto) {
-  if (!producto?.producto_uuid) return;
-
-  limpiarMensajeError();
-
-  try {
-    const productoDetalle = producto?.lotes
-      ? producto
-      : await store.seleccionarProducto(producto);
-
-    if (!productoDetalle) {
-      mensajeError.value = 'No fue posible cargar el detalle del producto.';
-      return;
-    }
-
-    const lotesDisponibles = Array.isArray(productoDetalle?.lotes)
-      ? productoDetalle.lotes
-      : [];
-
-    if (productoDetalle.con_lote && lotesDisponibles.length) {
-      productoPendiente.value = productoDetalle;
-      dialogLote.value = true;
-      dialogBuscar.value = false;
-      return;
-    }
-
-    store.agregarProductoAlCarrito({
-      producto: productoDetalle,
-      lote: null,
-      cantidad: 1,
-    });
-
-    productoPendiente.value = null;
-    dialogLote.value = false;
-    dialogBuscar.value = false;
-    scanQuery.value = '';
-    enfocarBuscador();
-  } catch (error) {
-    console.error('Error seleccionando producto:', error);
-    mensajeError.value = 'No fue posible seleccionar el producto.';
-  }
-}
-
-function onLoteSeleccionado({ producto, lote }) {
-  if (!producto || !lote) return;
-
-  limpiarMensajeError();
-
-  store.agregarProductoAlCarrito({
-    producto,
-    lote,
-    cantidad: 1,
-  });
-
-  productoPendiente.value = null;
-  dialogLote.value = false;
-  dialogBuscar.value = false;
-  scanQuery.value = '';
-  enfocarBuscador();
-}
-
-function onClienteSeleccionado(cliente) {
-  store.seleccionarCliente(cliente);
-  dialogClientes.value = false;
-  enfocarBuscador();
-}
-
-function onLimpiarCliente() {
-  store.limpiarClienteSeleccionado();
-  dialogClientes.value = false;
-  enfocarBuscador();
-}
-
-function onConfirmarVenta() {
-  store.limpiarCarrito();
-  productoPendiente.value = null;
-  dialogCobrar.value = false;
-  scanQuery.value = '';
-  limpiarMensajeError();
-  enfocarBuscador();
-}
-
-function confirmarCancelar() {
-  store.limpiarCarrito();
-  productoPendiente.value = null;
-  dialogLote.value = false;
-  scanQuery.value = '';
-  limpiarMensajeError();
-  enfocarBuscador();
+  nextTick(() => {
+    buscadorRef.value?.focus?.()
+  })
 }
 
 function formatMoneda(valor) {
   return Number(valor ?? 0).toLocaleString('es-MX', {
     style: 'currency',
     currency: 'MXN',
-  });
+  })
 }
 
 function formatFecha(fecha) {
-  if (!fecha) return 'Sin fecha';
+  if (!fecha) return 'Sin fecha'
 
-  const f = new Date(fecha);
-  if (Number.isNaN(f.getTime())) return 'Sin fecha';
+  const f = new Date(fecha)
+  if (Number.isNaN(f.getTime())) return 'Sin fecha'
 
   return f.toLocaleDateString('es-MX', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  });
+  })
+}
+
+function calcularImporteItem(item) {
+  return Number(item?.cantidad ?? 0) * Number(item?.preciounitario ?? item?.precio_unitario ?? 0)
+}
+
+function aumentarCantidad(item) {
+  limpiarMensajeError()
+  if (!item?.key) return
+
+  const cantidadActual = Number(item.cantidad ?? 0)
+  store.actualizarCantidadProducto(item.key, cantidadActual + 1)
+}
+
+function disminuirCantidad(item) {
+  limpiarMensajeError()
+  if (!item?.key) return
+
+  const cantidadActual = Number(item.cantidad ?? 0)
+  store.actualizarCantidadProducto(item.key, cantidadActual - 1)
+}
+
+function onCambiarCantidad(item, event) {
+  limpiarMensajeError()
+  if (!item?.key) return
+
+  const valor = Number(event?.target?.value ?? 1)
+  store.actualizarCantidadProducto(item.key, valor)
+}
+
+function eliminarItem(item) {
+  limpiarMensajeError()
+  if (!item?.key) return
+
+  store.eliminarProductoDelCarrito(item.key)
+}
+
+function requiereSeleccionarLote(producto) {
+  if (!producto) return false
+
+  const lotesDisponibles = store.normalizarLotes(producto)
+  return Boolean(producto.conlote ?? producto.con_lote) && lotesDisponibles.length > 0
+}
+
+function requiereSeleccionarAlmacen(lote) {
+  if (!lote) return false
+
+  const almacenes = Array.isArray(lote?.almacenes) ? lote.almacenes : []
+  return almacenes.length > 1
+}
+
+function abrirDialogAlmacenManual() {
+  limpiarMensajeError()
+  productoPendiente.value = null
+  lotePendiente.value = null
+  dialogAlmacen.value = true
+}
+
+function onScanInput() {
+  limpiarMensajeError()
+  clearTimeout(scanTimeout)
+
+  scanTimeout = setTimeout(() => {
+    const q = scanQuery.value.trim()
+    if (q.length >= 3) {
+      buscarProductoRapido(q)
+    }
+  }, 400)
+}
+
+async function onScanEnter() {
+  const q = scanQuery.value.trim()
+  if (!q) return
+
+  await buscarProductoRapido(q)
+}
+
+async function buscarProductoRapido(termino) {
+  limpiarMensajeError()
+
+  try {
+    const resultados = await store.buscarProductoParaPOS(termino)
+
+    if (!resultados.length) {
+      mensajeError.value = 'No se encontraron productos con ese criterio.'
+      dialogBuscar.value = true
+      return
+    }
+
+    if (resultados.length === 1) {
+      onProductoSeleccionado(resultados[0])
+      return
+    }
+
+    dialogBuscar.value = true
+  } catch (error) {
+    console.error('Error buscando producto en POS:', error)
+    mensajeError.value = 'Ocurrió un error al buscar el producto.'
+  }
+}
+
+function onProductoSeleccionado(producto) {
+  if (!producto?.productouuid && !producto?.producto_uuid) return
+
+  limpiarMensajeError()
+
+  const stockDisponible = store.obtenerStockDisponibleProducto(producto)
+
+  if (stockDisponible <= 0) {
+    mensajeError.value = `"${producto.nombre}" no tiene existencias disponibles.`
+    return
+  }
+
+  if (requiereSeleccionarLote(producto)) {
+    productoPendiente.value = producto
+    lotePendiente.value = null
+    dialogLote.value = true
+    dialogBuscar.value = false
+    return
+  }
+
+  const agregado = store.agregarProductoAlCarrito(producto, null, 1, null)
+
+  if (!agregado) {
+    mensajeError.value = `No fue posible agregar "${producto.nombre}" al carrito.`
+    return
+  }
+
+  productoPendiente.value = null
+  lotePendiente.value = null
+  dialogLote.value = false
+  dialogAlmacen.value = false
+  dialogBuscar.value = false
+  scanQuery.value = ''
+  enfocarBuscador()
+}
+
+function onLoteSeleccionado({ producto, lote }) {
+  if (!producto || !lote) return
+
+  limpiarMensajeError()
+
+  if (requiereSeleccionarAlmacen(lote)) {
+    productoPendiente.value = producto
+    lotePendiente.value = lote
+    dialogLote.value = false
+    dialogAlmacen.value = true
+    return
+  }
+
+  const agregado = store.agregarProductoAlCarrito(producto, lote, 1, lote?.almacen ?? null)
+
+  if (!agregado) {
+    mensajeError.value = `No fue posible agregar el lote seleccionado de "${producto.nombre}".`
+    return
+  }
+
+  productoPendiente.value = null
+  lotePendiente.value = null
+  dialogLote.value = false
+  dialogAlmacen.value = false
+  dialogBuscar.value = false
+  scanQuery.value = ''
+  enfocarBuscador()
+}
+
+async function onAlmacenSeleccionado(payload) {
+  const producto = payload?.producto ?? productoPendiente.value
+  const lote = payload?.lote ?? lotePendiente.value
+  const almacen = payload?.almacen ?? payload ?? null
+
+  if (!almacen) return
+
+  limpiarMensajeError()
+
+  await store.seleccionarAlmacen(almacen)
+
+  if (!producto || !lote) {
+    dialogAlmacen.value = false
+    enfocarBuscador()
+    return
+  }
+
+  const agregado = store.agregarProductoAlCarrito(producto, lote, 1, almacen)
+
+  if (!agregado) {
+    mensajeError.value = `No fue posible agregar el almacén seleccionado de "${producto.nombre}".`
+    return
+  }
+
+  productoPendiente.value = null
+  lotePendiente.value = null
+  dialogLote.value = false
+  dialogAlmacen.value = false
+  dialogBuscar.value = false
+  scanQuery.value = ''
+  enfocarBuscador()
+}
+
+function onClienteSeleccionado(cliente) {
+  store.seleccionarCliente(cliente)
+  dialogClientes.value = false
+  enfocarBuscador()
+}
+
+function onLimpiarCliente() {
+  store.limpiarClienteSeleccionado()
+  dialogClientes.value = false
+  enfocarBuscador()
+}
+
+async function onConfirmarVenta({ datos_cobro, payload }) {
+  try {
+    await store.crearVenta(payload)
+
+    store.limpiarCarrito()
+    productoPendiente.value = null
+    lotePendiente.value = null
+    dialogCobrar.value = false
+    scanQuery.value = ''
+    limpiarMensajeError()
+    enfocarBuscador()
+  } catch (error) {
+    console.error('Error preparando venta:', error)
+    mensajeError.value = error?.response?.data?.message ?? 'No fue posible registrar la venta.'
+  }
+}
+
+function confirmarCancelar() {
+  store.limpiarCarrito()
+  productoPendiente.value = null
+  lotePendiente.value = null
+  dialogLote.value = false
+  dialogAlmacen.value = false
+  dialogCobrar.value = false
+  scanQuery.value = ''
+  limpiarMensajeError()
+  enfocarBuscador()
 }
 
 onMounted(() => {
-  enfocarBuscador();
-});
+  enfocarBuscador()
+})
 
 onBeforeUnmount(() => {
-  clearTimeout(scanTimeout);
-});
+  clearTimeout(scanTimeout)
+})
 </script>
 
 <style scoped>

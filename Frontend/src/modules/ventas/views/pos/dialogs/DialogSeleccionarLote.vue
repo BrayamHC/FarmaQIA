@@ -12,6 +12,7 @@
         <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 shadow-sm">
           <i class="pi pi-box text-white"></i>
         </div>
+
         <div>
           <h2 class="text-base font-bold text-slate-900">Seleccionar lote</h2>
           <p class="text-xs text-slate-400">Elige el lote para continuar con la venta</p>
@@ -28,56 +29,52 @@
     <div class="space-y-4 bg-white px-6 py-5">
       <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
         <div class="flex items-start gap-3">
-          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200">
+          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white">
             <img v-if="producto?.url_imagen" :src="producto.url_imagen" :alt="producto?.nombre"
               class="h-full w-full rounded-xl object-cover" />
             <i v-else class="pi pi-box text-slate-300"></i>
           </div>
 
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-bold text-slate-900">
-              {{ producto?.nombre || 'Producto' }}
-            </p>
+            <p class="truncate text-sm font-bold text-slate-900">{{ producto?.nombre || 'Producto' }}</p>
 
             <div class="mt-1 flex flex-wrap items-center gap-2">
-              <span class="font-mono text-[11px] text-slate-400">
-                {{ producto?.sku || 'Sin SKU' }}
-              </span>
+              <span class="font-mono text-[11px] text-slate-400">{{ producto?.sku || 'Sin SKU' }}</span>
 
               <span v-if="producto?.presentacion" class="text-[11px] text-slate-400">
                 {{ producto.presentacion }}
               </span>
 
               <span class="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-                Stock total: {{ stockDisponible }}
+                Stock {{ stockDisponible }}
               </span>
             </div>
           </div>
 
           <div class="text-right">
-            <p class="text-sm font-bold text-blue-600">
-              {{ formatMoneda(precioUnitario) }}
-            </p>
+            <p class="text-sm font-bold text-blue-600">{{ formatMoneda(precioUnitario) }}</p>
           </div>
         </div>
       </div>
 
       <div v-if="!lotes.length"
         class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 py-10">
-        <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white border border-slate-200">
+        <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white">
           <i class="pi pi-inbox text-2xl text-slate-300"></i>
         </div>
+
         <p class="text-sm font-semibold text-slate-500">No hay lotes disponibles</p>
-        <p class="mt-1 text-xs text-slate-400">Este producto requiere lote, pero actualmente no tiene existencias por
-          lote.</p>
+        <p class="mt-1 text-xs text-slate-400">
+          Este producto requiere lote, pero actualmente no tiene existencias por lote.
+        </p>
       </div>
 
       <div v-else class="space-y-2">
-        <button v-for="lote in lotes" :key="lote.lote_uuid" type="button"
+        <button v-for="lote in lotes" :key="lote.lote_uuid ?? lote.loteuuid" type="button"
           class="w-full rounded-2xl border p-4 text-left transition" :class="loteSeleccionado?.lote_uuid === lote.lote_uuid
-            ? 'border-emerald-300 bg-emerald-50'
-            : 'border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/50'"
-          @click="seleccionarLote(lote)">
+              ? 'border-emerald-300 bg-emerald-50'
+              : 'border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/50'
+            " @click="seleccionarLote(lote)">
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
@@ -86,30 +83,31 @@
                 </p>
 
                 <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                  Cantidad: {{ lote.cantidad_actual }}
+                  Cantidad {{ lote.cantidad_actual }}
                 </span>
               </div>
 
               <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-400">
                 <span>
-                  Caduca:
+                  Caduca
                   <strong class="font-semibold text-slate-600">
                     {{ formatFecha(lote.fecha_caducidad) }}
                   </strong>
                 </span>
 
-                <span v-if="lote.almacen">
-                  Almacén:
+                <span v-if="lote.almacen?.nombre">
+                  Almacén
                   <strong class="font-semibold text-slate-600">
-                    {{ lote.almacen }}
+                    {{ lote.almacen.nombre }}
                   </strong>
                 </span>
               </div>
             </div>
 
             <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border" :class="loteSeleccionado?.lote_uuid === lote.lote_uuid
-              ? 'border-emerald-500 bg-emerald-500 text-white'
-              : 'border-slate-300 bg-white text-transparent'">
+                ? 'border-emerald-500 bg-emerald-500 text-white'
+                : 'border-slate-300 bg-white text-transparent'
+              ">
               <i class="pi pi-check text-[10px]"></i>
             </div>
           </div>
@@ -137,7 +135,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import Dialog from 'primevue/dialog'
-import { useVentasStore } from '../../../ventasStore'
+import { usePosStore } from '../posStore'
 
 const props = defineProps({
   modelValue: {
@@ -152,7 +150,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'confirmar'])
 
-const store = useVentasStore()
+const store = usePosStore()
 
 const visible = ref(props.modelValue)
 const loteSeleccionado = ref(null)
@@ -180,9 +178,11 @@ watch(
   { deep: true },
 )
 
+const producto = computed(() => props.producto)
+
 const lotes = computed(() => {
   if (!props.producto) return []
-  return store.normalizarLotes(props.producto)
+  return store.normalizarLotes(props.producto).filter((lote) => Number(lote?.cantidad_actual ?? 0) > 0)
 })
 
 const stockDisponible = computed(() => {
@@ -196,11 +196,13 @@ const precioUnitario = computed(() => {
 })
 
 function seleccionarLote(lote) {
+  if (Number(lote?.cantidad_actual ?? 0) <= 0) return
   loteSeleccionado.value = lote
 }
 
 function confirmar() {
   if (!loteSeleccionado.value || !props.producto) return
+  if (Number(loteSeleccionado.value.cantidad_actual ?? 0) <= 0) return
 
   emit('confirmar', {
     producto: props.producto,
@@ -224,7 +226,10 @@ function formatMoneda(valor) {
 function formatFecha(fecha) {
   if (!fecha) return 'Sin fecha'
 
-  return new Date(fecha).toLocaleDateString('es-MX', {
+  const valor = new Date(fecha)
+  if (Number.isNaN(valor.getTime())) return 'Sin fecha'
+
+  return valor.toLocaleDateString('es-MX', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

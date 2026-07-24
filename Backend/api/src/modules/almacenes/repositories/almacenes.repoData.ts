@@ -133,6 +133,7 @@ export class AlmacenesRepoData {
 
             const almacenes = await this.knex('almacenes as a')
                 .select(
+                    'a.almacen_id',
                     'a.almacen_uuid',
                     'a.nombre',
                     'a.descripcion',

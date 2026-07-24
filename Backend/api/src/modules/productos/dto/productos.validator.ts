@@ -97,7 +97,8 @@ export const FiltrosProductosSchema = z.object({
     prov_uuid: z.string().uuid().optional(),
     con_lote: z.coerce.boolean().optional(),
     presentacion: z.string().optional(),
-    sort: z.string().optional(),  // campo:asc|desc
+    almacen_id: z.coerce.number().int().positive().optional(), // <-- NUEVO
+    sort: z.string().optional(),
     page: z.coerce.number().min(1).default(1),
     limit: z.coerce.number().min(1).max(100).default(20),
 }).partial();

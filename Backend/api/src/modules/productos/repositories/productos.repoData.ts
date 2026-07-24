@@ -52,8 +52,30 @@ export class ProductosRepoData {
                 limit: filtros?.limit ?? 20,
             };
 
+            const almacenId = filtros?.almacen_id;
+
+            // Subquery de stock con binding seguro
+            const stockSubquery = almacenId
+                ? this.knex.raw(
+                    `(
+                    SELECT COALESCE(SUM(sa.stock_actual), 0)
+                    FROM stock_almacen AS sa
+                    WHERE sa.producto_id = p.producto_id
+                    AND sa.almacen_id = ?
+                ) AS stock_total`,
+                    [almacenId]
+                )
+                : this.knex.raw(
+                    `(
+                    SELECT COALESCE(SUM(sa.stock_actual), 0)
+                    FROM stock_almacen AS sa
+                    WHERE sa.producto_id = p.producto_id
+                ) AS stock_total`
+                );
+
             const query = this.knex('productos as p')
                 .select(
+                    'p.producto_id',
                     'p.producto_uuid',
                     'p.sku',
                     'p.upc',
@@ -73,11 +95,7 @@ export class ProductosRepoData {
                     'um.clave as clave_unidad_medida',
                     'c.nombre as categoria',
                     'pr.nombre_comercial as proveedor',
-                    this.knex.raw(`(
-                    SELECT COALESCE(SUM(sa.stock_actual), 0)
-                    FROM stock_almacen AS sa
-                    WHERE sa.producto_id = p.producto_id
-                ) AS stock_total`),
+                    stockSubquery,
                 )
                 .leftJoin('rel_proveedores_productos as rpp', 'rpp.producto_id', 'p.producto_id')
                 .leftJoin('proveedores as pr', 'pr.proveedor_id', 'rpp.proveedor_id')
@@ -108,10 +126,78 @@ export class ProductosRepoData {
                 queryCount as Promise<Array<{ total: string | number }>>,
             ]);
 
+            const productoIds = (productos ?? []).map((p) => p.producto_id);
+
+            let lotesPorProducto: Record<number, any[]> = {};
+
+            if (productoIds.length > 0) {
+                const lotesQuery = this.knex('lotes as l')
+                    .select(
+                        'l.lote_id',
+                        'l.lote_uuid',
+                        'l.codigo_lote',
+                        'l.cantidad_actual',
+                        'l.fecha_fabricacion',
+                        'l.fecha_caducidad',
+                        'l.costo_unitario_compra',
+                        'l.status as lote_status',
+                        'l.producto_id',
+                        'l.proveedor_id',
+                        'a.almacen_id',
+                        'a.almacen_uuid',
+                        'a.nombre as almacen_nombre',
+                        'a.descripcion as almacen_descripcion',
+                        'a.encargado as almacen_encargado',
+                        'a.direccion as almacen_direccion',
+                        'a.telefono as almacen_telefono',
+                        'a.status as almacen_status',
+                        'a.sucursal_id as almacen_sucursal_id',
+                    )
+                    .leftJoin('almacenes as a', 'a.almacen_id', 'l.almacen_id')
+                    .whereIn('l.producto_id', productoIds)
+                    .andWhere('a.sucursal_id', sucursalId)
+                    .andWhere('l.status', 'activo');
+
+                if (almacenId) {
+                    lotesQuery.andWhere('l.almacen_id', almacenId);
+                }
+
+                const lotes = await lotesQuery;
+
+                lotesPorProducto = lotes.reduce((acc, lote) => {
+                    const pid = lote.producto_id;
+                    if (!acc[pid]) acc[pid] = [];
+                    acc[pid].push({
+                        lote_id: lote.lote_id,
+                        lote_uuid: lote.lote_uuid,
+                        codigo_lote: lote.codigo_lote,
+                        cantidad_actual: Number(lote.cantidad_actual ?? 0),
+                        fecha_fabricacion: lote.fecha_fabricacion,
+                        fecha_caducidad: lote.fecha_caducidad,
+                        costo_unitario_compra: Number(lote.costo_unitario_compra ?? 0),
+                        status: lote.lote_status,
+                        proveedor_id: lote.proveedor_id,
+                        almacen: {
+                            almacen_id: lote.almacen_id,
+                            almacen_uuid: lote.almacen_uuid,
+                            nombre: lote.almacen_nombre,
+                            descripcion: lote.almacen_descripcion,
+                            encargado: lote.almacen_encargado,
+                            direccion: lote.almacen_direccion,
+                            telefono: lote.almacen_telefono,
+                            status: lote.almacen_status,
+                            sucursal_id: lote.almacen_sucursal_id,
+                        },
+                    });
+                    return acc;
+                }, {} as Record<number, any[]>);
+            }
+
             return {
                 productos: (productos ?? []).map((producto) => ({
                     ...producto,
                     stock_total: Number(producto.stock_total ?? 0),
+                    lotes: lotesPorProducto[producto.producto_id] ?? [],
                 })),
                 total: Number(conteo?.total ?? 0),
                 page: filtrosEfectivos.page,

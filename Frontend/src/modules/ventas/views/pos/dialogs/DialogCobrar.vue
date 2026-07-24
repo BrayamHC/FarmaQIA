@@ -12,6 +12,7 @@
         <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 shadow-sm">
           <i class="pi pi-credit-card text-white"></i>
         </div>
+
         <div>
           <h2 class="text-base font-bold text-slate-900">Cobrar venta</h2>
           <p class="text-xs text-slate-400">Selecciona método de pago</p>
@@ -58,9 +59,9 @@
         <div class="grid grid-cols-3 gap-2">
           <button v-for="m in metodosPago" :key="m.value" type="button"
             class="flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition" :class="metodoPago === m.value
-              ? 'border-blue-400 bg-blue-50 text-blue-700'
-              : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50/40'"
-            @click="metodoPago = m.value">
+                ? 'border-blue-400 bg-blue-50 text-blue-700'
+                : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50/40'
+              " @click="metodoPago = m.value">
             <i :class="[m.icon, 'text-xl']"></i>
             <span class="text-xs font-semibold">{{ m.label }}</span>
           </button>
@@ -108,6 +109,7 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import Dialog from 'primevue/dialog'
+import { usePosStore } from '../posStore'
 
 const props = defineProps({
   modelValue: {
@@ -137,6 +139,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue', 'confirmar'])
+
+const store = usePosStore()
 
 const visible = ref(props.modelValue)
 const metodoPago = ref('efectivo')
@@ -196,11 +200,24 @@ const puedeConfirmar = computed(() => {
 function confirmar() {
   if (!puedeConfirmar.value) return
 
-  emit('confirmar', {
+  const datosCobro = {
     metodo_pago: metodoPago.value,
-    monto_recibido: metodoPago.value === 'efectivo' ? Number(montoRecibido.value ?? 0) : Number(props.total ?? 0),
-    cambio: metodoPago.value === 'efectivo' ? Number(cambio.value ?? 0) : 0,
+    monto_recibido:
+      metodoPago.value === 'efectivo'
+        ? Number(montoRecibido.value ?? 0)
+        : Number(props.total ?? 0),
+    cambio:
+      metodoPago.value === 'efectivo'
+        ? Number(cambio.value ?? 0)
+        : 0,
     total: Number(props.total ?? 0),
+  }
+
+  const payload = store.construirPayloadCrearVenta(datosCobro)
+
+  emit('confirmar', {
+    datos_cobro: datosCobro,
+    payload,
   })
 
   cerrar()
