@@ -55,7 +55,7 @@ export async function seed(knex: Knex): Promise<void> {
             descripcion: 'Higiene personal antibacterial',
             precio_publico: 55,
             presentacion: 'Envase 500 ml',
-            con_lote: false,
+            con_lote: true,
             categoria_nombre: 'Higiene Corporal',
             tags: ['higiene']
         },
@@ -68,7 +68,7 @@ export async function seed(knex: Knex): Promise<void> {
             descripcion: 'Material médico de protección',
             precio_publico: 40,
             presentacion: 'Caja con 50 piezas',
-            con_lote: false,
+            con_lote: true,
             categoria_nombre: 'Protección Personal',
             tags: ['proteccion', 'hospital']
         }
