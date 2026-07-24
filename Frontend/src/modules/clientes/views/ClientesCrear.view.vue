@@ -416,7 +416,7 @@ async function submitForm() {
 
   try {
     await clientesStore.crearCliente(construirPayload());
-    router.push('/clientes');
+    router.push({ name: 'Clientes' });
   } catch (error) {
     console.error('Error creando cliente:', error);
   } finally {
