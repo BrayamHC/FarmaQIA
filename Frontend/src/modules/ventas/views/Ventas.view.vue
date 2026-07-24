@@ -97,16 +97,30 @@
               </thead>
 
               <tbody class="divide-y divide-slate-50 bg-white">
-                <tr v-for="venta in ventasStore.ventasRecientes" :key="venta.folio"
-                  class="group transition hover:bg-slate-50/60">
-                  <td class="py-3 pl-4 pr-4">
-                    <span class="font-mono text-[13px] font-medium text-slate-700">{{ venta.folio }}</span>
-                  </td>
-                  <td class="px-4 py-3 text-slate-600">{{ venta.cliente }}</td>
-                  <td class="px-4 py-3 text-slate-400">{{ venta.hora }}</td>
-                  <td class="py-3 pl-4 pr-4 text-right font-semibold text-slate-900">{{ venta.monto }}</td>
-                </tr>
-              </tbody>
+  <tr
+    v-for="venta in ventasStore.ventasRecientes"
+    :key="venta.venta_uuid"
+    class="group transition hover:bg-slate-50/60"
+  >
+    <td class="py-3 pl-4 pr-4">
+      <RouterLink
+        to="/ventas/notas-de-venta"
+        class="font-mono text-[13px] font-medium text-slate-700 transition hover:text-blue-600"
+      >
+        {{ venta.folio }}
+      </RouterLink>
+    </td>
+    <td class="px-4 py-3 text-slate-600">
+      {{ venta.cliente_nombre || 'Público general' }}
+    </td>
+    <td class="px-4 py-3 text-slate-400">
+      {{ formatearHora(venta.fecha_venta) }}
+    </td>
+    <td class="py-3 pl-4 pr-4 text-right font-semibold text-slate-900">
+      {{ formatearMoneda(venta.total) }}
+    </td>
+  </tr>
+</tbody>
             </table>
           </div>
         </div>
@@ -170,10 +184,34 @@
 </template>
 
 <script setup>
-import { RouterLink } from 'vue-router';
-import { useVentasStore } from '../ventasStore';
+import { onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
+import { useVentasStore } from '../ventasStore'
 
-const ventasStore = useVentasStore();
+const ventasStore = useVentasStore()
+
+function formatearHora(value) {
+  if (!value) return '—'
+  const fecha = new Date(value)
+  if (Number.isNaN(fecha.getTime())) return value
+
+  return fecha.toLocaleTimeString('es-MX', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function formatearMoneda(valor) {
+  const numero = Number(valor || 0)
+  return numero.toLocaleString('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+  })
+}
+
+onMounted(async () => {
+  await ventasStore.obtenerVentasRecientes()
+})
 </script>
 
 <style scoped>

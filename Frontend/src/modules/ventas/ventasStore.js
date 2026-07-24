@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { productosService } from '@/modules/productos/productosService'
 import { clientesService } from '@/modules/clientes/clientesService'
+import { ventasService } from './ventasService'
 
 export const useVentasStore = defineStore('ventas', () => {
   const cargando = ref(false)
@@ -16,12 +17,12 @@ export const useVentasStore = defineStore('ventas', () => {
       tags: ['Caja rápida', 'Recetas'],
     },
     {
-      titulo: 'Notas de Venta',
-      descripcion: 'Consulta de historial, pedidos pendientes y gestión de facturación electrónica.',
-      icono: 'pi pi-file-edit',
-      ruta: '/ventas/notas-de-venta',
-      tags: ['Historial', 'Anulaciones'],
-    },
+  titulo: 'Notas de Venta',
+  descripcion: 'Consulte historial de ventas, filtros, detalle de partidas y seguimiento de comprobantes.',
+  icono: 'pi pi-file-edit',
+  ruta: '/ventas/notas-de-venta',
+  tags: ['Historial', 'Detalle'],
+},
     {
       titulo: 'Clientes',
       descripcion: 'Base de datos de clientes, programas de lealtad y cuentas corrientes activas.',
@@ -38,13 +39,30 @@ export const useVentasStore = defineStore('ventas', () => {
     },
   ])
 
-  const ventasRecientes = ref([
-    { folio: 'F001-00234', cliente: 'Juan Pérez', hora: '12:45 PM', monto: '$120.50' },
-    { folio: 'F001-00235', cliente: 'María García', hora: '1:12 PM', monto: '$45.00' },
-    { folio: 'F001-00236', cliente: 'Pedro S.', hora: '2:05 PM', monto: '$312.20' },
-    { folio: 'F001-00237', cliente: 'Consumidor Final', hora: '3:30 PM', monto: '$12.90' },
-    { folio: 'F001-00238', cliente: 'Laura Mendoza', hora: '3:58 PM', monto: '$87.00' },
-  ])
+  // ── Ventas GET ────────────────────────────────────────────────────────────
+  const ventas = ref([])
+  const totalVentas = ref(0)
+  const pageVentas = ref(1)
+  const limitVentas = ref(20)
+  const filtrosVentas = ref({
+    folio: '',
+    cliente_uuid: '',
+    almacen_id: null,
+    metodo_pago: '',
+    status: '',
+    fecha_inicio: '',
+    fecha_fin: '',
+    sort: 'fecha_creacion:desc',
+    page: 1,
+    limit: 20,
+  })
+
+  const cargandoVentas = ref(false)
+  const ventaDetalle = ref(null)
+  const cargandoVentaDetalle = ref(false)
+
+  const ventasRecientes = ref([])
+  const cargandoVentasRecientes = ref(false)
 
   const estadoCaja = ref({
     total: '$1,450.00',
@@ -125,6 +143,165 @@ export const useVentasStore = defineStore('ventas', () => {
     limpiarBusquedaClientes()
     clienteSeleccionado.value = null
     carrito.value = []
+  }
+
+  // ── Ventas helpers ────────────────────────────────────────────────────────
+  function limpiarVentaDetalle() {
+    ventaDetalle.value = null
+  }
+
+  function limpiarVentas() {
+    ventas.value = []
+    totalVentas.value = 0
+    pageVentas.value = 1
+  }
+
+  function normalizarVentaLista(venta = {}) {
+    return {
+      ...venta,
+      total: Number(venta?.total ?? 0),
+      subtotal: Number(venta?.subtotal ?? 0),
+      descuento_total: Number(venta?.descuento_total ?? 0),
+      impuesto_total: Number(venta?.impuesto_total ?? 0),
+      monto_recibido: Number(venta?.monto_recibido ?? 0),
+      cambio: Number(venta?.cambio ?? 0),
+      cliente_nombre: venta?.cliente_nombre ?? 'Público general',
+    }
+  }
+
+  function normalizarPartida(partida = {}) {
+    return {
+      ...partida,
+      cantidad: Number(partida?.cantidad ?? 0),
+      precio_unitario: Number(partida?.precio_unitario ?? 0),
+      descuento: Number(partida?.descuento ?? 0),
+      impuesto: Number(partida?.impuesto ?? 0),
+      subtotal: Number(partida?.subtotal ?? 0),
+      total: Number(partida?.total ?? 0),
+    }
+  }
+
+  function normalizarVentaDetalleResponse(venta = {}) {
+    return {
+      ...venta,
+      total: Number(venta?.total ?? 0),
+      subtotal: Number(venta?.subtotal ?? 0),
+      descuento_total: Number(venta?.descuento_total ?? 0),
+      impuesto_total: Number(venta?.impuesto_total ?? 0),
+      monto_recibido: Number(venta?.monto_recibido ?? 0),
+      cambio: Number(venta?.cambio ?? 0),
+      cliente_nombre: venta?.cliente_nombre ?? 'Público general',
+      cliente: venta?.cliente ?? null,
+      almacen: venta?.almacen ?? null,
+      partidas: Array.isArray(venta?.partidas)
+        ? venta.partidas.map(normalizarPartida)
+        : [],
+    }
+  }
+
+  async function obtenerVentas(filtros = {}) {
+    cargandoVentas.value = true
+
+    try {
+      const requestParams = {
+        folio: filtros.folio ?? filtrosVentas.value.folio ?? undefined,
+        cliente_uuid: filtros.cliente_uuid ?? filtrosVentas.value.cliente_uuid ?? undefined,
+        almacen_id: filtros.almacen_id ?? filtrosVentas.value.almacen_id ?? undefined,
+        metodo_pago: filtros.metodo_pago ?? filtrosVentas.value.metodo_pago ?? undefined,
+        status: filtros.status ?? filtrosVentas.value.status ?? undefined,
+        fecha_inicio: filtros.fecha_inicio ?? filtrosVentas.value.fecha_inicio ?? undefined,
+        fecha_fin: filtros.fecha_fin ?? filtrosVentas.value.fecha_fin ?? undefined,
+        sort: filtros.sort ?? filtrosVentas.value.sort ?? 'fecha_creacion:desc',
+        page: Number(filtros.page ?? filtrosVentas.value.page ?? pageVentas.value ?? 1),
+        limit: Number(filtros.limit ?? filtrosVentas.value.limit ?? limitVentas.value ?? 20),
+      }
+
+      Object.keys(requestParams).forEach((key) => {
+        if (
+          requestParams[key] === '' ||
+          requestParams[key] === null ||
+          requestParams[key] === undefined
+        ) {
+          delete requestParams[key]
+        }
+      })
+
+      const response = await ventasService.obtenerVentas(requestParams)
+
+      ventas.value = Array.isArray(response?.ventas)
+        ? response.ventas.map(normalizarVentaLista)
+        : []
+
+      totalVentas.value = Number(response?.total ?? 0)
+      pageVentas.value = Number(response?.page ?? requestParams.page)
+      limitVentas.value = Number(response?.limit ?? requestParams.limit)
+
+      filtrosVentas.value = {
+        folio: requestParams.folio ?? '',
+        cliente_uuid: requestParams.cliente_uuid ?? '',
+        almacen_id: requestParams.almacen_id ?? null,
+        metodo_pago: requestParams.metodo_pago ?? '',
+        status: requestParams.status ?? '',
+        fecha_inicio: requestParams.fecha_inicio ?? '',
+        fecha_fin: requestParams.fecha_fin ?? '',
+        sort: requestParams.sort ?? 'fecha_creacion:desc',
+        page: pageVentas.value,
+        limit: limitVentas.value,
+      }
+
+      return response
+    } catch (error) {
+      console.error('Error obteniendo ventas:', error)
+      ventas.value = []
+      totalVentas.value = 0
+      throw error
+    } finally {
+      cargandoVentas.value = false
+    }
+  }
+
+  async function obtenerVentaPorUuid(ventaUuid) {
+    if (!ventaUuid) return null
+
+    cargandoVentaDetalle.value = true
+
+    try {
+      const response = await ventasService.obtenerVentaPorUuid(ventaUuid)
+      ventaDetalle.value = normalizarVentaDetalleResponse(response ?? {})
+      return ventaDetalle.value
+    } catch (error) {
+      console.error('Error obteniendo detalle de venta:', error)
+      ventaDetalle.value = null
+      throw error
+    } finally {
+      cargandoVentaDetalle.value = false
+    }
+  }
+
+  async function obtenerVentasRecientes() {
+    cargandoVentasRecientes.value = true
+
+    try {
+      const response = await ventasService.obtenerVentas({
+        page: 1,
+        limit: 5,
+        sort: 'fecha_creacion:desc',
+      })
+
+      ventasRecientes.value = Array.isArray(response?.ventas)
+        ? response.ventas.slice(0, 5).map((venta) => ({
+            ...normalizarVentaLista(venta),
+          }))
+        : []
+
+      return ventasRecientes.value
+    } catch (error) {
+      console.error('Error obteniendo ventas recientes:', error)
+      ventasRecientes.value = []
+      throw error
+    } finally {
+      cargandoVentasRecientes.value = false
+    }
   }
 
   function esTextoCodigo(valor = '') {
@@ -463,7 +640,18 @@ export const useVentasStore = defineStore('ventas', () => {
   return {
     cargando,
     submodulos,
+
+    ventas,
+    totalVentas,
+    pageVentas,
+    limitVentas,
+    filtrosVentas,
+    cargandoVentas,
+    ventaDetalle,
+    cargandoVentaDetalle,
     ventasRecientes,
+    cargandoVentasRecientes,
+
     estadoCaja,
 
     cargandoProductos,
@@ -491,6 +679,13 @@ export const useVentasStore = defineStore('ventas', () => {
     limpiarProductoSeleccionado,
     limpiarBusquedaClientes,
     limpiarEstadoPOS,
+
+    limpiarVentaDetalle,
+    limpiarVentas,
+    obtenerVentas,
+    obtenerVentaPorUuid,
+    obtenerVentasRecientes,
+
     normalizarLotes,
     obtenerStockDisponibleProducto,
     obtenerPrecioUnitario,

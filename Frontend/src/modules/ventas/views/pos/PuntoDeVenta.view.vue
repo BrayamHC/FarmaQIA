@@ -611,11 +611,13 @@ function onLimpiarCliente() {
   enfocarBuscador()
 }
 
-async function onConfirmarVenta({ datos_cobro, payload }) {
+async function onConfirmarVenta({ payload }) {
+  // El store ya se encarga de: registrar la venta, notificar éxito/error
+  // (vía notificacionesStore) y limpiar carrito/búsquedas al terminar,
+  // conservando el almacén y el cliente seleccionados.
   try {
     await store.crearVenta(payload)
 
-    store.limpiarCarrito()
     productoPendiente.value = null
     lotePendiente.value = null
     dialogCobrar.value = false
@@ -623,8 +625,9 @@ async function onConfirmarVenta({ datos_cobro, payload }) {
     limpiarMensajeError()
     enfocarBuscador()
   } catch (error) {
-    console.error('Error preparando venta:', error)
-    mensajeError.value = error?.response?.data?.message ?? 'No fue posible registrar la venta.'
+    // El error ya se notificó desde el store; sólo evitamos cerrar el
+    // diálogo de cobro para que el usuario pueda reintentar.
+    console.error('Error registrando venta:', error)
   }
 }
 

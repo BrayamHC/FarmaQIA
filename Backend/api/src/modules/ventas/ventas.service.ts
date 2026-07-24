@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { VentasBo } from './repositories/ventas.bo';
 import { VentasRepoAction } from './repositories/ventas.repoAction';
 import { VentasRepoData } from './repositories/ventas.repoData';
+import { FiltrosVentasDTO } from './dto/ventas.validator';
 
 @Injectable()
 export class VentasService {
@@ -11,40 +12,26 @@ export class VentasService {
         private readonly repoData: VentasRepoData,
     ) { }
 
-    async obtenerClienteParaVenta(input: {
-        cliente_id: number;
-        sucursal_id: number;
-    }) {
+    // ── Auxiliares para creación (ya existentes) ────────────────────────────
+    async obtenerClienteParaVenta(input: { cliente_id: number; sucursal_id: number }) {
         return this.repoData.obtenerClientePorId(input.cliente_id, input.sucursal_id);
     }
 
-    async obtenerAlmacenParaVenta(input: {
-        almacen_id: number;
-        sucursal_id: number;
-    }) {
+    async obtenerAlmacenParaVenta(input: { almacen_id: number; sucursal_id: number }) {
         return this.repoData.obtenerAlmacenPorId(input.almacen_id, input.sucursal_id);
     }
 
-    async obtenerProductoParaVenta(input: {
-        producto_uuid: string | null;
-        sucursal_id: number;
-    }) {
+    async obtenerProductoParaVenta(input: { producto_uuid: string | null; sucursal_id: number }) {
         if (!input.producto_uuid) return null;
         return this.repoData.obtenerProductoPorUuid(input.producto_uuid, input.sucursal_id);
     }
 
-    async obtenerLoteParaVenta(input: {
-        lote_uuid: string | null;
-        sucursal_id: number;
-    }) {
+    async obtenerLoteParaVenta(input: { lote_uuid: string | null; sucursal_id: number }) {
         if (!input.lote_uuid) return null;
         return this.repoData.obtenerLotePorUuid(input.lote_uuid);
     }
 
-    async obtenerStockProductoParaVenta(input: {
-        producto_id: number;
-        almacen_id: number;
-    }) {
+    async obtenerStockProductoParaVenta(input: { producto_id: number; almacen_id: number }) {
         return this.repoData.obtenerStockAlmacen(input.producto_id, input.almacen_id);
     }
 
@@ -54,11 +41,7 @@ export class VentasService {
         almacen_id: number;
         usuario_id: number;
         cliente_id: number | null;
-        detallesResueltos: Array<{
-            detalle: any;
-            producto: any;
-            lote_id: number | null;
-        }>;
+        detallesResueltos: Array<{ detalle: any; producto: any; lote_id: number | null }>;
     }) {
         return this.crearVentaProcesada(input);
     }
@@ -69,11 +52,7 @@ export class VentasService {
         almacen_id: number;
         usuario_id: number;
         cliente_id: number | null;
-        detallesResueltos: Array<{
-            detalle: any;
-            producto: any;
-            lote_id: number | null;
-        }>;
+        detallesResueltos: Array<{ detalle: any; producto: any; lote_id: number | null }>;
     }) {
         const folio = await this.repoData.obtenerSiguienteFolio();
 
@@ -88,13 +67,7 @@ export class VentasService {
         });
 
         const detalles = input.detallesResueltos.map(({ detalle, producto, lote_id }) =>
-            VentasBo.buildVentaDetalleInsert(
-                0,
-                detalle,
-                producto,
-                lote_id,
-                input.usuario_id,
-            ),
+            VentasBo.buildVentaDetalleInsert(0, detalle, producto, lote_id, input.usuario_id),
         );
 
         const stockAfectar = input.detallesResueltos.map(({ detalle, producto }) => ({
@@ -116,5 +89,15 @@ export class VentasService {
             stockAfectar,
             lotesAfectar,
         });
+    }
+
+    // ── Listar ────────────────────────────────────────────────────────────────
+    async obtenerVentas(filtros: FiltrosVentasDTO, sucursalId: number) {
+        return this.repoData.obtenerVentas(filtros, sucursalId);
+    }
+
+    // ── Detalle ───────────────────────────────────────────────────────────────
+    async obtenerVentaPorUUID(uuid: string, sucursalId: number) {
+        return this.repoData.obtenerVentaPorUUID(uuid, sucursalId);
     }
 }

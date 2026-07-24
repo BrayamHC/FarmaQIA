@@ -15,7 +15,14 @@
 
         <div>
           <h2 class="text-base font-bold text-slate-900">Buscar producto</h2>
-          <p class="text-xs text-slate-400">Busca por nombre, SKU o UPC</p>
+          <p class="text-xs text-slate-400">
+            <template v-if="store.almacenSeleccionado">
+              Mostrando existencias de {{ store.almacenSeleccionado.nombre }}
+            </template>
+            <template v-else>
+              Busca por nombre, SKU o UPC
+            </template>
+          </p>
         </div>
       </div>
 
@@ -47,6 +54,11 @@
         </button>
       </div>
 
+      <div v-if="!store.almacenSeleccionado"
+        class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+        Selecciona un almacén para ver únicamente las existencias disponibles en él.
+      </div>
+
       <div v-if="mensajeError"
         class="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
         {{ mensajeError }}
@@ -64,16 +76,14 @@
         </div>
 
         <p class="text-sm font-medium text-slate-500">
-          {{ busqueda ? 'Sin resultados para tu búsqueda' : 'No hay productos disponibles' }}
+          {{ mensajeSinResultados }}
         </p>
       </div>
 
       <div v-else class="divide-y divide-slate-50">
         <button v-for="producto in productos" :key="producto.producto_uuid ?? producto.productouuid" type="button"
-          class="flex w-full items-center gap-4 px-6 py-3.5 text-left transition" :class="tieneStock(producto)
-              ? 'hover:bg-blue-50/50'
-              : 'cursor-not-allowed opacity-60 hover:bg-rose-50/40'
-            " @click="seleccionar(producto)">
+          class="flex w-full items-center gap-4 px-6 py-3.5 text-left transition hover:bg-blue-50/50"
+          @click="seleccionar(producto)">
           <div
             class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
             <img v-if="producto.url_imagen" :src="producto.url_imagen" :alt="producto.nombre"
@@ -99,16 +109,11 @@
                 class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                 Con lote
               </span>
-
-              <span v-if="!tieneStock(producto)"
-                class="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600">
-                Sin stock
-              </span>
             </div>
           </div>
 
           <div class="shrink-0 text-right">
-            <p class="text-sm font-bold" :class="tieneStock(producto) ? 'text-slate-800' : 'text-rose-500'">
+            <p class="text-sm font-bold text-slate-800">
               {{ obtenerStock(producto) }}
             </p>
             <p class="text-[10px] text-slate-400">en stock</p>
@@ -121,7 +126,7 @@
             </p>
           </div>
 
-          <i class="pi pi-plus shrink-0 text-xs" :class="tieneStock(producto) ? 'text-blue-400' : 'text-slate-300'"></i>
+          <i class="pi pi-plus shrink-0 text-xs text-blue-400"></i>
         </button>
       </div>
     </div>
@@ -203,8 +208,20 @@ const filtrosRapidos = [
   { label: 'Con lote', value: 'con_lote' },
 ]
 
-const productos = computed(() => {
-  return Array.isArray(store.productos) ? store.productos : []
+// Usamos el listado ya filtrado por el store: si hay un almacén seleccionado,
+// sólo trae productos que traen lotes con stock EN ESE ALMACÉN. Así nunca se
+// puede seleccionar un producto cuyo lote pertenece a otro almacén.
+const productos = computed(() => store.productosDisponiblesVenta)
+
+const mensajeSinResultados = computed(() => {
+  if (!busqueda.value) {
+    return store.almacenSeleccionado
+      ? 'No hay productos con existencias en este almacén'
+      : 'No hay productos disponibles'
+  }
+  return store.almacenSeleccionado
+    ? 'Sin resultados con existencias en este almacén'
+    : 'Sin resultados para tu búsqueda'
 })
 
 watch(
@@ -321,7 +338,7 @@ function seleccionar(producto) {
   limpiarMensajeError()
 
   if (!tieneStock(producto)) {
-    mensajeError.value = `"${producto.nombre}" no tiene existencias disponibles y no puede agregarse a la venta.`
+    mensajeError.value = `"${producto.nombre}" no tiene existencias disponibles en este almacén y no puede agregarse a la venta.`
     return
   }
 

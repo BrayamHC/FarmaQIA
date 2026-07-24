@@ -122,7 +122,7 @@ export async function seed(knex: Knex): Promise<void> {
             categoria: 'Higiene Personal',
             precio_publico: 35,
             presentacion: 'Botella 500 ml',
-            con_lote: false,
+            con_lote: true,
             url_imagen: 'https://resources.claroshop.com/imagenes-sanborns-ii/1200/7503014279248.jpg',
             tags: ['heridas', 'antiseptico', 'limpieza', 'curacion']
         },
@@ -276,7 +276,7 @@ export async function seed(knex: Knex): Promise<void> {
             categoria: 'Material Médico',
             precio_publico: 30,
             presentacion: 'Pieza',
-            con_lote: false,
+            con_lote: true,
             url_imagen: 'https://curitek.com/venda-elastica.jpg',
             tags: ['heridas', 'vendaje', 'curacion']
         },
@@ -290,7 +290,7 @@ export async function seed(knex: Knex): Promise<void> {
             categoria: 'Higiene Personal',
             precio_publico: 60,
             presentacion: 'Botella 500 ml',
-            con_lote: false,
+            con_lote: true,
             url_imagen: 'https://www.walmart.com.mx/gel-antibacterial.jpg',
             tags: ['higiene', 'manos', 'antiseptico']
         },
@@ -304,7 +304,7 @@ export async function seed(knex: Knex): Promise<void> {
             categoria: 'Alimentos y Bebidas',
             precio_publico: 18,
             presentacion: 'Botella 600 ml',
-            con_lote: false,
+            con_lote: true,
             url_imagen: 'https://www.walmart.com.mx/agua.jpg',
             tags: ['bebida', 'hidratacion']
         }

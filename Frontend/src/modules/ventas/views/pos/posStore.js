@@ -5,10 +5,13 @@ import { productosService } from '../../../productos/productosService'
 import { clientesService } from '../../../clientes/clientesService'
 import { almacenesService } from '../../../almacenes/almacenesService'
 import ventasService from '../../ventasService'
+import { useNotificacionesStore } from '@/stores/notificaciones.store'
 
 const POS_VENTA_STORAGE_KEY = 'farmaq_pos_venta_borrador'
 
 export const usePosStore = defineStore('pos', () => {
+  const notificacionesStore = useNotificacionesStore()
+
   const cargando = ref(false)
 
   const cargandoProductos = ref(false)
@@ -74,6 +77,20 @@ export const usePosStore = defineStore('pos', () => {
     return Math.max(1, Math.ceil(Number(totalProductos.value ?? 0) / limite))
   })
 
+  // Productos listos para vender:
+  // - Si hay un almacén seleccionado, sólo se muestran productos que traen
+  //   lotes con stock EN ESE ALMACÉN (evita seleccionar un lote de otro almacén).
+  // - Sin importar el almacén, si el producto no tiene stock disponible,
+  //   simplemente no se muestra (no se lista deshabilitado).
+  const productosDisponiblesVenta = computed(() => {
+    const lista = Array.isArray(productos.value) ? productos.value : []
+
+    return lista.filter((producto) => {
+      if (almacenSeleccionado.value && normalizarLotes(producto).length === 0) return false
+      return obtenerStockLista(producto) > 0
+    })
+  })
+
   function redondearMoneda(valor) {
     return Number(Number(valor ?? 0).toFixed(2))
   }
@@ -86,9 +103,9 @@ export const usePosStore = defineStore('pos', () => {
     if (!almacen) return null
 
     const almacenId = Number(
+      almacen?.id ??
       almacen?.almacenid ??
       almacen?.almacen_id ??
-      almacen?.id ??
       0,
     )
 
@@ -108,9 +125,9 @@ export const usePosStore = defineStore('pos', () => {
 
   function obtenerAlmacenIdSeleccionado() {
     const almacenId = Number(
+      almacenSeleccionado.value?.id ??
       almacenSeleccionado.value?.almacenid ??
       almacenSeleccionado.value?.almacen_id ??
-      almacenSeleccionado.value?.id ??
       0,
     )
 
@@ -161,6 +178,16 @@ export const usePosStore = defineStore('pos', () => {
     limpiarAlmacenSeleccionado()
     limpiarCarrito()
     eliminarBorradorVentaPOS()
+  }
+
+  // Al finalizar una venta exitosa: limpia carrito y resultados de búsqueda,
+  // pero mantiene el almacén y el cliente seleccionados (siguen vigentes
+  // para la próxima venta en la misma caja).
+  function limpiarEstadoPOSTrasVenta() {
+    limpiarBusquedaProductos()
+    limpiarBusquedaClientes()
+    limpiarBusquedaAlmacenes()
+    limpiarCarrito()
   }
 
   function esTextoCodigo(valor) {
@@ -217,6 +244,16 @@ export const usePosStore = defineStore('pos', () => {
   function obtenerStockLista(producto) {
     if (!producto) return 0
 
+    const lotes = normalizarLotes(producto)
+
+    // Con un almacén seleccionado, el stock SIEMPRE se calcula a partir de los
+    // lotes que vienen en la respuesta (ya filtrados por ese almacén en el backend).
+    // No usamos los totales planos (stocktotal, etc.) porque esos reflejan
+    // existencias globales de todos los almacenes, no las de este almacén.
+    if (almacenSeleccionado.value) {
+      return lotes.reduce((acumulado, lote) => acumulado + Number(lote.cantidadactual ?? 0), 0)
+    }
+
     const stockPlano =
       producto?.stocktotal ??
       producto?.stock_total ??
@@ -228,7 +265,6 @@ export const usePosStore = defineStore('pos', () => {
 
     if (stockPlano != null) return Number(stockPlano ?? 0)
 
-    const lotes = normalizarLotes(producto)
     if (lotes.length) {
       return lotes.reduce((acumulado, lote) => acumulado + Number(lote.cantidadactual ?? 0), 0)
     }
@@ -253,15 +289,19 @@ export const usePosStore = defineStore('pos', () => {
         0,
       )
 
+      const conLote =
+        typeof params.conlote === 'boolean'
+          ? params.conlote
+          : filtrosProductos.value.conlote ?? undefined
+
       const requestParams = {
         page: Number(params.page ?? pageProductos.value ?? 1),
         limit: Number(params.limit ?? limitProductos.value ?? 20),
         status: params.status ?? filtrosProductos.value.status ?? 'activo',
-        conlote:
-          typeof params.conlote === 'boolean'
-            ? params.conlote
-            : filtrosProductos.value.conlote ?? undefined,
-        almacenid: esEnteroPositivo(almacenId) ? almacenId : undefined,
+        // OJO: productosService espera con_lote y almacen_id (snake_case exacto),
+        // no conlote/almacenid.
+        con_lote: conLote,
+        almacen_id: esEnteroPositivo(almacenId) ? almacenId : undefined,
         sort: params.sort ?? filtrosProductos.value.sort ?? undefined,
       }
 
@@ -283,8 +323,8 @@ export const usePosStore = defineStore('pos', () => {
       filtrosProductos.value = {
         termino,
         status: requestParams.status ?? 'activo',
-        conlote: typeof requestParams.conlote === 'boolean' ? requestParams.conlote : null,
-        almacenid: requestParams.almacenid ?? null,
+        conlote: typeof requestParams.con_lote === 'boolean' ? requestParams.con_lote : null,
+        almacenid: requestParams.almacen_id ?? null,
         page: pageProductos.value,
         limit: limitProductos.value,
         sort: requestParams.sort ?? null,
@@ -687,10 +727,22 @@ export const usePosStore = defineStore('pos', () => {
 
     try {
       const response = await ventasService.crearVenta(payload)
+
       eliminarBorradorVentaPOS()
+      limpiarEstadoPOSTrasVenta()
+
+      notificacionesStore?.mostrarExito?.(
+        response?.message || 'Venta registrada correctamente.',
+      )
+
       return response
     } catch (error) {
       console.error('Error creando venta:', error)
+
+      notificacionesStore?.mostrarError?.(
+        error?.response?.data?.message || 'No fue posible registrar la venta.',
+      )
+
       throw error
     } finally {
       cargando.value = false
@@ -710,6 +762,7 @@ export const usePosStore = defineStore('pos', () => {
     cargando,
     cargandoProductos,
     productos,
+    productosDisponiblesVenta,
     totalProductos,
     pageProductos,
     limitProductos,
@@ -734,6 +787,7 @@ export const usePosStore = defineStore('pos', () => {
     limpiarBusquedaClientes,
     limpiarBusquedaAlmacenes,
     limpiarEstadoPOS,
+    limpiarEstadoPOSTrasVenta,
     normalizarAlmacen,
     normalizarLotes,
     obtenerPrecioUnitario,

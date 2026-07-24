@@ -54,8 +54,10 @@ export class ClientesController {
         @User() user: any,
     ) {
         const cliente = await this.clientesService.crearCliente(body, sucursalId, user);
-        return { cliente };
-    }
+        return {
+            success: true,
+            message: 'Cliente creado exitosamente',
+        };       }
 
     @Put(':cliente_uuid')
     @ApiOperation({ summary: 'Actualizar cliente' })
