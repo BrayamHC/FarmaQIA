@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class ProductosBO {
-
     prepararNuevoProducto(datos: any, usuario: any) {
         const tags = this.normalizarTags(datos.tags);
 
@@ -26,10 +25,9 @@ export class ProductosBO {
             unidad_entrada: datos.unidad_entrada,
             unidad_salida: datos.unidad_salida,
             control_almacen: String(datos.control_almacen),
-            factor_unidades: datos.factor_unidades,
-            con_lote: datos.con_lote,
+            factor_unidades: Number(datos.factor_unidades),
+            con_lote: Boolean(datos.con_lote),
 
-            // IVA siempre 16% — se aplica en el módulo de ventas, no aquí
             costo_compra: Number(datos.costo_compra),
             precio_publico: Number(datos.precio_publico),
 
@@ -58,27 +56,22 @@ export class ProductosBO {
         };
 
         if (temperatura !== undefined) {
-            data.temperatura = JSON.stringify(temperatura);
+            data.temperatura = temperatura ? JSON.stringify(temperatura) : null;
         }
+
         if (tags !== undefined) {
             data.tags = JSON.stringify(this.normalizarTags(tags));
         }
+
         if (fecha_entrada) {
             data.fecha_entrada = new Date(fecha_entrada);
         }
 
-        // Limpiar nulos/undefined que no deben sobrescribir
         Object.keys(data).forEach((k) => {
             if (data[k] === undefined) delete data[k];
         });
 
         return data;
-    }
-
-    private normalizarTags(tags: string | string[]): string[] {
-        if (!tags) return [];
-        if (Array.isArray(tags)) return tags.map((t) => t.trim());
-        return tags.split(',').map((t) => t.trim());
     }
 
     prepararAltaLoteStock(datos: any, usuario: any) {
@@ -107,5 +100,19 @@ export class ProductosBO {
                 usuario_id: usuario.usuario_id,
             },
         };
+    }
+
+    private normalizarTags(tags: string | string[]): string[] {
+        if (!tags) return [];
+        if (Array.isArray(tags)) {
+            return tags
+                .map((t) => String(t).trim())
+                .filter(Boolean);
+        }
+
+        return String(tags)
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean);
     }
 }

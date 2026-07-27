@@ -174,25 +174,6 @@ export const ProductosListaResponseSchema = z.object({
     limit: z.number(),
 });
 
-export const CrearProductoResponseSchema = z.object({
-    meta: z.object({ message: z.string() }),
-    producto: ProductoResponseSchema.pick({
-        producto_uuid: true,
-        sku: true,
-        upc: true,
-        nombre: true,
-        descripcion: true,
-        status: true,
-        precio_publico: true,
-        costo_compra: true,
-        presentacion: true,
-        con_lote: true,
-        tags: true,
-        fecha_entrada: true,
-        url_imagen: true,
-    }),
-});
-
 export const AltaLoteStockSchema = z.object({
     almacen_uuid: z.string().uuid('UUID de almacén inválido'),
     codigo_lote: z.string().min(1, 'El código de lote es obligatorio').max(100),

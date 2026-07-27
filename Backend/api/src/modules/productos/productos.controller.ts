@@ -11,7 +11,6 @@ import {
     FiltrosProductosDTO,
     ProductoResponseDTO,
     ProductosListaResponseDTO,
-    CrearProductoResponseDTO,
     AltaLoteStockResponseDTO,
     AltaLoteStockDTO,
 } from './dto/productos.dto';
@@ -49,7 +48,6 @@ export class ProductosController {
     // ── Crear ────────────────────────────────────────────────────────────────
     @Post()
     @ApiOperation({ summary: 'Crear un nuevo producto' })
-    @ZodSerializerDto(CrearProductoResponseDTO)
     async crearProducto(
         @Body() dto: CrearProductoDTO,
         @User() usuario: any,

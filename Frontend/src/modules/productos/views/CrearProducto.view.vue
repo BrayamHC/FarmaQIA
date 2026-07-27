@@ -76,10 +76,9 @@
                     placeholder="Describe el producto"></textarea>
                 </div>
 
-
                 <div>
                   <label class="mb-1.5 block text-xs font-medium text-slate-500">Unidad de medida *</label>
-                  <Select v-model="form.unidad_medida_uuid" :options="unidadesMedidaOptions" optionLabel="label"
+                  <Select v-model="form.unidad_medida_id" :options="unidadesMedidaOptions" optionLabel="label"
                     optionValue="value" placeholder="Selecciona una unidad" filter
                     :loading="catalogosStore.cargandoUnidadesMedida" class="w-full farma-select" />
                 </div>
@@ -94,12 +93,12 @@
                 <div>
                   <label class="mb-1.5 block text-xs font-medium text-slate-500">Proveedor</label>
                   <Select v-model="form.proveedor_uuid" :options="proveedoresOptions" optionLabel="label"
-                    optionValue="value" placeholder="Selecciona un proveedor" filter :loading="cargandoProveedores"
-                    class="w-full farma-select" />
+                    optionValue="value" placeholder="Selecciona un proveedor" filter
+                    :loading="proveedoresStore.cargando" class="w-full farma-select" />
                 </div>
 
                 <div class="md:col-span-2">
-                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Presentación</label>
+                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Presentación *</label>
                   <input v-model="form.presentacion" type="text" class="farma-input" placeholder="Ej. Botella 500 ml" />
                 </div>
               </div>
@@ -115,32 +114,32 @@
 
               <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Costo compra</label>
+                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Costo compra *</label>
                   <input v-model.number="form.costo_compra" type="number" step="0.01" min="0" class="farma-input" />
                 </div>
 
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Precio público</label>
+                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Precio público *</label>
                   <input v-model.number="form.precio_publico" type="number" step="0.01" min="0" class="farma-input" />
                 </div>
 
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Factor unidades</label>
-                  <input v-model.number="form.factor_unidades" type="number" min="0" class="farma-input" />
+                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Factor unidades *</label>
+                  <input v-model.number="form.factor_unidades" type="number" min="1" class="farma-input" />
                 </div>
 
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Unidad entrada</label>
+                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Unidad entrada *</label>
                   <input v-model="form.unidad_entrada" type="text" class="farma-input" placeholder="Caja" />
                 </div>
 
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Unidad salida</label>
+                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Unidad salida *</label>
                   <input v-model="form.unidad_salida" type="text" class="farma-input" placeholder="Pieza" />
                 </div>
 
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Control almacén</label>
+                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Control almacén *</label>
                   <Select v-model="form.control_almacen" :options="controlAlmacenOptions" optionLabel="label"
                     optionValue="value" placeholder="Selecciona control" class="w-full farma-select" />
                 </div>
@@ -202,7 +201,7 @@
                 </div>
 
                 <div>
-                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Fecha entrada</label>
+                  <label class="mb-1.5 block text-xs font-medium text-slate-500">Fecha entrada *</label>
                   <div class="farma-datepicker-click" @click="fechaEntradaRef?.showOverlay?.()">
                     <DatePicker ref="fechaEntradaRef" v-model="form.fecha_entrada" placeholder="YYYY-MM-DD"
                       dateFormat="yy-mm-dd" showIcon iconDisplay="input" manualInput showOnFocus
@@ -250,49 +249,41 @@
             <article class="card-base rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div class="mb-4">
                 <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Imagen</p>
-                <h2 class="mt-1 text-lg font-semibold text-slate-900">Vista previa local</h2>
+                <h2 class="mt-1 text-lg font-semibold text-slate-900">Vista previa por URL</h2>
               </div>
 
               <div class="space-y-4">
                 <div class="farma-image-frame">
-                  <img v-if="imagenPreview" :src="imagenPreview" alt="Vista previa del producto"
-                    class="farma-image-preview" />
+                  <img v-if="mostrarImagenPreview" :src="form.url_imagen" alt="Vista previa del producto"
+                    class="farma-image-preview" @error="onImagenError" @load="onImagenLoad" />
 
                   <div v-else class="flex h-full flex-col items-center justify-center px-6 py-10 text-center">
                     <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm">
                       <i class="pi pi-image text-xl text-slate-300"></i>
                     </div>
-                    <p class="text-sm font-medium text-slate-500">Sin imagen seleccionada</p>
+                    <p class="text-sm font-medium text-slate-500">
+                      {{ form.url_imagen ? 'No se pudo cargar la imagen' : 'Sin imagen configurada' }}
+                    </p>
                     <p class="mt-1 text-xs text-slate-400">
-                      Puedes cargar una imagen solo como referencia visual.
+                      {{ form.url_imagen
+                        ? 'Verifica que la URL sea pública y válida.'
+                        : 'Pega una URL pública para visualizar la imagen del producto.' }}
                     </p>
                   </div>
                 </div>
 
-                <input ref="inputImagenRef" type="file" accept="image/*" class="hidden" @change="onSeleccionarImagen" />
+                <div>
+                  <label class="mb-1.5 block text-xs font-medium text-slate-500">URL de imagen</label>
+                  <input v-model.trim="form.url_imagen" type="url" class="farma-input"
+                    placeholder="https://ejemplo.com/imagen-producto.jpg" @input="reiniciarEstadoImagen" />
+                </div>
 
                 <div class="grid grid-cols-1 gap-2">
-                  <button type="button" class="farma-btn farma-btn-ghost w-full justify-center"
-                    @click="inputImagenRef?.click()">
-                    <i class="pi pi-upload text-xs"></i>
-                    <span>{{ imagenPreview ? 'Cambiar imagen' : 'Seleccionar imagen' }}</span>
-                  </button>
-
-                  <button v-if="imagenPreview" type="button" class="farma-btn farma-btn-soft w-full justify-center"
-                    @click="removerImagen">
+                  <button v-if="form.url_imagen" type="button" class="farma-btn farma-btn-soft w-full justify-center"
+                    @click="limpiarImagenUrl">
                     <i class="pi pi-trash text-xs"></i>
                     <span>Quitar imagen</span>
                   </button>
-                </div>
-
-                <div class="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
-                  <p class="text-xs font-semibold uppercase tracking-widest text-amber-600">
-                    Nota actual
-                  </p>
-                  <p class="mt-1 text-sm text-amber-700">
-                    La imagen aún no se envía al backend. Solo se usa como referencia visual local; después se integrará
-                    la carga a S3.
-                  </p>
                 </div>
               </div>
             </article>
@@ -310,20 +301,16 @@ import DatePicker from 'primevue/datepicker';
 import Select from 'primevue/select';
 import { useProductosStore } from '../productosStore';
 import { useCatalogosStore } from '@/modules/catalogos/catalogosStore';
+import { useProveedoresStore } from '@/modules/proveedores/proveedoresStore';
 
 const router = useRouter();
 const productosStore = useProductosStore();
 const catalogosStore = useCatalogosStore();
+const proveedoresStore = useProveedoresStore();
 
 const tagInput = ref('');
-const inputImagenRef = ref(null);
-const imagenFile = ref(null);
-const imagenPreview = ref('');
 const fechaEntradaRef = ref(null);
-
-const cargandoProveedores = ref(false);
-const proveedoresOptions = ref([]);
-
+const imagenCargada = ref(true);
 
 const controlAlmacenOptions = ref([
   { label: 'PEPS', value: 'PEPS' },
@@ -333,8 +320,8 @@ const controlAlmacenOptions = ref([
 const unidadesMedidaOptions = computed(() =>
   (catalogosStore.unidadesMedida ?? []).map((item) => ({
     label: `${item.clave} - ${item.nombre}`,
-    value: item.unidad_medida_uuid,
-  }))
+    value: item.unidad_medida_id,
+  })),
 );
 
 const categoriasOptions = computed(() =>
@@ -343,7 +330,23 @@ const categoriasOptions = computed(() =>
       ? `${item.nombre_categoria_padre} - ${item.nombre_categoria}`
       : item.nombre_categoria,
     value: item.categoria_uuid,
-  }))
+  })),
+);
+
+const proveedoresOptions = computed(() =>
+  (proveedoresStore.proveedores ?? []).map((item) => ({
+    label:
+      item.nombre_comercial ||
+      item.nombre ||
+      item.razon_social ||
+      item.proveedor ||
+      'Proveedor',
+    value: item.proveedor_uuid,
+  })),
+);
+
+const mostrarImagenPreview = computed(
+  () => Boolean(form.value.url_imagen?.trim()) && imagenCargada.value,
 );
 
 const form = ref({
@@ -352,7 +355,7 @@ const form = ref({
   nombre: '',
   descripcion: '',
   status: 'activo',
-  unidad_medida_uuid: '',
+  unidad_medida_id: null,
   categoria_uuid: '',
   proveedor_uuid: '',
   volumen_valor: null,
@@ -362,10 +365,10 @@ const form = ref({
   unidad_entrada: '',
   unidad_salida: '',
   control_almacen: '',
-  factor_unidades: 0,
+  factor_unidades: 1,
   con_lote: false,
-  costo_compra: 0,
-  precio_publico: 0,
+  costo_compra: null,
+  precio_publico: null,
   numero_registro_sanitario: '',
   temperatura: {
     valor: null,
@@ -380,9 +383,11 @@ const form = ref({
 function agregarTag() {
   const valor = tagInput.value.trim();
   if (!valor) return;
+
   if (!form.value.tags.includes(valor)) {
     form.value.tags.push(valor);
   }
+
   tagInput.value = '';
 }
 
@@ -390,20 +395,21 @@ function eliminarTag(tag) {
   form.value.tags = form.value.tags.filter((item) => item !== tag);
 }
 
-function onSeleccionarImagen(event) {
-  const file = event.target.files?.[0];
-  if (!file) return;
-
-  imagenFile.value = file;
-  imagenPreview.value = URL.createObjectURL(file);
+function reiniciarEstadoImagen() {
+  imagenCargada.value = true;
 }
 
-function removerImagen() {
-  imagenFile.value = null;
-  imagenPreview.value = '';
-  if (inputImagenRef.value) {
-    inputImagenRef.value.value = '';
-  }
+function onImagenError() {
+  imagenCargada.value = false;
+}
+
+function onImagenLoad() {
+  imagenCargada.value = true;
+}
+
+function limpiarImagenUrl() {
+  form.value.url_imagen = '';
+  imagenCargada.value = true;
 }
 
 function formatearFecha(value) {
@@ -416,34 +422,61 @@ function formatearFecha(value) {
 
 function construirPayload() {
   return {
-    sku: form.value.sku || '',
-    upc: form.value.upc || '',
-    nombre: form.value.nombre || '',
-    descripcion: form.value.descripcion || '',
+    sku: form.value.sku?.trim() || '',
+    upc: form.value.upc?.trim() || undefined,
+    nombre: form.value.nombre?.trim() || '',
+    descripcion: form.value.descripcion?.trim() || undefined,
     status: form.value.status || 'activo',
-    unidad_medida_uuid: form.value.unidad_medida_uuid || '',
-    categoria_uuid: form.value.categoria_uuid || '',
-    proveedor_uuid: form.value.proveedor_uuid || '',
-    volumen_valor: form.value.volumen_valor ?? 0,
-    volumen_unidad: form.value.volumen_unidad || '',
-    peso_valor: form.value.peso_valor ?? 0,
-    peso_unidad: form.value.peso_unidad || '',
-    unidad_entrada: form.value.unidad_entrada || '',
-    unidad_salida: form.value.unidad_salida || '',
+
+    unidad_medida_id:
+      form.value.unidad_medida_id !== null && form.value.unidad_medida_id !== undefined
+        ? Number(form.value.unidad_medida_id)
+        : null,
+
+    categoria_uuid: form.value.categoria_uuid?.trim() || '',
+    proveedor_uuid: form.value.proveedor_uuid?.trim() || '',
+
+    volumen_valor:
+      form.value.volumen_valor !== null &&
+        form.value.volumen_valor !== undefined &&
+        form.value.volumen_valor !== ''
+        ? Number(form.value.volumen_valor)
+        : undefined,
+    volumen_unidad: form.value.volumen_unidad?.trim() || undefined,
+
+    peso_valor:
+      form.value.peso_valor !== null &&
+        form.value.peso_valor !== undefined &&
+        form.value.peso_valor !== ''
+        ? Number(form.value.peso_valor)
+        : undefined,
+    peso_unidad: form.value.peso_unidad?.trim() || undefined,
+
+    unidad_entrada: form.value.unidad_entrada?.trim() || '',
+    unidad_salida: form.value.unidad_salida?.trim() || '',
     control_almacen: form.value.control_almacen || '',
     factor_unidades: Number(form.value.factor_unidades || 0),
     con_lote: Boolean(form.value.con_lote),
+
     costo_compra: Number(form.value.costo_compra || 0),
     precio_publico: Number(form.value.precio_publico || 0),
-    numero_registro_sanitario: form.value.numero_registro_sanitario || '',
-    temperatura: {
-      valor: form.value.temperatura?.valor ?? 0,
-      unidad: form.value.temperatura?.unidad || '°C',
-    },
-    presentacion: form.value.presentacion || '',
+
+    numero_registro_sanitario: form.value.numero_registro_sanitario?.trim() || undefined,
+
+    temperatura:
+      form.value.temperatura?.valor !== null &&
+        form.value.temperatura?.valor !== undefined &&
+        form.value.temperatura?.valor !== ''
+        ? {
+          valor: Number(form.value.temperatura.valor),
+          unidad: form.value.temperatura?.unidad?.trim() || '°C',
+        }
+        : undefined,
+
+    presentacion: form.value.presentacion?.trim() || '',
     fecha_entrada: formatearFecha(form.value.fecha_entrada),
-    tags: form.value.tags || [],
-    url_imagen: '',
+    tags: Array.isArray(form.value.tags) ? form.value.tags : [],
+    url_imagen: form.value.url_imagen?.trim() || undefined,
   };
 }
 
@@ -452,20 +485,19 @@ async function cargarCatalogos() {
     await Promise.all([
       catalogosStore.obtenerUnidadesMedida?.(),
       catalogosStore.obtenerCategoriasSubcategorias?.(),
+      proveedoresStore.obtenerProveedores?.(),
     ]);
   } catch (error) {
     console.error('Error cargando catálogos:', error);
   }
 }
 
-async function cargarProveedores() {
-  cargandoProveedores.value = false;
-  proveedoresOptions.value = [];
-}
-
 async function submitForm() {
   try {
-    await productosStore.crearProducto(construirPayload());
+    const payload = construirPayload();
+    console.log('payload crear producto', payload);
+
+    await productosStore.crearProducto(payload);
     router.push('/inventario/productos');
   } catch (error) {
     console.error('Error creando producto:', error);
@@ -473,7 +505,7 @@ async function submitForm() {
 }
 
 onMounted(async () => {
-  await Promise.all([cargarCatalogos(), cargarProveedores()]);
+  await cargarCatalogos();
 });
 </script>
 

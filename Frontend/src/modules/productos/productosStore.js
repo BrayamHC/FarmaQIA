@@ -1,8 +1,13 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { productosService } from './productosService';
+import { useNotificacionesStore } from '@/stores/notificaciones.store';
+import { useProveedoresStore } from '@/modules/proveedores/proveedoresStore';
 
 export const useProductosStore = defineStore('productos', () => {
+  const notificacionesStore = useNotificacionesStore();
+  const proveedoresStore = useProveedoresStore();
+
   const cargando = ref(false);
   const cargandoDetalle = ref(false);
   const cambiandoStatus = ref(false);
@@ -16,7 +21,6 @@ export const useProductosStore = defineStore('productos', () => {
   const stockProducto = ref(null);
   const lotesProducto = ref([]);
 
-  const proveedores = ref([]);
   const almacenes = ref([]);
 
   const total = ref(0);
@@ -36,14 +40,14 @@ export const useProductosStore = defineStore('productos', () => {
   });
 
   const proveedoresOptions = computed(() =>
-    (proveedores.value ?? []).map((item) => ({
+    (proveedoresStore.proveedores ?? []).map((item) => ({
       label:
         item.nombre_comercial ||
         item.nombre ||
         item.razon_social ||
         item.proveedor ||
         'Proveedor',
-      value: item.proveedor_uuid || item.uuid,
+      value: item.proveedor_id,
     })),
   );
 
@@ -85,6 +89,9 @@ export const useProductosStore = defineStore('productos', () => {
       return response;
     } catch (error) {
       console.error('Error obteniendo productos:', error);
+      notificacionesStore.error?.(
+        error?.response?.data?.message || 'No se pudieron obtener los productos.',
+      );
       throw error;
     } finally {
       cargando.value = false;
@@ -100,6 +107,9 @@ export const useProductosStore = defineStore('productos', () => {
       return response;
     } catch (error) {
       console.error('Error obteniendo detalle del producto:', error);
+      notificacionesStore.error?.(
+        error?.response?.data?.message || 'No se pudo obtener el detalle del producto.',
+      );
       throw error;
     } finally {
       cargandoDetalle.value = false;
@@ -115,6 +125,9 @@ export const useProductosStore = defineStore('productos', () => {
       return response;
     } catch (error) {
       console.error('Error obteniendo stock del producto:', error);
+      notificacionesStore.error?.(
+        error?.response?.data?.message || 'No se pudo obtener el stock del producto.',
+      );
       throw error;
     } finally {
       cargandoStock.value = false;
@@ -130,6 +143,9 @@ export const useProductosStore = defineStore('productos', () => {
       return response;
     } catch (error) {
       console.error('Error obteniendo lotes del producto:', error);
+      notificacionesStore.error?.(
+        error?.response?.data?.message || 'No se pudieron obtener los lotes del producto.',
+      );
       throw error;
     } finally {
       cargandoLotes.value = false;
@@ -140,16 +156,10 @@ export const useProductosStore = defineStore('productos', () => {
     cargandoCatalogosStock.value = true;
 
     try {
-      const [responseProveedores, responseAlmacenes] = await Promise.all([
-        productosService.obtenerProveedores(params.proveedores ?? {}),
+      const [responseAlmacenes] = await Promise.all([
         productosService.obtenerAlmacenes(params.almacenes ?? {}),
+        proveedoresStore.obtenerProveedores(params.proveedores ?? {}),
       ]);
-
-      proveedores.value =
-        responseProveedores?.data?.proveedores ??
-        responseProveedores?.proveedores ??
-        responseProveedores?.data ??
-        [];
 
       almacenes.value =
         responseAlmacenes?.data?.almacenes ??
@@ -158,13 +168,15 @@ export const useProductosStore = defineStore('productos', () => {
         [];
 
       return {
-        proveedores: proveedores.value,
+        proveedores: proveedoresStore.proveedores,
         almacenes: almacenes.value,
       };
     } catch (error) {
       console.error('Error obteniendo catálogos de stock:', error);
-      proveedores.value = [];
       almacenes.value = [];
+      notificacionesStore.error?.(
+        error?.response?.data?.message || 'No se pudieron obtener los catálogos.',
+      );
       throw error;
     } finally {
       cargandoCatalogosStock.value = false;
@@ -172,7 +184,6 @@ export const useProductosStore = defineStore('productos', () => {
   }
 
   function limpiarCatalogosStock() {
-    proveedores.value = [];
     almacenes.value = [];
   }
 
@@ -239,9 +250,15 @@ export const useProductosStore = defineStore('productos', () => {
 
     try {
       const response = await productosService.crearProducto(payload);
+      notificacionesStore.success?.(
+        response?.meta?.message || response?.message || 'Producto creado correctamente.',
+      );
       return response;
     } catch (error) {
       console.error('Error creando producto:', error);
+      notificacionesStore.error?.(
+        error?.response?.data?.message || 'No se pudo crear el producto.',
+      );
       throw error;
     } finally {
       cargando.value = false;
@@ -258,9 +275,16 @@ export const useProductosStore = defineStore('productos', () => {
         await obtenerProductoDetalle(productoUuid);
       }
 
+      notificacionesStore.success?.(
+        response?.meta?.message || response?.message || 'Producto actualizado correctamente.',
+      );
+
       return response;
     } catch (error) {
       console.error('Error actualizando producto:', error);
+      notificacionesStore.error?.(
+        error?.response?.data?.message || 'No se pudo actualizar el producto.',
+      );
       throw error;
     } finally {
       cargando.value = false;
@@ -282,9 +306,16 @@ export const useProductosStore = defineStore('productos', () => {
         limit: limit.value,
       });
 
+      notificacionesStore.success?.(
+        response?.meta?.message || response?.message || 'Status actualizado correctamente.',
+      );
+
       return response;
     } catch (error) {
       console.error('Error cambiando status del producto:', error);
+      notificacionesStore.error?.(
+        error?.response?.data?.message || 'No se pudo cambiar el status del producto.',
+      );
       throw error;
     } finally {
       cambiandoStatus.value = false;
@@ -309,9 +340,16 @@ export const useProductosStore = defineStore('productos', () => {
         limit: limit.value,
       });
 
+      notificacionesStore.success?.(
+        response?.meta?.message || response?.message || 'Stock registrado correctamente.',
+      );
+
       return response;
     } catch (error) {
       console.error('Error registrando alta manual de stock:', error);
+      notificacionesStore.error?.(
+        error?.response?.data?.message || 'No se pudo registrar el stock.',
+      );
       throw error;
     } finally {
       guardandoStock.value = false;
@@ -329,9 +367,16 @@ export const useProductosStore = defineStore('productos', () => {
         obtenerLotesProducto(productoUuid),
       ]);
 
+      notificacionesStore.success?.(
+        response?.meta?.message || response?.message || 'Status del lote actualizado correctamente.',
+      );
+
       return response;
     } catch (error) {
       console.error('Error cambiando status del lote:', error);
+      notificacionesStore.error?.(
+        error?.response?.data?.message || 'No se pudo cambiar el status del lote.',
+      );
       throw error;
     } finally {
       cargandoLotes.value = false;
@@ -350,7 +395,6 @@ export const useProductosStore = defineStore('productos', () => {
     productoDetalle,
     stockProducto,
     lotesProducto,
-    proveedores,
     almacenes,
     proveedoresOptions,
     almacenesOptions,

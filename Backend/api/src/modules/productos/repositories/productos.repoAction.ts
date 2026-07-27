@@ -10,30 +10,32 @@ export class ProductosRepoAction {
 
     async insertarProducto(nuevoProducto: any): Promise<any> {
         const trx = await this.knex.transaction();
+
         try {
-            // 1. Insertar producto
+            const { proveedor_id, ...productoData } = nuevoProducto;
+
             const [{ producto_id, producto_uuid }] = await trx('productos')
-                .insert(nuevoProducto)
+                .insert(productoData)
                 .returning(['producto_id', 'producto_uuid']);
 
-            // 2. Relación proveedor ↔ producto
-            await trx('rel_proveedores_productos').insert({
-                producto_id,
-                proveedor_id: nuevoProducto.proveedor_id,
-                usuario_creacion: nuevoProducto.usuario_creacion,
-                usuario_actualizacion: null,
-                fecha_creacion: new Date(),
-                fecha_actualizacion: null,
-            });
+            if (proveedor_id) {
+                await trx('rel_proveedores_productos').insert({
+                    producto_id,
+                    proveedor_id,
+                    usuario_creacion: productoData.usuario_creacion,
+                    usuario_actualizacion: null,
+                    fecha_creacion: new Date(),
+                    fecha_actualizacion: null,
+                });
+            }
 
-            // 3. Precio inicial (precio_publico se convierte en precio de lista base)
             await trx('precios').insert({
                 producto_id,
-                precio_venta: nuevoProducto.precio_publico,
+                precio_venta: productoData.precio_publico,
                 es_default: true,
                 status: 'activo',
-                con_impuestos: true,   // IVA 16% se calcula en ventas
-                usuario_creacion: nuevoProducto.usuario_creacion,
+                con_impuestos: true,
+                usuario_creacion: productoData.usuario_creacion,
                 usuario_actualizacion: null,
                 fecha_creacion: new Date(),
                 fecha_actualizacion: null,
@@ -41,7 +43,6 @@ export class ProductosRepoAction {
 
             await trx.commit();
 
-            // 4. Retornar producto recién creado
             return await this.knex('productos as p')
                 .select('p.*', 'c.nombre as categoria', 'pr.nombre_comercial as proveedor')
                 .leftJoin('rel_proveedores_productos as rpp', 'rpp.producto_id', 'p.producto_id')

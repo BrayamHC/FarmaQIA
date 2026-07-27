@@ -6,7 +6,6 @@ import {
     FiltrosProductosSchema,
     ProductoResponseSchema,
     ProductosListaResponseSchema,
-    CrearProductoResponseSchema,
     AltaLoteStockSchema,
     AltaLoteStockResponseSchema
 } from './productos.validator';
@@ -17,6 +16,5 @@ export class CambiarStatusProductoDTO extends createZodDto(CambiarStatusProducto
 export class FiltrosProductosDTO extends createZodDto(FiltrosProductosSchema) { }
 export class ProductoResponseDTO extends createZodDto(ProductoResponseSchema) { }
 export class ProductosListaResponseDTO extends createZodDto(ProductosListaResponseSchema) { }
-export class CrearProductoResponseDTO extends createZodDto(CrearProductoResponseSchema) { }
 export class AltaLoteStockDTO extends createZodDto(AltaLoteStockSchema) { }
 export class AltaLoteStockResponseDTO extends createZodDto(AltaLoteStockResponseSchema) { }
