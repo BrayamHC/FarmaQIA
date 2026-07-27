@@ -24,6 +24,8 @@ import { OrdenesCompraModule } from './modules/ordenesCompra/ordenesCompra.modul
 import { CatalogosModule } from './modules/catalogos/catalogos.module';
 import { LotesModule } from './modules/lotes/lotes.module';
 import { VentasModule } from './modules/ventas/ventas.module';
+import { MetricasModule } from './modules/metricas/metricas.module';
+
 
 
 
@@ -45,6 +47,7 @@ import { VentasModule } from './modules/ventas/ventas.module';
         CatalogosModule,
         LotesModule,
         VentasModule,
+        MetricasModule,
         ThrottlerModule.forRoot([
             {
                 ttl: 60000,

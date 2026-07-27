@@ -142,13 +142,17 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useAuthStore } from '@/modules/auth/authStore';
 import { useDashboardStore } from '../dashboardStore';
 
 const authStore = useAuthStore();
 const dashboardStore = useDashboardStore();
+
+onMounted(() => {
+  dashboardStore.obtenerMetricas();
+});
 
 const commonChartOptions = computed(() => ({
   responsive: true,
@@ -277,55 +281,9 @@ const doughnutChartOptions = computed(() => ({
   },
 }));
 
-const ventasChartData = computed(() => ({
-  labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-  datasets: [
-    {
-      label: 'Ventas',
-      data: [12500, 14800, 13600, 17200, 19400, 22100, 20800],
-      borderColor: '#3B82F6',
-      backgroundColor: 'rgba(59, 130, 246, 0.14)',
-      fill: true,
-      tension: 0.38,
-      pointBackgroundColor: '#3B82F6',
-      pointBorderColor: '#ffffff',
-      pointBorderWidth: 2,
-      pointRadius: 4,
-    },
-  ],
-}));
-
-const inventarioChartData = computed(() => ({
-  labels: ['Analgésicos', 'Antibióticos', 'Vitaminas', 'Dermatológicos', 'Otros'],
-  datasets: [
-    {
-      data: [320, 210, 180, 140, 90],
-      backgroundColor: [
-        '#1D4ED8', // blue-700 — el más oscuro/saturado
-        '#3B82F6', // blue-500 — tu --color-primary
-        '#60A5FA', // blue-400 — tu --color-secondary
-        '#93C5FD', // blue-300 — tono claro
-        '#BFDBFE', // blue-200 — el más claro
-      ],
-      borderColor: '#ffffff',
-      borderWidth: 3,
-      hoverOffset: 6,
-    },
-  ],
-}));
-
-const caducidadesChartData = computed(() => ({
-  labels: ['7 días', '15 días', '30 días', '60 días', '90 días'],
-  datasets: [
-    {
-      label: 'Productos por caducar',
-      data: [12, 18, 27, 39, 54],
-      backgroundColor: ['#1D4ED8', '#2563EB', '#3B82F6', '#60A5FA', '#93C5FD'],
-      borderRadius: 10,
-      maxBarThickness: 42,
-    },
-  ],
-}));
+const ventasChartData = computed(() => dashboardStore.ventasChartData);
+const inventarioChartData = computed(() => dashboardStore.inventarioChartData);
+const caducidadesChartData = computed(() => dashboardStore.caducidadesChartData);
 
 const movimientosChartData = computed(() => ({
   labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
