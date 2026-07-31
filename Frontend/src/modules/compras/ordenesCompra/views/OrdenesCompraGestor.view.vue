@@ -44,11 +44,6 @@
             Busca por folio, proveedor o status.
           </p>
         </div>
-
-        <div
-          class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-500">
-          Página {{ paginaActual }}
-        </div>
       </div>
 
       <div class="flex flex-wrap items-end gap-3">
