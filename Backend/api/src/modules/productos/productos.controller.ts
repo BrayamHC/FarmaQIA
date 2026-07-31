@@ -13,6 +13,8 @@ import {
     ProductosListaResponseDTO,
     AltaLoteStockResponseDTO,
     AltaLoteStockDTO,
+    RecomendacionesTagsDTO,
+    RecomendacionesResponseDTO,
 } from './dto/productos.dto';
 import { ProductosCoordinator } from './productos.coordinator';
 
