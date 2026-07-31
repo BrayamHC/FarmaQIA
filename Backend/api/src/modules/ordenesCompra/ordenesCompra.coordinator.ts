@@ -36,15 +36,6 @@ export class OrdenesCompraCoordinator {
             throw new NotFoundException('Almacén no encontrado o no pertenece a la sucursal');
         }
 
-        let serieId: number | null = null;
-        if (body.serie_uuid) {
-            const serie = await this.catalogosService.obtenerSeriePorUUID(body.serie_uuid, sucursalId);
-            if (!serie) throw new NotFoundException('Serie no encontrada');
-            if (!serie.es_activa) {
-                throw new UnprocessableEntityException('La serie seleccionada está inactiva');
-            }
-            serieId = serie.serie_id;
-        }
 
         const partidasProcesadas = await Promise.all(
             body.partidas.map(async (partida) => {
@@ -69,7 +60,6 @@ export class OrdenesCompraCoordinator {
                 sucursal_id: sucursalId,
                 almacen_id: almacen.almacen.almacen_id,
                 proveedor_id: proveedor.proveedor_id,
-                serie_id: serieId,
                 body,
                 partidas: partidasProcesadas,
             },

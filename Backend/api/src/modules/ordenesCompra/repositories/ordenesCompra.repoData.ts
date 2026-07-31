@@ -39,9 +39,6 @@ export class OrdenesCompraRepoData {
                     'p.proveedor_uuid as proveedor_uuid',
                     'p.nombre_comercial as proveedor_nombre',
                     'p.rfc as proveedor_rfc',
-                    's.serie_uuid as serie_uuid',
-                    's.serie as serie',
-                    's.prefijo as serie_prefijo',
                     this.knex.raw(`
                         (
                             SELECT COUNT(*)
@@ -52,7 +49,6 @@ export class OrdenesCompraRepoData {
                 )
                 .join('almacenes as a', 'oc.almacen_id', 'a.almacen_id')
                 .join('proveedores as p', 'oc.proveedor_id', 'p.proveedor_id')
-                .leftJoin('series as s', 'oc.serie_id', 's.serie_id')
                 .where('oc.sucursal_id', filtros.sucursal_id)
                 .orderBy('oc.orden_compra_id', 'desc')
                 .limit(filtros.limit)
@@ -61,7 +57,6 @@ export class OrdenesCompraRepoData {
             let countQuery = this.knex('ordenes_compra as oc')
                 .join('almacenes as a', 'oc.almacen_id', 'a.almacen_id')
                 .join('proveedores as p', 'oc.proveedor_id', 'p.proveedor_id')
-                .leftJoin('series as s', 'oc.serie_id', 's.serie_id')
                 .where('oc.sucursal_id', filtros.sucursal_id)
                 .count('oc.orden_compra_id as total')
                 .first();
@@ -109,13 +104,9 @@ export class OrdenesCompraRepoData {
                     'p.proveedor_uuid as proveedor_uuid',
                     'p.nombre_comercial as proveedor_nombre',
                     'p.rfc as proveedor_rfc',
-                    's.serie_uuid as serie_uuid',
-                    's.serie as serie',
-                    's.prefijo as serie_prefijo',
                 )
                 .join('almacenes as a', 'oc.almacen_id', 'a.almacen_id')
                 .join('proveedores as p', 'oc.proveedor_id', 'p.proveedor_id')
-                .leftJoin('series as s', 'oc.serie_id', 's.serie_id')
                 .where('oc.orden_compra_uuid', uuid)
                 .andWhere('oc.sucursal_id', sucursalId)
                 .first();

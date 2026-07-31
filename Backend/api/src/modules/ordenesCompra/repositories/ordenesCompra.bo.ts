@@ -6,7 +6,6 @@ export class OrdenesCompraBo {
         sucursal_id: number;
         almacen_id: number;
         proveedor_id: number;
-        serie_id: number | null;
         body: any;
         subtotal: number;
         iva: number;
@@ -16,7 +15,6 @@ export class OrdenesCompraBo {
             sucursal_id: data.sucursal_id,
             almacen_id: data.almacen_id,
             proveedor_id: data.proveedor_id,
-            serie_id: data.serie_id,
             fecha_orden: data.body.fecha_orden ?? new Date().toISOString().split('T')[0],
             fecha_entrega_estimada: data.body.fecha_entrega_estimada ?? null,
             condiciones_pago: data.body.condiciones_pago ?? null,

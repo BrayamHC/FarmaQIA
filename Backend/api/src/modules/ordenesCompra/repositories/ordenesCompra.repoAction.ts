@@ -2,49 +2,41 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Knex } from 'knex';
 import { DATABASE_CONNECTION } from 'src/config/database.constants';
 
-
 @Injectable()
 export class OrdenesCompraRepoAction {
-    constructor(@Inject('DATABASE_CONNECTION') private readonly knex: Knex) { }
+    constructor(
+        @Inject(DATABASE_CONNECTION)
+        private readonly knex: Knex,
+    ) { }
 
-    async crearOrdenCompleta(ordenObj: any, partidasBase: any[]): Promise<{ uuid: string; folio_display: string }> {
+    async crearOrdenCompleta(
+        ordenObj: any,
+        partidasBase: any[],
+    ): Promise<{ uuid: string; folio_display: string }> {
         return this.knex.transaction(async (trx) => {
-            let nuevoFolio: number | null = null;
-            let folioDisplay: string | null = null;
+            // Obtener el último folio utilizado
+            const ultimo = await trx('ordenes_compra')
+                .max<{ max: number | string }>('folio_numero as max')
+                .first();
 
-            if (ordenObj.serie_id) {
-                const serie = await trx('series')
-                    .where('serie_id', ordenObj.serie_id)
-                    .forUpdate()
-                    .first();
-
-                if (!serie) {
-                    throw new Error('Serie no encontrada');
-                }
-
-                nuevoFolio = Number(serie.ultimo_folio ?? 0) === 0
-                    ? Number(serie.folio_inicial)
-                    : Number(serie.ultimo_folio) + 1;
-
-                folioDisplay = `${serie.prefijo ?? ''}${String(nuevoFolio).padStart(Number(serie.padding ?? 6), '0')}`;
-
-                await trx('series')
-                    .where('serie_id', ordenObj.serie_id)
-                    .update({
-                        ultimo_folio: nuevoFolio,
-                        fecha_actualizacion: trx.fn.now(),
-                    });
-            }
+            const nuevoFolio = Number(ultimo?.max ?? 0) + 1;
+            const folioDisplay = `OC-PUE-${String(nuevoFolio).padStart(6, '0')}`;
 
             const [ordenCreada] = await trx('ordenes_compra')
                 .insert({
                     ...ordenObj,
+
                     folio_numero: nuevoFolio,
                     folio_display: folioDisplay,
+
                     fecha_creacion: trx.fn.now(),
                     fecha_actualizacion: trx.fn.now(),
                 })
-                .returning(['orden_compra_id', 'orden_compra_uuid', 'folio_display']);
+                .returning([
+                    'orden_compra_id',
+                    'orden_compra_uuid',
+                    'folio_display',
+                ]);
 
             for (const partida of partidasBase) {
                 await trx('partidas_oc').insert({
@@ -65,7 +57,10 @@ export class OrdenesCompraRepoAction {
     async actualizarOrdenCompra(uuid: string, body: any) {
         const [ordenActualizada] = await this.knex('ordenes_compra')
             .where('orden_compra_uuid', uuid)
-            .update(body)
+            .update({
+                ...body,
+                fecha_actualizacion: this.knex.fn.now(),
+            })
             .returning([
                 'orden_compra_uuid',
                 'folio_display',

@@ -1,4 +1,6 @@
-import ComprasHomeView from './views/Compras.view.vue';
+// Frontend/src/modules/compras/compras.routes.js
+import ComprasHomeView from './views/Compras.view.vue'
+import ordenesCompraRoutes from './ordenesCompra/ordenesCompra.routes.js'
 
 export default [
   {
@@ -7,9 +9,5 @@ export default [
     component: ComprasHomeView,
     meta: { title: 'Compras | FarmaQ IA' },
   },
-  // Rutas de submódulos — activar cuando estén implementados
-  // { path: '/compras/ordenes',      name: 'OrdenesCompra',  component: () => import('./views/OrdenesCompra.view.vue') },
-  // { path: '/compras/proveedores',  name: 'Proveedores',    component: () => import('./views/Proveedores.view.vue')   },
-  // { path: '/compras/ingresos',     name: 'OrdenesIngreso', component: () => import('./views/OrdenesIngreso.view.vue') },
-  // { path: '/compras/analisis',     name: 'ComprasAnalisis',component: () => import('./views/ComprasAnalisis.view.vue') },
-];
+  ...ordenesCompraRoutes,
+]

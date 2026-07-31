@@ -26,7 +26,6 @@ export const ActualizarPartidaOCSchema = z.object({
 export const OrdenCompraBaseSchema = z.object({
     almacen_uuid: z.string().uuid('UUID de almacén inválido'),
     proveedor_uuid: z.string().uuid('UUID de proveedor inválido'),
-    serie_uuid: z.string().uuid('UUID de serie inválido').optional(),
 
     fecha_orden: z
         .string()
@@ -43,7 +42,7 @@ export const OrdenCompraBaseSchema = z.object({
     condiciones_pago: z.string().max(100).optional(),
     moneda: z.enum(['MXN', 'USD', 'EUR']).default('MXN'),
     tipo_cambio: z.coerce.number().positive().default(1),
-    notas: z.string().max(2000).optional(),
+    notas: z.string().max(2000).nullable().optional(),
 });
 
 // POST /ordenes-compra

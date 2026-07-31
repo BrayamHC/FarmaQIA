@@ -62,7 +62,6 @@ export class OrdenesCompraService {
             sucursal_id: number;
             almacen_id: number;
             proveedor_id: number;
-            serie_id: number | null;
             body: any;
             partidas: any[];
         },
