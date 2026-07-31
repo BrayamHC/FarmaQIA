@@ -10,7 +10,7 @@ import comprasRoutes from '../modules/compras/compras.routes';
 import almacenesRoutes from '../modules/almacenes/almacenes.routes';
 import proveedoresRoutes from '../modules/proveedores/proveedores.routes';
 import clientesRoutes from '../modules/clientes/clientes.routes';
-
+import reportesRoutes from '../modules/reportes/reportes.routes';
 
 // ── Placeholder — eliminar cuando el módulo esté implementado ────
 const placeholderView = (title) => ({
@@ -41,6 +41,7 @@ const routes = [
       ...almacenesRoutes,
       ...proveedoresRoutes,
       ...clientesRoutes,
+      ...reportesRoutes,
     ],
   },
 

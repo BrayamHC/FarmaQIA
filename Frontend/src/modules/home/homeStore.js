@@ -31,11 +31,10 @@ export const useHomeStore = defineStore('home', () => {
     },
     {
       titulo: 'Reportes',
-      descripcion: 'Visualización de métricas y análisis de datos operativos.',
+      descripcion: 'Consulte y exporte reportes de inventario, ventas y compras.',
       icono: 'pi pi-chart-bar',
       ruta: '/reportes',
-      color: 'purple',
-      submodulos: ['Ventas', 'Compras', 'Inventario', 'Caducidades'],
+      tags: ['PDF', 'Excel', 'Analítica'],
     },
     {
       titulo: 'Usuarios',

@@ -1,0 +1,382 @@
+.farma-table-shell,
+.card-base {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.farma-table-shell {
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 1rem;
+  background: #ffffff;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.farma-table-content {
+  min-height: 0;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.reportes-table {
+  height: 100%;
+}
+
+.reportes-table :deep(.p-datatable),
+.reportes-table :deep(.p-datatable-wrapper),
+.reportes-table :deep(.p-datatable-table-container) {
+  height: 100%;
+}
+
+.reportes-table :deep(.p-datatable-wrapper) {
+  height: 100%;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-secondary) transparent;
+}
+
+.reportes-table :deep(.p-datatable-wrapper::-webkit-scrollbar) {
+  width: 6px;
+  height: 6px;
+}
+
+.reportes-table :deep(.p-datatable-wrapper::-webkit-scrollbar-track) {
+  background: transparent;
+  border-radius: 9999px;
+}
+
+.reportes-table :deep(.p-datatable-wrapper::-webkit-scrollbar-thumb) {
+  background: var(--color-secondary);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.reportes-table :deep(.p-datatable-wrapper::-webkit-scrollbar-thumb:hover) {
+  background: var(--color-primary);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.reportes-table :deep(.p-datatable-thead > tr > th) {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(96, 165, 250, 0.14);
+  background: var(--color-surface);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.reportes-table :deep(.p-datatable-tbody > tr > td) {
+  padding: 0.72rem 1rem;
+  border-bottom: 1px solid rgba(96, 165, 250, 0.08);
+}
+
+.reportes-table :deep(.p-datatable-tbody > tr:last-child > td) {
+  border-bottom: none;
+}
+
+.reportes-table :deep(.p-datatable-tbody > tr:hover > td) {
+  background: rgba(59, 130, 246, 0.03);
+}
+
+.farma-select-input,
+.farma-input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.85rem;
+  background: #fff;
+  color: #0f172a;
+  padding: 0.625rem 0.9rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  box-shadow: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.farma-select-input:focus,
+.farma-input:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+.input-label {
+  display: block;
+  margin-bottom: 0.45rem;
+}
+
+.farma-btn-limpiar,
+.farma-btn-buscar,
+.farma-btn-export {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.85rem;
+  transition: all 0.18s ease;
+}
+
+.farma-btn-limpiar {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  background: #fff;
+}
+
+.farma-btn-limpiar:hover {
+  background: #f8fafc;
+  color: #334155;
+}
+
+.farma-btn-buscar {
+  min-height: 42px;
+  padding: 0 1rem;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.farma-btn-buscar:hover {
+  background: #1d4ed8;
+}
+
+.farma-btn-export {
+  min-height: 42px;
+  padding: 0 0.95rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.farma-btn-excel {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.farma-btn-excel:hover {
+  background: #d1fae5;
+}
+
+.farma-btn-pdf {
+  background: #fff1f2;
+  color: #be123c;
+  border-color: #fecdd3;
+}
+
+.farma-btn-pdf:hover {
+  background: #ffe4e6;
+}
+
+.farma-paginator-wrap {
+  flex-shrink: 0;
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+  background: #fff;
+  padding: 0.75rem 1rem;
+}
+
+.farma-paginator :deep(.p-paginator) {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.farma-paginator :deep(.p-paginator-page),
+.farma-paginator :deep(.p-paginator-first),
+.farma-paginator :deep(.p-paginator-prev),
+.farma-paginator :deep(.p-paginator-next),
+.farma-paginator :deep(.p-paginator-last) {
+  min-width: 2rem;
+  height: 2rem;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0.65rem;
+  color: #64748b;
+  background: transparent;
+}
+
+.farma-paginator :deep(.p-paginator-page:hover),
+.farma-paginator :deep(.p-paginator-first:hover),
+.farma-paginator :deep(.p-paginator-prev:hover),
+.farma-paginator :deep(.p-paginator-next:hover),
+.farma-paginator :deep(.p-paginator-last:hover) {
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
+}
+
+.farma-paginator :deep(.p-paginator-page.p-highlight) {
+  background: #2563eb !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+.farma-paginator :deep(.p-paginator-current) {
+  margin: 0 0.5rem;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.farma-mobile {
+  padding: 0.9rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.farma-mobile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.farma-mobile-card {
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 1rem;
+  background: #fff;
+  padding: 0.95rem;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.farma-mobile-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.farma-mobile-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding-top: 0.8rem;
+}
+
+.farma-mobile-card__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.farma-mobile-card__label {
+  flex: 0 0 6.5rem;
+  font-size: 0.72rem;
+  line-height: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.farma-mobile-card__value {
+  min-width: 0;
+  flex: 1;
+  text-align: right;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #0f172a;
+}
+
+.farma-mobile-card__value--success {
+  font-weight: 700;
+  color: #047857;
+}
+
+@media (max-width: 768px) {
+  .farma-filtros-bar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    align-items: end;
+  }
+
+  .farma-paginator-wrap {
+    padding: 0.75rem;
+  }
+
+  .farma-paginator :deep(.p-paginator-current) {
+    width: 100%;
+    text-align: center;
+    order: -1;
+    margin: 0 0 0.25rem 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .farma-mobile-card {
+    padding: 0.85rem;
+  }
+
+  .farma-mobile-card__row {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .farma-mobile-card__label,
+  .farma-mobile-card__value {
+    text-align: left;
+  }
+
+  .farma-mobile-card__label {
+    flex: none;
+  }
+}
+.folio-trigger {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+
+.folio-trigger:hover {
+  opacity: 0.95;
+}
+
+.farma-mobile-card__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.85rem;
+  margin-top: 0.85rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.farma-mobile-card__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 0.85rem;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+  transition: all 0.18s ease;
+}
+
+.farma-mobile-card__action:hover {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+@media (max-width: 520px) {
+  .farma-mobile-card__footer {
+    justify-content: stretch;
+  }
+
+  .farma-mobile-card__action {
+    width: 100%;
+    justify-content: center;
+  }
+}
