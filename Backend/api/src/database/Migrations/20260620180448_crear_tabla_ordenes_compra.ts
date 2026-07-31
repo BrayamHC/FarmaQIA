@@ -7,13 +7,6 @@ export async function up(knex: Knex): Promise<void> {
         table.increments('orden_compra_id').primary();
         table.uuid('orden_compra_uuid').unique().notNullable().defaultTo(knex.raw('gen_random_uuid()'));
 
-        table.integer('serie_id')
-            .unsigned()
-            .nullable()
-            .references('serie_id')
-            .inTable('series')
-            .onDelete('RESTRICT');
-
         table.integer('folio_numero').unsigned().nullable();
         table.string('folio_display', 50).nullable();
 
