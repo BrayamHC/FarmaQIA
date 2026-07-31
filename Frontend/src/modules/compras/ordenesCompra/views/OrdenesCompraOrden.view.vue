@@ -45,14 +45,21 @@
       </div>
     </header>
 
-    <Menu ref="menuRef" :model="menuItems" popup :pt="menuPt">
-      <template #item="{ item, props }">
-        <a v-ripple
-          class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
-          :class="{ 'text-rose-600 hover:bg-rose-50 hover:text-rose-700': item.danger }" v-bind="props.action">
-          <i :class="[item.icon, 'text-sm']"></i>
+    <Menu ref="menuRef" :model="accionesMenuItems" popup :pt="{
+      root: { class: 'farma-menu-popup' },
+      list: { class: 'p-1' },
+      item: { class: 'rounded-xl overflow-hidden' },
+      itemLink: { class: '!p-0' },
+      itemLabel: { class: 'sr-only' },
+      separator: { class: 'farma-menu-separator' },
+    }">
+      <template #item="{ item }">
+        <button v-if="!item.separator" type="button"
+          class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40"
+          :class="item.itemClass" :disabled="item.disabled" @click="item.command">
+          <i :class="[item.icon, 'text-sm shrink-0', item.iconClass]"></i>
           <span>{{ item.label }}</span>
-        </a>
+        </button>
       </template>
     </Menu>
 
@@ -193,7 +200,7 @@
 
                   <tbody class="divide-y divide-slate-100">
                     <tr v-if="!partidas.length">
-                      <td :colspan="esCrear ? 5 : 5" class="px-4 py-10 text-center text-sm text-slate-400">
+                      <td :colspan="5" class="px-4 py-10 text-center text-sm text-slate-400">
                         Sin partidas agregadas
                       </td>
                     </tr>
@@ -290,6 +297,15 @@
                 {{ orden.motivo_rechazo }}
               </p>
             </div>
+
+            <div v-if="orden.motivo_cancelacion" class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <p class="text-xs font-semibold uppercase tracking-[0.14em] text-amber-600">
+                Motivo de cancelación
+              </p>
+              <p class="mt-1 text-sm font-medium text-amber-700">
+                {{ orden.motivo_cancelacion }}
+              </p>
+            </div>
           </div>
 
           <button v-if="esCrear" type="submit" class="farma-btn farma-btn-primary mt-5 w-full"
@@ -302,6 +318,135 @@
     </form>
 
     <DialogBuscarProductoOrden v-model:visible="mostrarBuscadorProducto" @seleccionar="agregarProductoDesdeDialog" />
+
+    <Dialog v-model:visible="dialogAutorizarVisible" modal :closable="!store.guardando" :style="{ width: '28rem' }" :pt="{
+      root: { class: 'farma-dialog-root' },
+      mask: { class: 'farma-dialog-mask' },
+      header: { style: 'display:none' },
+      content: { class: 'farma-dialog-content' },
+      footer: { style: 'display:none' },
+    }">
+      <div class="flex items-start gap-4 p-6 pb-4">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100">
+          <i class="pi pi-check-circle text-xl text-emerald-600"></i>
+        </div>
+        <div class="min-w-0">
+          <h3 class="text-base font-bold text-slate-900">Autorizar orden</h3>
+          <p class="mt-1 text-sm leading-relaxed text-slate-500">
+            La orden quedará autorizada y lista para proceder con la recepción de mercancía.
+          </p>
+        </div>
+      </div>
+
+      <div class="mx-6 mb-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Orden</p>
+        <p class="mt-1 text-sm font-semibold text-slate-800">{{ orden?.folio_display || '—' }}</p>
+        <p class="mt-0.5 text-xs text-slate-500">{{ orden?.proveedor_nombre || 'Sin proveedor' }}</p>
+      </div>
+
+      <div class="flex items-center justify-end gap-4 border-t border-slate-100 px-6 py-4">
+        <Button label="Cancelar" :disabled="store.guardando"
+          class="!rounded-lg !bg-slate-100 !border !border-slate-300 !text-slate-700 hover:!bg-slate-200 !px-4 !py-2 !text-sm"
+          @click="dialogAutorizarVisible = false" />
+        <Button :label="store.guardando ? 'Autorizando...' : 'Autorizar'" :loading="store.guardando"
+          class="!rounded-lg !px-4 !py-2 !text-sm !text-white !bg-emerald-600 !border-emerald-600 hover:!bg-emerald-700"
+          @click="confirmarAutorizar" />
+      </div>
+    </Dialog>
+
+    <Dialog v-model:visible="dialogRechazarVisible" modal :closable="!store.guardando" :style="{ width: '28rem' }" :pt="{
+      root: { class: 'farma-dialog-root' },
+      mask: { class: 'farma-dialog-mask' },
+      header: { style: 'display:none' },
+      content: { class: 'farma-dialog-content' },
+      footer: { style: 'display:none' },
+    }">
+      <div class="flex items-start gap-4 p-6 pb-4">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-100">
+          <i class="pi pi-times-circle text-xl text-rose-600"></i>
+        </div>
+        <div class="min-w-0">
+          <h3 class="text-base font-bold text-slate-900">Rechazar orden</h3>
+          <p class="mt-1 text-sm leading-relaxed text-slate-500">
+            Indica el motivo por el que se rechaza esta orden. No podrá ser procesada hasta una nueva revisión.
+          </p>
+        </div>
+      </div>
+
+      <div class="mx-6 mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4">
+        <p class="text-xs font-semibold uppercase tracking-widest text-rose-500">Orden a rechazar</p>
+        <p class="mt-1 text-sm font-semibold text-rose-900">{{ orden?.folio_display || '—' }}</p>
+        <p class="mt-0.5 text-xs text-rose-600">{{ orden?.proveedor_nombre || 'Sin proveedor' }}</p>
+      </div>
+
+      <div class="mx-6 mb-5">
+        <label class="mb-1.5 block text-xs font-medium text-slate-500">
+          Motivo de rechazo <span class="text-rose-500">*</span>
+        </label>
+        <textarea v-model="motivoRechazo" rows="3" placeholder="Describe el motivo del rechazo..."
+          class="farma-textarea farma-input-editing" :disabled="store.guardando" />
+        <p v-if="motivoRechazo.trim() && motivoRechazo.trim().length < 10" class="mt-2 text-xs text-rose-500">
+          El motivo debe contener al menos 10 caracteres.
+        </p>
+      </div>
+
+      <div class="flex items-center justify-end gap-4 border-t border-slate-100 px-6 py-4">
+        <Button label="Cancelar" :disabled="store.guardando"
+          class="!rounded-lg !bg-slate-100 !border !border-slate-300 !text-slate-700 hover:!bg-slate-200 !px-4 !py-2 !text-sm"
+          @click="dialogRechazarVisible = false" />
+        <Button :label="store.guardando ? 'Rechazando...' : 'Rechazar'" :loading="store.guardando"
+          :disabled="motivoRechazo.trim().length < 10"
+          class="!rounded-lg !px-4 !py-2 !text-sm !text-white !bg-rose-600 !border-rose-600 hover:!bg-rose-700"
+          @click="confirmarRechazar" />
+      </div>
+    </Dialog>
+
+    <Dialog v-model:visible="dialogCancelarVisible" modal :closable="!store.guardando" :style="{ width: '28rem' }" :pt="{
+      root: { class: 'farma-dialog-root' },
+      mask: { class: 'farma-dialog-mask' },
+      header: { style: 'display:none' },
+      content: { class: 'farma-dialog-content' },
+      footer: { style: 'display:none' },
+    }">
+      <div class="flex items-start gap-4 p-6 pb-4">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100">
+          <i class="pi pi-ban text-xl text-amber-600"></i>
+        </div>
+        <div class="min-w-0">
+          <h3 class="text-base font-bold text-slate-900">Cancelar orden</h3>
+          <p class="mt-1 text-sm leading-relaxed text-slate-500">
+            Esta acción cancelará la orden de compra. Indica el motivo de cancelación.
+          </p>
+        </div>
+      </div>
+
+      <div class="mx-6 mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <p class="text-xs font-semibold uppercase tracking-widest text-amber-600">Orden a cancelar</p>
+        <p class="mt-1 text-sm font-semibold text-amber-900">{{ orden?.folio_display || '—' }}</p>
+        <p class="mt-0.5 text-xs text-amber-700">{{ orden?.proveedor_nombre || 'Sin proveedor' }}</p>
+      </div>
+
+      <div class="mx-6 mb-5">
+        <label class="mb-1.5 block text-xs font-medium text-slate-500">
+          Motivo de cancelación <span class="text-amber-500">*</span>
+        </label>
+        <textarea v-model="motivoCancelacion" rows="3" placeholder="Describe el motivo de la cancelación..."
+          class="farma-textarea farma-input-editing" :disabled="store.guardando" />
+        <p v-if="motivoCancelacion.trim() && motivoCancelacion.trim().length < 10" class="mt-2 text-xs text-amber-600">
+          El motivo debe contener al menos 10 caracteres.
+        </p>
+      </div>
+
+      <div class="flex items-center justify-end gap-4 border-t border-slate-100 px-6 py-4">
+        <Button label="Volver" :disabled="store.guardando"
+          class="!rounded-lg !bg-slate-100 !border !border-slate-300 !text-slate-700 hover:!bg-slate-200 !px-4 !py-2 !text-sm"
+          @click="dialogCancelarVisible = false" />
+        <Button :label="store.guardando ? 'Cancelando...' : 'Cancelar orden'" :loading="store.guardando"
+          :disabled="motivoCancelacion.trim().length < 10"
+          class="!rounded-lg !px-4 !py-2 !text-sm !text-white !bg-amber-500 !border-amber-500 hover:!bg-amber-600"
+          @click="confirmarCancelar" />
+      </div>
+    </Dialog>
   </section>
 </template>
 
@@ -311,6 +456,8 @@ import { RouterLink, useRouter } from 'vue-router'
 import Menu from 'primevue/menu'
 import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
+import Dialog from 'primevue/dialog'
+import Button from 'primevue/button'
 import Ripple from 'primevue/ripple'
 import { useOrdenesCompraStore } from '../ordenesCompraStore'
 import { useProveedoresStore } from '@/modules/proveedores/proveedoresStore'
@@ -336,6 +483,13 @@ const router = useRouter()
 const menuRef = ref(null)
 const mostrarBuscadorProducto = ref(false)
 const fechaEntregaRef = ref(null)
+
+const dialogAutorizarVisible = ref(false)
+const dialogRechazarVisible = ref(false)
+const dialogCancelarVisible = ref(false)
+
+const motivoRechazo = ref('')
+const motivoCancelacion = ref('')
 
 const esCrear = computed(() => props.modo === 'crear')
 const cargandoDetalle = computed(() => !esCrear.value && store.cargandoDetalle)
@@ -377,6 +531,7 @@ const almacenesOptions = computed(() =>
 const totales = computed(() => {
   const subtotal = partidas.value.reduce((acc, p) => acc + Number(p.subtotal_estimado ?? 0), 0)
   const iva = subtotal * 0.16
+
   return {
     subtotal,
     iva,
@@ -392,17 +547,12 @@ const puedeGuardar = computed(() => {
   )
 })
 
-const menuPt = {
-  root: { class: 'farma-menu-popup' },
-  separator: { class: 'farma-menu-separator' },
-}
-
 const selectPt = {
   root: { class: 'w-full' },
   overlay: { class: 'farma-prime-select-overlay' },
 }
 
-const menuItems = computed(() => {
+const accionesMenuItems = computed(() => {
   const o = orden.value
   if (!o || esCrear.value) return []
 
@@ -412,23 +562,40 @@ const menuItems = computed(() => {
     items.push({
       label: 'Autorizar',
       icon: 'pi pi-check-circle',
-      command: () => accionAutorizar(),
+      iconClass: 'text-emerald-500',
+      itemClass: 'text-black font-bold hover:bg-emerald-50',
+      command: () => {
+        cerrarMenu()
+        dialogAutorizarVisible.value = true
+      },
     })
+
     items.push({
       label: 'Rechazar',
       icon: 'pi pi-times-circle',
-      command: () => accionRechazar(),
-      danger: true,
+      iconClass: 'text-rose-500',
+      itemClass: 'text-black font-bold hover:bg-rose-50',
+      command: () => {
+        cerrarMenu()
+        motivoRechazo.value = ''
+        dialogRechazarVisible.value = true
+      },
     })
   }
 
   if (o.status !== 'cancelada') {
     if (items.length) items.push({ separator: true })
+
     items.push({
       label: 'Cancelar orden',
       icon: 'pi pi-ban',
-      command: () => accionCancelar(),
-      danger: true,
+      iconClass: 'text-amber-500',
+      itemClass: 'text-black font-bold hover:bg-amber-50',
+      command: () => {
+        cerrarMenu()
+        motivoCancelacion.value = ''
+        dialogCancelarVisible.value = true
+      },
     })
   }
 
@@ -436,9 +603,11 @@ const menuItems = computed(() => {
 })
 
 function abrirMenu(event) {
-  if (menuRef.value) {
-    menuRef.value.toggle(event)
-  }
+  menuRef.value?.toggle(event)
+}
+
+function cerrarMenu() {
+  menuRef.value?.hide()
 }
 
 function abrirBuscadorProducto() {
@@ -595,12 +764,7 @@ function construirPayload() {
 async function onSubmit() {
   try {
     const payload = construirPayload()
-
-    console.log('Payload Orden de Compra:', payload)
-    console.log('Payload JSON:', JSON.stringify(payload, null, 2))
-
     const res = await store.crearOrden(payload)
-
     const nuevoUuid = res?.orden?.uuid ?? res?.uuid
 
     if (nuevoUuid) {
@@ -614,34 +778,44 @@ async function onSubmit() {
   }
 }
 
-async function accionAutorizar() {
+async function confirmarAutorizar() {
   if (!props.uuid) return
+
   try {
     await store.autorizarOrden(props.uuid)
     await store.obtenerOrdenPorUuid(props.uuid)
-  } catch { }
+    dialogAutorizarVisible.value = false
+  } catch (error) {
+    console.error('Error al autorizar la orden:', error)
+  }
 }
 
-async function accionRechazar() {
-  if (!props.uuid) return
-  const motivo = window.prompt('Motivo de rechazo:')
-  if (!motivo) return
+async function confirmarRechazar() {
+  const motivo = motivoRechazo.value.trim()
+  if (!props.uuid || motivo.length < 10) return
 
   try {
     await store.rechazarOrden(props.uuid, motivo)
     await store.obtenerOrdenPorUuid(props.uuid)
-  } catch { }
+    dialogRechazarVisible.value = false
+    motivoRechazo.value = ''
+  } catch (error) {
+    console.error('Error al rechazar la orden:', error)
+  }
 }
 
-async function accionCancelar() {
-  if (!props.uuid) return
-  const confirmado = window.confirm('¿Cancelar esta orden de compra?')
-  if (!confirmado) return
+async function confirmarCancelar() {
+  const motivo = motivoCancelacion.value.trim()
+  if (!props.uuid || motivo.length < 10) return
 
   try {
-    await store.cancelarOrden(props.uuid)
+    await store.cancelarOrden(props.uuid, motivo)
     await store.obtenerOrdenPorUuid(props.uuid)
-  } catch { }
+    dialogCancelarVisible.value = false
+    motivoCancelacion.value = ''
+  } catch (error) {
+    console.error('Error al cancelar la orden:', error)
+  }
 }
 
 function formatFechaHora(fecha) {
@@ -1001,6 +1175,20 @@ onMounted(async () => {
 :global(.farma-menu-separator) {
   margin: 0.25rem 0.5rem;
   border-top: 1px solid #e2e8f0;
+}
+
+:global(.farma-dialog-root) {
+  border-radius: 1.25rem !important;
+  overflow: hidden !important;
+}
+
+:global(.farma-dialog-mask) {
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(2px);
+}
+
+:global(.farma-dialog-content) {
+  padding: 0 !important;
 }
 
 @media (max-width: 768px) {

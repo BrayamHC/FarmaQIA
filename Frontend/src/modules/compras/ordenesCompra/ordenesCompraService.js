@@ -27,17 +27,24 @@ export const ordenesCompraService = {
   },
 
   async autorizarOrden(uuid) {
-    const { data } = await api.patch(`${BASE}/${uuid}/autorizar`)
+    const { data } = await api.patch(`${BASE}/${uuid}/autorizar`, {
+      accion: 'autorizar',
+    })
     return data
   },
 
   async rechazarOrden(uuid, payload) {
-    const { data } = await api.patch(`${BASE}/${uuid}/rechazar`, payload)
+    const { data } = await api.patch(`${BASE}/${uuid}/autorizar`, {
+      accion: 'rechazar',
+      motivo_rechazo: payload?.motivo_rechazo,
+    })
     return data
   },
 
-  async cancelarOrden(uuid) {
-    const { data } = await api.patch(`${BASE}/${uuid}/cancelar`)
+  async cancelarOrden(uuid, payload) {
+    const { data } = await api.patch(`${BASE}/${uuid}/cancelar`, {
+      motivo_cancelacion: payload?.motivo_cancelacion,
+    })
     return data
   },
 }

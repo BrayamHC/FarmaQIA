@@ -160,7 +160,10 @@ export const useOrdenesCompraStore = defineStore('ordenesCompra', () => {
     }
   }
 
+  // Fragmento de Frontend/src/modules/compras/ordenesCompra/ordenesCompraStore.js
+
   async function autorizarOrden(uuid) {
+    guardando.value = true
     try {
       const res = await ordenesCompraService.autorizarOrden(uuid)
       notificaciones.success('Orden autorizada correctamente')
@@ -170,10 +173,13 @@ export const useOrdenesCompraStore = defineStore('ordenesCompra', () => {
         e?.response?.data?.message ?? 'Error al autorizar la orden',
       )
       throw e
+    } finally {
+      guardando.value = false
     }
   }
 
   async function rechazarOrden(uuid, motivo) {
+    guardando.value = true
     try {
       const res = await ordenesCompraService.rechazarOrden(uuid, {
         motivo_rechazo: motivo,
@@ -185,12 +191,17 @@ export const useOrdenesCompraStore = defineStore('ordenesCompra', () => {
         e?.response?.data?.message ?? 'Error al rechazar la orden',
       )
       throw e
+    } finally {
+      guardando.value = false
     }
   }
 
-  async function cancelarOrden(uuid) {
+  async function cancelarOrden(uuid, motivoCancelacion) {
+    guardando.value = true
     try {
-      const res = await ordenesCompraService.cancelarOrden(uuid)
+      const res = await ordenesCompraService.cancelarOrden(uuid, {
+        motivo_cancelacion: motivoCancelacion,
+      })
       notificaciones.success('Orden cancelada correctamente')
       return res
     } catch (e) {
@@ -198,6 +209,8 @@ export const useOrdenesCompraStore = defineStore('ordenesCompra', () => {
         e?.response?.data?.message ?? 'Error al cancelar la orden',
       )
       throw e
+    } finally {
+      guardando.value = false
     }
   }
 
