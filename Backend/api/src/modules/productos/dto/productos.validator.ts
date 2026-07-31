@@ -206,6 +206,35 @@ export const AltaLoteStockResponseSchema = z.object({
     }),
 });
 
+export const RecomendacionesTagsSchema = z.object({
+    tags: z.union([
+        z.string().transform((value) =>
+            value.split(',').map((tag) => tag.trim()).filter(Boolean),
+        ),
+        z.array(z.string()),
+    ]),
+    limite: z.coerce.number().int().min(1).max(20).default(5),
+    stock_minimo: z.coerce.number().int().min(1).default(1),
+});
+
+export const RecomendacionProductoSchema = z.object({
+    producto_id: z.number(),
+    uuid: z.string().uuid(),
+    sku: z.string(),
+    nombre: z.string(),
+    presentacion: z.string().nullable(),
+    precio_publico: z.number(),
+    stock_disponible: z.number(),
+    tags: z.array(z.string()),
+    categoria: z.string().nullable(),
+});
+
+export const RecomendacionesTagsResponseSchema = z.object({
+    success: z.boolean(),
+    total: z.number(),
+    productos: z.array(RecomendacionProductoSchema),
+});
+
 
 // ─────────────────────────────────────────────
 // TIPOS INFERIDOS
@@ -215,3 +244,5 @@ export type ActualizarProducto = z.infer<typeof ActualizarProductoSchema>;
 export type FiltrosProductos = z.infer<typeof FiltrosProductosSchema>;
 export type ProductoResponse = z.infer<typeof ProductoResponseSchema>;
 export type AltaLoteStock = z.infer<typeof AltaLoteStockSchema>;
+export type ProductoRecomendadoType = z.infer<typeof ProductoRecomendadoSchema>;
+export type RecomendacionesResponseType = z.infer<typeof RecomendacionesResponseSchema>;

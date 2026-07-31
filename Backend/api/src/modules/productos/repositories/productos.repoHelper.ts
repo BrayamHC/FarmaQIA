@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { Knex } from 'knex';
 
+export interface FiltrosFEFO {
+    tags: string[];
+    limite: number;
+    stock_minimo: number;
+    sucursal_id: number;
+}
+
 @Injectable()
 export class ProductosRepoHelper {
     aplicarFiltros(query: Knex.QueryBuilder, filtros: any): Knex.QueryBuilder {
@@ -70,5 +77,33 @@ export class ProductosRepoHelper {
     ): Knex.QueryBuilder {
         const offset = (page - 1) * limit;
         return query.limit(limit).offset(offset);
+    }
+
+    normalizarTags(tags: string[]): string[] {
+        return (tags ?? [])
+            .map((tag) => tag?.trim().toLowerCase())
+            .filter(Boolean);
+    }
+
+    aplicarFiltroTagsFEFO(
+        query: Knex.QueryBuilder,
+        tags: string[],
+    ): Knex.QueryBuilder {
+        const tagsNormalizados = this.normalizarTags(tags);
+
+        if (!tagsNormalizados.length) {
+            return query.whereRaw('1 = 0');
+        }
+
+        return query.whereRaw(
+            `
+            EXISTS (
+                SELECT 1
+                FROM jsonb_array_elements_text(COALESCE(p.tags::jsonb, '[]'::jsonb)) AS tag
+                WHERE LOWER(tag) = ANY (?)
+            )
+            `,
+            [tagsNormalizados],
+        );
     }
 }

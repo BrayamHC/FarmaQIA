@@ -115,4 +115,23 @@ export class ProductosController {
     ) {
         return this.service.obtenerLotesProducto(uuid, sucursalId);
     }
+
+    @Get('recomendaciones')
+    @ApiOperation({
+        summary: 'Obtener productos recomendados por tags (FEFO) — uso interno IA',
+        description:
+            'Endpoint consumido por el microservicio de IA. Devuelve productos ' +
+            'ordenados por proximidad de caducidad (FEFO) sin exponer dicha información.',
+    })
+    async obtenerRecomendacionesPorTags(
+        @Query() dto: RecomendacionesTagsDTO,
+        @Sucursal('sucursal_id') sucursalId: number,
+    ): Promise<RecomendacionesResponseDTO> {
+        return this.service.obtenerRecomendacionesPorTags(
+            dto.tags,
+            dto.limite,
+            dto.stock_minimo,
+            sucursalId,
+        );
+    }
 }

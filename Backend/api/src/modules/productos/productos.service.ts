@@ -6,6 +6,7 @@ import { FiltrosProductosDTO } from './dto/productos.dto';
 import { ResourceNotFoundException } from 'src/common/exceptions/business.exception';
 import { logSqlError } from 'src/utils/log-sql-error';
 import { DatabaseQueryException } from 'src/common/exceptions/technical.exception';
+import { RecomendacionesResponseType } from './dto/productos.validator';
 
 @Injectable()
 export class ProductosService {
@@ -94,5 +95,25 @@ export class ProductosService {
         }
 
         return this.repoData.obtenerLotesProducto(producto.producto_id);
+    }
+
+    async obtenerRecomendacionesPorTags(
+        tags: string[],
+        limite: number,
+        stock_minimo: number,
+        sucursalId: number,
+    ): Promise<RecomendacionesResponseType> {
+        const productos = await this.repoData.obtenerRecomendacionesFEFO({
+            tags,
+            limite,
+            stock_minimo,
+            sucursal_id: sucursalId,
+        });
+
+        return {
+            success: true,
+            total: productos.length,
+            productos,
+        };
     }
 }

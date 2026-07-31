@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Knex } from 'knex';
 import { DATABASE_CONNECTION } from 'src/config/database.constants';
-import { ProductosRepoHelper } from './productos.repoHelper';
+import { FiltrosFEFO, ProductosRepoHelper } from './productos.repoHelper';
 import { FiltrosProductosDTO } from '../dto/productos.dto';
 import { DatabaseQueryException } from 'src/common/exceptions/technical.exception';
 
@@ -54,23 +54,22 @@ export class ProductosRepoData {
 
             const almacenId = filtros?.almacen_id;
 
-            // Subquery de stock con binding seguro
             const stockSubquery = almacenId
                 ? this.knex.raw(
                     `(
-                    SELECT COALESCE(SUM(sa.stock_actual), 0)
-                    FROM stock_almacen AS sa
-                    WHERE sa.producto_id = p.producto_id
-                    AND sa.almacen_id = ?
-                ) AS stock_total`,
-                    [almacenId]
+                        SELECT COALESCE(SUM(sa.stock_actual), 0)
+                        FROM stock_almacen AS sa
+                        WHERE sa.producto_id = p.producto_id
+                        AND sa.almacen_id = ?
+                    ) AS stock_total`,
+                    [almacenId],
                 )
                 : this.knex.raw(
                     `(
-                    SELECT COALESCE(SUM(sa.stock_actual), 0)
-                    FROM stock_almacen AS sa
-                    WHERE sa.producto_id = p.producto_id
-                ) AS stock_total`
+                        SELECT COALESCE(SUM(sa.stock_actual), 0)
+                        FROM stock_almacen AS sa
+                        WHERE sa.producto_id = p.producto_id
+                    ) AS stock_total`,
                 );
 
             const query = this.knex('productos as p')
@@ -105,11 +104,7 @@ export class ProductosRepoData {
 
             this.helper.aplicarFiltros(query, filtrosEfectivos);
             this.helper.aplicarOrden(query, filtrosEfectivos);
-            this.helper.aplicarPaginacion(
-                query,
-                filtrosEfectivos.page,
-                filtrosEfectivos.limit,
-            );
+            this.helper.aplicarPaginacion(query, filtrosEfectivos.page, filtrosEfectivos.limit);
 
             const queryCount = this.knex('productos as p')
                 .count({ total: 'p.producto_id' })
@@ -323,5 +318,93 @@ export class ProductosRepoData {
                 sucursal_id: sucursalId,
             })
             .first();
+    }
+
+    async obtenerRecomendacionesFEFO(filtros: FiltrosFEFO) {
+        try {
+            const tags = this.helper.normalizarTags(filtros.tags);
+
+            const query = this.knex('productos as p')
+                .select(
+                    'p.producto_id',
+                    'p.producto_uuid',
+                    'p.sku',
+                    'p.nombre',
+                    'p.presentacion',
+                    'p.precio_publico',
+                    'p.tags',
+                    'c.nombre as categoria',
+                    this.knex.raw(`
+                        COALESCE((
+                            SELECT SUM(sa.stock_actual)
+                            FROM stock_almacen AS sa
+                            WHERE sa.producto_id = p.producto_id
+                        ), 0) AS stock_disponible
+                    `),
+                    this.knex.raw(`
+                        (
+                            SELECT MIN(l.fecha_caducidad)
+                            FROM lotes AS l
+                            WHERE l.producto_id = p.producto_id
+                              AND l.status = 'activo'
+                              AND l.cantidad_actual > 0
+                              AND l.fecha_caducidad IS NOT NULL
+                              AND l.fecha_caducidad >= CURRENT_DATE
+                        ) AS proxima_caducidad
+                    `),
+                )
+                .leftJoin('cat_categorias_subcategorias as c', 'c.categoria_id', 'p.categoria_id')
+                .where('p.sucursal_id', filtros.sucursal_id)
+                .where('p.status', 'activo')
+                .modify((qb) => this.helper.aplicarFiltroTagsFEFO(qb, tags))
+                .whereRaw(
+                    `
+                    COALESCE((
+                        SELECT SUM(sa.stock_actual)
+                        FROM stock_almacen AS sa
+                        WHERE sa.producto_id = p.producto_id
+                    ), 0) >= ?
+                    `,
+                    [filtros.stock_minimo],
+                )
+                .orderByRaw(`
+                    CASE
+                        WHEN (
+                            SELECT MIN(l.fecha_caducidad)
+                            FROM lotes AS l
+                            WHERE l.producto_id = p.producto_id
+                              AND l.status = 'activo'
+                              AND l.cantidad_actual > 0
+                              AND l.fecha_caducidad IS NOT NULL
+                              AND l.fecha_caducidad >= CURRENT_DATE
+                        ) IS NULL THEN 1
+                        ELSE 0
+                    END ASC
+                `)
+                .orderBy('proxima_caducidad', 'asc')
+                .orderBy('p.nombre', 'asc')
+                .limit(filtros.limite);
+
+            const rows = await query;
+
+            return rows.map((row) => ({
+                producto_id: row.producto_id,
+                uuid: row.producto_uuid,
+                sku: row.sku,
+                nombre: row.nombre,
+                presentacion: row.presentacion ?? null,
+                precio_publico: Number(row.precio_publico ?? 0),
+                stock_disponible: Number(row.stock_disponible ?? 0),
+                tags: Array.isArray(row.tags)
+                    ? row.tags
+                    : typeof row.tags === 'string'
+                        ? JSON.parse(row.tags)
+                        : [],
+                categoria: row.categoria ?? null,
+            }));
+        } catch (error) {
+            this.logger.error('obtenerRecomendacionesFEFO', error);
+            throw new DatabaseQueryException('Error al obtener recomendaciones FEFO');
+        }
     }
 }

@@ -7,7 +7,9 @@ import {
     ProductoResponseSchema,
     ProductosListaResponseSchema,
     AltaLoteStockSchema,
-    AltaLoteStockResponseSchema
+    AltaLoteStockResponseSchema,
+    RecomendacionesTagsSchema,
+    RecomendacionesResponseSchema
 } from './productos.validator';
 
 export class CrearProductoDTO extends createZodDto(CrearProductoSchema) { }
@@ -18,3 +20,5 @@ export class ProductoResponseDTO extends createZodDto(ProductoResponseSchema) { 
 export class ProductosListaResponseDTO extends createZodDto(ProductosListaResponseSchema) { }
 export class AltaLoteStockDTO extends createZodDto(AltaLoteStockSchema) { }
 export class AltaLoteStockResponseDTO extends createZodDto(AltaLoteStockResponseSchema) { }
+export class RecomendacionesTagsDTO extends createZodDto(RecomendacionesTagsSchema) { }
+export class RecomendacionesResponseDTO extends createZodDto(RecomendacionesResponseSchema) { }
