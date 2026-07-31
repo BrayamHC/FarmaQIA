@@ -338,7 +338,7 @@
                       <div class="rounded-xl border border-white/70 bg-white/80 p-3">
                         <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Clave UM</p>
                         <p class="mt-1 text-sm font-medium text-slate-900">{{ productoDetalle.clave_unidad_medida || '—'
-                          }}
+                        }}
                         </p>
                       </div>
                       <div class="rounded-xl border border-white/70 bg-white/80 p-3">

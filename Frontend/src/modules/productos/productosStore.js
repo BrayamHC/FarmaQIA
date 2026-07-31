@@ -47,7 +47,7 @@ export const useProductosStore = defineStore('productos', () => {
         item.razon_social ||
         item.proveedor ||
         'Proveedor',
-      value: item.proveedor_id,
+      value: item.proveedor_uuid,
     })),
   );
 
