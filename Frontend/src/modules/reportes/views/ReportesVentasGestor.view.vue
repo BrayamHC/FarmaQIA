@@ -58,14 +58,14 @@
         <div class="farma-filtro-principal">
           <label class="input-label text-xs font-medium text-slate-500">Fecha inicio</label>
           <DatePicker v-model="filtros.fecha_inicio" showIcon iconDisplay="input" dateFormat="yy-mm-dd"
-            class="farma-prime-control w-full" :manualInput="false" @date-select="aplicarFiltros"
+            class="farma-prime-control w-full" :manualInput="false" showButtonBar @date-select="aplicarFiltros"
             @clear-click="aplicarFiltros" />
         </div>
 
         <div class="farma-filtro-principal">
           <label class="input-label text-xs font-medium text-slate-500">Fecha fin</label>
           <DatePicker v-model="filtros.fecha_fin" showIcon iconDisplay="input" dateFormat="yy-mm-dd"
-            class="farma-prime-control w-full" :manualInput="false" @date-select="aplicarFiltros"
+            class="farma-prime-control w-full" :manualInput="false" showButtonBar @date-select="aplicarFiltros"
             @clear-click="aplicarFiltros" />
         </div>
 
@@ -347,8 +347,8 @@ async function aplicarFiltros() {
 
 async function limpiarTodo() {
   filtros.value = {
-    fecha_inicio: parseFecha(reportesStore.filtrosVentas.fecha_inicio),
-    fecha_fin: parseFecha(reportesStore.filtrosVentas.fecha_fin),
+    fecha_inicio: null,
+    fecha_fin: null,
     almacen_id: null,
   };
 

@@ -29,7 +29,7 @@
     <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Órdenes</p>
-        <p class="mt-2 text-2xl font-bold text-slate-900">{{ resumen.total_ordenes }}</p>
+        <p class="mt-2 text-2xl font-bold text-slate-900">{{ resumen.total_ordenes || 0 }}</p>
       </article>
 
       <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -52,23 +52,21 @@
       <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <div class="farma-filtro-principal">
           <label class="input-label text-xs font-medium text-slate-500">Fecha inicio</label>
-          <input v-model="filtros.fecha_inicio" type="date" class="farma-input" />
+          <DatePicker v-model="filtros.fecha_inicio" showIcon iconDisplay="input" dateFormat="yy-mm-dd"
+            class="farma-prime-control w-full" :manualInput="false" />
         </div>
 
         <div class="farma-filtro-principal">
           <label class="input-label text-xs font-medium text-slate-500">Fecha fin</label>
-          <input v-model="filtros.fecha_fin" type="date" class="farma-input" />
+          <DatePicker v-model="filtros.fecha_fin" showIcon iconDisplay="input" dateFormat="yy-mm-dd"
+            class="farma-prime-control w-full" :manualInput="false" />
         </div>
 
         <div class="farma-filtro-principal">
           <label class="input-label text-xs font-medium text-slate-500">Almacén</label>
-          <select v-model="filtros.almacen_id" class="farma-select-input">
-            <option value="">Todos</option>
-            <option v-for="almacen in almacenes" :key="almacen.almacen_uuid ?? almacen.almacen_id"
-              :value="almacen.almacen_id">
-              {{ almacen.nombre }}
-            </option>
-          </select>
+          <Select v-model="filtros.almacen_id" :options="almacenesNormalizados" optionLabel="nombre"
+            optionValue="almacen_id" placeholder="Todos" class="farma-prime-control w-full"
+            :disabled="reportesStore.cargandoAlmacenes" :showClear="true" />
         </div>
 
         <div class="farma-filtro-principal">
@@ -79,6 +77,7 @@
               <i class="pi pi-file-excel text-sm"></i>
               <span>Excel</span>
             </button>
+
             <button class="farma-btn-export farma-btn-pdf" :disabled="reportesStore.exportando"
               @click="exportar('pdf')">
               <i class="pi pi-file-pdf text-sm"></i>
@@ -193,7 +192,9 @@
           </Column>
           <Column field="total_estimado" header="Total" style="width: 140px">
             <template #body="{ data }">
-              <span class="text-sm font-semibold text-emerald-700">{{ formatearMoneda(data.total_estimado) }}</span>
+              <span class="text-sm font-semibold text-emerald-700">
+                {{ formatearMoneda(data.total_estimado) }}
+              </span>
             </template>
           </Column>
         </DataTable>
@@ -215,15 +216,36 @@ import { useIsMobile } from '@/composables/useIsMobile';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Paginator from 'primevue/paginator';
+import DatePicker from 'primevue/datepicker';
+import Select from 'primevue/select';
 import { useReportesStore } from '../reportesStore';
 
 const { isMobile } = useIsMobile();
 const reportesStore = useReportesStore();
 
+function parseFecha(valor) {
+  if (!valor) return null;
+
+  const [year, month, day] = String(valor).split('-').map(Number);
+  if (!year || !month || !day) return null;
+
+  return new Date(year, month - 1, day);
+}
+
+function formatearFechaApi(valor) {
+  if (!valor) return undefined;
+
+  const year = valor.getFullYear();
+  const month = `${valor.getMonth() + 1}`.padStart(2, '0');
+  const day = `${valor.getDate()}`.padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
 const filtros = ref({
-  fecha_inicio: reportesStore.filtrosCompras.fecha_inicio || '',
-  fecha_fin: reportesStore.filtrosCompras.fecha_fin || '',
-  almacen_id: reportesStore.filtrosCompras.almacen_id || '',
+  fecha_inicio: parseFecha(reportesStore.filtrosCompras.fecha_inicio),
+  fecha_fin: parseFecha(reportesStore.filtrosCompras.fecha_fin),
+  almacen_id: reportesStore.filtrosCompras.almacen_id ?? null,
 });
 
 const first = ref(0);
@@ -234,6 +256,14 @@ const registros = computed(() => reportesStore.reporteCompras?.items ?? []);
 const resumen = computed(() => reportesStore.reporteCompras?.totales ?? {});
 const totalRegistros = computed(() => registros.value.length);
 
+const almacenesNormalizados = computed(() =>
+  (almacenes.value ?? []).map((almacen) => ({
+    ...almacen,
+    almacen_id: Number(almacen.almacen_id),
+    nombre: almacen.nombre,
+  })),
+);
+
 const registrosPaginados = computed(() => {
   const inicio = first.value;
   const fin = first.value + rows.value;
@@ -242,9 +272,9 @@ const registrosPaginados = computed(() => {
 
 function payloadFiltros() {
   return {
-    fecha_inicio: filtros.value.fecha_inicio || undefined,
-    fecha_fin: filtros.value.fecha_fin || undefined,
-    almacen_id: filtros.value.almacen_id || undefined,
+    fecha_inicio: formatearFechaApi(filtros.value.fecha_inicio),
+    fecha_fin: formatearFechaApi(filtros.value.fecha_fin),
+    almacen_id: filtros.value.almacen_id ?? undefined,
   };
 }
 
@@ -259,10 +289,11 @@ async function aplicarFiltros() {
 
 async function limpiarTodo() {
   filtros.value = {
-    fecha_inicio: '',
-    fecha_fin: '',
-    almacen_id: '',
+    fecha_inicio: null,
+    fecha_fin: null,
+    almacen_id: null,
   };
+
   first.value = 0;
   await cargarDatos();
 }
@@ -298,4 +329,62 @@ onMounted(async () => {
 
 <style scoped>
 @import './shared-reportes.css';
+
+.farma-prime-control {
+  width: 100%;
+}
+
+.farma-prime-control :deep(.p-datepicker),
+.farma-prime-control :deep(.p-select) {
+  width: 100%;
+}
+
+.farma-prime-control :deep(.p-inputtext),
+.farma-prime-control :deep(.p-datepicker-input),
+.farma-prime-control :deep(.p-select),
+.farma-prime-control :deep(.p-select-label),
+.farma-prime-control :deep(.p-select-dropdown) {
+  font-size: 0.875rem;
+}
+
+.farma-prime-control :deep(.p-datepicker-input),
+.farma-prime-control :deep(.p-select) {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #dbe4f0;
+  border-radius: 0.85rem;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: none;
+}
+
+.farma-prime-control :deep(.p-datepicker-input) {
+  padding-left: 0.9rem;
+  padding-right: 2.5rem;
+}
+
+.farma-prime-control :deep(.p-select-label) {
+  padding: 0.625rem 0.9rem;
+  color: #0f172a;
+}
+
+.farma-prime-control :deep(.p-select-dropdown),
+.farma-prime-control :deep(.p-datepicker-dropdown),
+.farma-prime-control :deep(.p-datepicker-input-icon-container) {
+  color: #64748b;
+}
+
+.farma-prime-control :deep(.p-focus),
+.farma-prime-control :deep(.p-datepicker-input:focus),
+.farma-prime-control :deep(.p-select:focus),
+.farma-prime-control :deep(.p-inputtext:focus) {
+  outline: none;
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12) !important;
+}
+
+.farma-prime-control :deep(.p-select.p-disabled),
+.farma-prime-control :deep(.p-datepicker.p-disabled) {
+  opacity: 0.7;
+}
 </style>

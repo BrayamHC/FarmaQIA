@@ -55,22 +55,8 @@
       </article>
     </div>
 
-    <div class="farma-filtros-bar rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_auto]">
-        <div class="farma-filtro-principal">
-          <label class="input-label text-xs font-medium text-slate-500">Fecha inicio</label>
-          <DatePicker v-model="filtros.fecha_inicio" showIcon iconDisplay="input" dateFormat="yy-mm-dd"
-            class="farma-prime-control w-full" :manualInput="false" @date-select="aplicarFiltros"
-            @clear-click="aplicarFiltros" />
-        </div>
-
-        <div class="farma-filtro-principal">
-          <label class="input-label text-xs font-medium text-slate-500">Fecha fin</label>
-          <DatePicker v-model="filtros.fecha_fin" showIcon iconDisplay="input" dateFormat="yy-mm-dd"
-            class="farma-prime-control w-full" :manualInput="false" @date-select="aplicarFiltros"
-            @clear-click="aplicarFiltros" />
-        </div>
-
+    <div class="farma-filtros-bar rounded-2xl p-3">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[1fr_auto]">
         <div class="farma-filtro-principal">
           <label class="input-label text-xs font-medium text-slate-500">Almacén</label>
           <Select v-model="filtros.almacen_id" :options="almacenesNormalizados" optionLabel="nombre"
@@ -98,12 +84,6 @@
 
       <div v-if="!isMobile" class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-          <span class="rounded-full bg-slate-100 px-3 py-1">
-            {{ fechaInicioTexto }}
-          </span>
-          <span class="rounded-full bg-slate-100 px-3 py-1">
-            {{ fechaFinTexto }}
-          </span>
           <span class="rounded-full bg-slate-100 px-3 py-1">
             {{ nombreAlmacenSeleccionado }}
           </span>
@@ -288,7 +268,6 @@ import { useIsMobile } from '@/composables/useIsMobile';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Paginator from 'primevue/paginator';
-import DatePicker from 'primevue/datepicker';
 import Select from 'primevue/select';
 import { useReportesStore } from '../reportesStore';
 import DialogReporteInventarioDetalle from './components/DialogReporteInventarioDetalle.vue';
@@ -296,28 +275,7 @@ import DialogReporteInventarioDetalle from './components/DialogReporteInventario
 const { isMobile } = useIsMobile();
 const reportesStore = useReportesStore();
 
-function parseFecha(valor) {
-  if (!valor) return null;
-
-  const [year, month, day] = String(valor).split('-').map(Number);
-  if (!year || !month || !day) return null;
-
-  return new Date(year, month - 1, day);
-}
-
-function formatearFechaApi(valor) {
-  if (!valor) return undefined;
-
-  const year = valor.getFullYear();
-  const month = `${valor.getMonth() + 1}`.padStart(2, '0');
-  const day = `${valor.getDate()}`.padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
-
 const filtros = ref({
-  fecha_inicio: parseFecha(reportesStore.filtrosInventario.fecha_inicio),
-  fecha_fin: parseFecha(reportesStore.filtrosInventario.fecha_fin),
   almacen_id: reportesStore.filtrosInventario.almacen_id ?? null,
 });
 
@@ -349,9 +307,6 @@ const nombreAlmacenSeleccionado = computed(() => {
   return encontrado?.nombre || 'Almacén seleccionado';
 });
 
-const fechaInicioTexto = computed(() => formatearFechaApi(filtros.value.fecha_inicio) || 'Sin fecha inicio');
-const fechaFinTexto = computed(() => formatearFechaApi(filtros.value.fecha_fin) || 'Sin fecha fin');
-
 const registrosPaginados = computed(() => {
   const inicio = first.value;
   const fin = first.value + rows.value;
@@ -360,8 +315,6 @@ const registrosPaginados = computed(() => {
 
 function payloadFiltros() {
   return {
-    fecha_inicio: formatearFechaApi(filtros.value.fecha_inicio),
-    fecha_fin: formatearFechaApi(filtros.value.fecha_fin),
     almacen_id: filtros.value.almacen_id ?? undefined,
   };
 }
@@ -379,9 +332,7 @@ async function limpiarTodo() {
   reportesStore.resetFiltrosInventario();
 
   filtros.value = {
-    fecha_inicio: parseFecha(reportesStore.filtrosInventario.fecha_inicio),
-    fecha_fin: parseFecha(reportesStore.filtrosInventario.fecha_fin),
-    almacen_id: reportesStore.filtrosInventario.almacen_id,
+    almacen_id: reportesStore.filtrosInventario.almacen_id ?? null,
   };
 
   first.value = 0;
@@ -418,9 +369,7 @@ onMounted(async () => {
   await reportesStore.obtenerInventario(reportesStore.filtrosInventario);
 
   filtros.value = {
-    fecha_inicio: parseFecha(reportesStore.filtrosInventario.fecha_inicio),
-    fecha_fin: parseFecha(reportesStore.filtrosInventario.fecha_fin),
-    almacen_id: reportesStore.filtrosInventario.almacen_id,
+    almacen_id: reportesStore.filtrosInventario.almacen_id ?? null,
   };
 });
 </script>
@@ -492,17 +441,14 @@ onMounted(async () => {
 
 .farma-prime-control :deep(.p-inputtext),
 .farma-prime-control :deep(.p-select-label),
-.farma-prime-control :deep(.p-select-dropdown),
-.farma-prime-control :deep(.p-datepicker-input) {
+.farma-prime-control :deep(.p-select-dropdown) {
   font-size: 0.875rem;
 }
 
-.farma-prime-control :deep(.p-datepicker),
 .farma-prime-control :deep(.p-select) {
   width: 100%;
 }
 
-.farma-prime-control :deep(.p-datepicker-input),
 .farma-prime-control :deep(.p-select),
 .farma-prime-control :deep(.p-inputtext) {
   width: 100%;
@@ -512,11 +458,6 @@ onMounted(async () => {
   background: #fff;
   color: #0f172a;
   box-shadow: none;
-}
-
-.farma-prime-control :deep(.p-datepicker-input) {
-  padding-left: 0.9rem;
-  padding-right: 2.5rem;
 }
 
 .farma-prime-control :deep(.p-select-label) {
@@ -529,13 +470,7 @@ onMounted(async () => {
   color: #64748b;
 }
 
-.farma-prime-control :deep(.p-datepicker-dropdown),
-.farma-prime-control :deep(.p-datepicker-input-icon-container) {
-  color: #64748b;
-}
-
 .farma-prime-control :deep(.p-focus),
-.farma-prime-control :deep(.p-datepicker-input:focus),
 .farma-prime-control :deep(.p-select:focus),
 .farma-prime-control :deep(.p-inputtext:focus) {
   outline: none;
@@ -543,8 +478,7 @@ onMounted(async () => {
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12) !important;
 }
 
-.farma-prime-control :deep(.p-select.p-disabled),
-.farma-prime-control :deep(.p-datepicker.p-disabled) {
+.farma-prime-control :deep(.p-select.p-disabled) {
   opacity: 0.7;
 }
 
