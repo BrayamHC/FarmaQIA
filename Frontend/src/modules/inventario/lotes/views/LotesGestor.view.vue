@@ -1,5 +1,8 @@
 <template>
   <section class="flex h-[calc(100vh-8rem)] flex-col gap-4">
+    <!-- ============================================================
+         HEADER
+    ============================================================ -->
     <header class="flex flex-col gap-3">
       <nav class="flex items-center gap-1.5 text-xs text-slate-400">
         <RouterLink to="/home" class="transition hover:text-slate-600">Inicio</RouterLink>
@@ -26,10 +29,15 @@
       </div>
     </header>
 
+    <!-- ============================================================
+         FILTROS — Desktop completo / Mobile simplificado
+    ============================================================ -->
     <div class="farma-filtros-bar">
-      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+
+      <!-- DESKTOP: todos los filtros -->
+      <div class="hidden md:grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
         <div class="xl:col-span-2">
-          <label class="input-label text-xs font-medium text-slate-500">Búsqueda general</label>
+          <label class="input-label">Búsqueda general</label>
           <div class="relative">
             <i class="pi pi-search farma-search-icon"></i>
             <input v-model="filtros.q" type="text" placeholder="Código de lote, producto o SKU..."
@@ -38,42 +46,36 @@
         </div>
 
         <div>
-          <label class="input-label text-xs font-medium text-slate-500">Código lote</label>
+          <label class="input-label">Código lote</label>
           <input v-model="filtros.codigo_lote" type="text" placeholder="L-2026-01" class="farma-input"
             @input="onBuscarInput" />
         </div>
 
         <div>
-          <label class="input-label text-xs font-medium text-slate-500">Almacén</label>
+          <label class="input-label">Almacén</label>
           <Dropdown v-model="filtros.almacen_uuid" :options="almacenesOptionsConTodos" optionLabel="label"
             optionValue="value" placeholder="Todos" class="farma-dropdown" panelClass="farma-dropdown-panel"
-            @change="onAlmacenChange">
+            appendTo="body" @change="onAlmacenChange">
             <template #value="slotProps">
               <div class="farma-dropdown-value-shell">
                 <span class="farma-dropdown-value-icon">
                   <i class="pi pi-building"></i>
                 </span>
-
                 <span v-if="slotProps.value" class="farma-dropdown-value-text">
                   {{ obtenerNombreAlmacenSeleccionado(slotProps.value) }}
                 </span>
-
                 <span v-else class="farma-dropdown-placeholder-text">
                   Todos los almacenes
                 </span>
               </div>
             </template>
-
             <template #option="slotProps">
               <div class="farma-dropdown-option-shell">
                 <span class="farma-dropdown-option-icon" :class="slotProps.option.value ? 'is-almacen' : 'is-todos'">
                   <i :class="slotProps.option.value ? 'pi pi-building' : 'pi pi-box'"></i>
                 </span>
-
                 <div class="farma-dropdown-option-copy">
-                  <span class="farma-dropdown-option-title">
-                    {{ slotProps.option.label }}
-                  </span>
+                  <span class="farma-dropdown-option-title">{{ slotProps.option.label }}</span>
                   <span class="farma-dropdown-option-subtitle">
                     {{ slotProps.option.value ? 'Filtrar por almacén específico' : 'Sin filtro de almacén' }}
                   </span>
@@ -84,7 +86,7 @@
         </div>
 
         <div>
-          <label class="input-label text-xs font-medium text-slate-500">Status</label>
+          <label class="input-label">Status</label>
           <select v-model="filtros.status" class="farma-select-input" @change="aplicarFiltros">
             <option value="">Todos</option>
             <option value="activo">Activo</option>
@@ -94,6 +96,19 @@
         </div>
       </div>
 
+      <!-- MOBILE: solo búsqueda general -->
+      <div class="md:hidden grid grid-cols-1 gap-3">
+        <div>
+          <label class="input-label">Búsqueda general</label>
+          <div class="relative">
+            <i class="pi pi-search farma-search-icon"></i>
+            <input v-model="filtros.q" type="text" placeholder="Código, producto o SKU..." class="farma-search-input"
+              @input="onBuscarInput" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Acciones de filtro -->
       <div class="mt-3 flex items-center justify-end gap-2">
         <button class="farma-btn-limpiar" title="Limpiar filtros" @click="limpiarTodo">
           <i class="pi pi-filter-slash text-sm"></i>
@@ -105,8 +120,13 @@
       </div>
     </div>
 
+    <!-- ============================================================
+         CONTENIDO PRINCIPAL: tabla (desktop) + cards (mobile)
+    ============================================================ -->
     <article class="card-base farma-table-shell flex min-h-0 flex-1 flex-col">
-      <div class="farma-table-content app-scroll flex-1 min-h-0">
+
+      <!-- ── DESKTOP: DataTable ── -->
+      <div class="farma-table-content app-scroll flex-1 min-h-0 hidden md:flex md:flex-col">
         <DataTable :value="lotesTabla" scrollable scrollHeight="flex" dataKey="lote_uuid"
           :tableStyle="{ minWidth: '1250px' }" :loading="lotesStore.cargando" stripedRows class="lotes-table h-full">
           <template #empty>
@@ -123,6 +143,7 @@
             </div>
           </template>
 
+          <!-- Lote -->
           <Column field="codigo_lote" header="Lote" style="width: 160px">
             <template #body="slotProps">
               <span class="text-sm font-semibold text-slate-800">
@@ -131,10 +152,11 @@
             </template>
           </Column>
 
+          <!-- Producto -->
           <Column field="producto_nombre" header="Producto" style="width: 260px">
             <template #body="slotProps">
-              <div>
-                <p class="text-sm font-semibold text-slate-800">
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-800 truncate">
                   {{ slotProps.data.producto_nombre || '—' }}
                 </p>
                 <p class="text-xs text-slate-400">
@@ -144,14 +166,16 @@
             </template>
           </Column>
 
+          <!-- Almacén -->
           <Column field="almacen_nombre" header="Almacén" style="width: 220px">
             <template #body="slotProps">
-              <span class="text-sm text-slate-600">
+              <span class="text-sm text-slate-600 truncate">
                 {{ slotProps.data.almacen_nombre || '—' }}
               </span>
             </template>
           </Column>
 
+          <!-- Cantidad -->
           <Column field="cantidad_actual" header="Cantidad" style="width: 120px">
             <template #body="slotProps">
               <span class="text-sm text-slate-600">
@@ -160,14 +184,16 @@
             </template>
           </Column>
 
+          <!-- Caducidad -->
           <Column field="fecha_caducidad" header="Caducidad" style="width: 140px">
             <template #body="slotProps">
-              <span class="text-xs text-slate-500">
+              <span class="text-xs font-medium" :class="caducidadClass(slotProps.data.fecha_caducidad)">
                 {{ formatearFechaTexto(slotProps.data.fecha_caducidad) }}
               </span>
             </template>
           </Column>
 
+          <!-- Status -->
           <Column field="status" header="Status" style="width: 120px">
             <template #body="slotProps">
               <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
@@ -177,6 +203,7 @@
             </template>
           </Column>
 
+          <!-- Creación -->
           <Column field="fecha_creacion" header="Creación" style="width: 140px">
             <template #body="slotProps">
               <span class="text-xs text-slate-500">
@@ -184,15 +211,228 @@
               </span>
             </template>
           </Column>
+
+          <!-- Acciones: menú de tres puntos -->
+          <Column header="" style="width: 52px" :frozen="true" alignFrozen="right">
+            <template #body="slotProps">
+              <div class="flex justify-center">
+                <button class="farma-menu-trigger" :aria-label="'Acciones para lote ' + slotProps.data.codigo_lote"
+                  @click="abrirMenu($event, slotProps.data)">
+                  <i class="pi pi-ellipsis-v text-sm"></i>
+                </button>
+              </div>
+            </template>
+          </Column>
         </DataTable>
       </div>
 
+      <!-- ── MOBILE: Cards ── -->
+      <div class="md:hidden flex-1 min-h-0 overflow-y-auto farma-mobile-list">
+        <!-- Loading skeleton -->
+        <template v-if="lotesStore.cargando">
+          <div v-for="n in 5" :key="n" class="farma-lote-card animate-pulse">
+            <div class="h-4 w-24 rounded bg-slate-200 mb-2"></div>
+            <div class="h-3 w-40 rounded bg-slate-100 mb-1"></div>
+            <div class="h-3 w-32 rounded bg-slate-100"></div>
+          </div>
+        </template>
+
+        <!-- Empty state -->
+        <template v-else-if="!lotesTabla.length">
+          <div class="flex flex-col items-center justify-center py-16 text-center px-6">
+            <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+              <i class="pi pi-box text-2xl text-slate-300"></i>
+            </div>
+            <p class="text-sm font-medium text-slate-500">No se encontraron lotes</p>
+            <p class="mt-1 text-xs text-slate-400">Intenta ajustar los filtros de búsqueda</p>
+          </div>
+        </template>
+
+        <!-- Cards -->
+        <template v-else>
+          <div v-for="lote in lotesTabla" :key="lote.lote_uuid" class="farma-lote-card">
+            <!-- Fila superior: código + botón acciones -->
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <div class="min-w-0">
+                <span class="text-sm font-bold text-slate-900 leading-tight block truncate">
+                  {{ lote.codigo_lote || '—' }}
+                </span>
+                <span class="text-xs text-slate-500 truncate block">
+                  {{ lote.producto_nombre || '—' }}
+                </span>
+              </div>
+              <button class="farma-menu-trigger shrink-0" :aria-label="'Acciones para ' + lote.codigo_lote"
+                @click="abrirMenu($event, lote)">
+                <i class="pi pi-ellipsis-v text-sm"></i>
+              </button>
+            </div>
+
+            <!-- Grid de datos del lote -->
+            <div class="farma-lote-card-grid">
+              <div class="farma-lote-card-field">
+                <span class="farma-lote-card-label">SKU</span>
+                <span class="farma-lote-card-value">{{ lote.producto_sku || '—' }}</span>
+              </div>
+              <div class="farma-lote-card-field">
+                <span class="farma-lote-card-label">Almacén</span>
+                <span class="farma-lote-card-value truncate">{{ lote.almacen_nombre || '—' }}</span>
+              </div>
+              <div class="farma-lote-card-field">
+                <span class="farma-lote-card-label">Cantidad</span>
+                <span class="farma-lote-card-value font-semibold text-slate-800">
+                  {{ formatearNumero(lote.cantidad_actual) }}
+                </span>
+              </div>
+              <div class="farma-lote-card-field">
+                <span class="farma-lote-card-label">Caducidad</span>
+                <span class="farma-lote-card-value font-medium" :class="caducidadClass(lote.fecha_caducidad)">
+                  {{ formatearFechaTexto(lote.fecha_caducidad) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Footer: status -->
+            <div class="mt-2.5 flex items-center justify-between">
+              <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                :class="statusClass(lote.status)">
+                {{ capitalizar(lote.status) }}
+              </span>
+              <span class="text-[11px] text-slate-400">
+                {{ formatearFechaTexto(lote.fecha_creacion) }}
+              </span>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- ── Paginador ── -->
       <footer class="farma-paginator-wrap shrink-0">
         <Paginator :first="first" :rows="rows" :totalRecords="totalRegistros" :rowsPerPageOptions="[10, 20, 30]"
           template="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink RowsPerPageDropdown"
           currentPageReportTemplate="{first} - {last} de {totalRecords}" class="farma-paginator" @page="onPage" />
       </footer>
     </article>
+
+    <!-- ============================================================
+         MENÚ POPUP (PrimeVue Menu) — acciones contextuales
+    ============================================================ -->
+    <Menu ref="menuRef" :model="menuItems" popup class="farma-menu-popup" appendTo="body" />
+
+    <!-- ============================================================
+         DIALOG: Ver detalle del lote
+    ============================================================ -->
+    <Dialog v-model:visible="dialogs.detalle" :modal="true" :closable="true" :draggable="false" :dismissableMask="true"
+      class="farma-dialog-root" appendTo="body" :style="{ width: 'clamp(320px, 95vw, 560px)' }">
+      <template #header>
+        <div class="flex items-center gap-3">
+          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600">
+            <i class="pi pi-box text-sm text-white"></i>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-slate-900 leading-tight">
+              {{ loteSeleccionado?.codigo_lote || 'Detalle del Lote' }}
+            </p>
+            <p class="text-xs text-slate-500">Información del lote</p>
+          </div>
+        </div>
+      </template>
+
+      <div v-if="loteSeleccionado" class="farma-dialog-content-shell">
+        <div class="farma-detalle-grid">
+          <div class="farma-detalle-field">
+            <span class="farma-detalle-label">Código lote</span>
+            <span class="farma-detalle-value font-semibold">{{ loteSeleccionado.codigo_lote || '—' }}</span>
+          </div>
+          <div class="farma-detalle-field">
+            <span class="farma-detalle-label">Producto</span>
+            <span class="farma-detalle-value">{{ loteSeleccionado.producto_nombre || '—' }}</span>
+          </div>
+          <div class="farma-detalle-field">
+            <span class="farma-detalle-label">SKU</span>
+            <span class="farma-detalle-value">{{ loteSeleccionado.producto_sku || '—' }}</span>
+          </div>
+          <div class="farma-detalle-field">
+            <span class="farma-detalle-label">Almacén</span>
+            <span class="farma-detalle-value">{{ loteSeleccionado.almacen_nombre || '—' }}</span>
+          </div>
+          <div class="farma-detalle-field">
+            <span class="farma-detalle-label">Cantidad actual</span>
+            <span class="farma-detalle-value font-semibold text-slate-800">
+              {{ formatearNumero(loteSeleccionado.cantidad_actual) }}
+            </span>
+          </div>
+          <div class="farma-detalle-field">
+            <span class="farma-detalle-label">Fecha caducidad</span>
+            <span class="farma-detalle-value font-medium" :class="caducidadClass(loteSeleccionado.fecha_caducidad)">
+              {{ formatearFechaTexto(loteSeleccionado.fecha_caducidad) }}
+            </span>
+          </div>
+          <div class="farma-detalle-field">
+            <span class="farma-detalle-label">Status</span>
+            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
+              :class="statusClass(loteSeleccionado.status)">
+              {{ capitalizar(loteSeleccionado.status) }}
+            </span>
+          </div>
+          <div class="farma-detalle-field">
+            <span class="farma-detalle-label">Fecha creación</span>
+            <span class="farma-detalle-value">{{ formatearFechaTexto(loteSeleccionado.fecha_creacion) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end">
+          <button class="farma-btn-limpiar px-4 gap-2" @click="dialogs.detalle = false">
+            <i class="pi pi-times text-sm"></i>
+            <span class="text-sm font-medium">Cerrar</span>
+          </button>
+        </div>
+      </template>
+    </Dialog>
+
+    <!-- ============================================================
+         DIALOG: Cambiar status del lote
+    ============================================================ -->
+    <Dialog v-model:visible="dialogs.status" :modal="true" :closable="true" :draggable="false" :dismissableMask="true"
+      class="farma-dialog-root" appendTo="body" :style="{ width: 'clamp(300px, 90vw, 420px)' }">
+      <template #header>
+        <div class="flex items-center gap-3">
+          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500">
+            <i class="pi pi-sync text-sm text-white"></i>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-slate-900 leading-tight">Cambiar Status</p>
+            <p class="text-xs text-slate-500">{{ loteSeleccionado?.codigo_lote }}</p>
+          </div>
+        </div>
+      </template>
+
+      <div class="farma-dialog-content-shell">
+        <div>
+          <label class="input-label">Nuevo status</label>
+          <select v-model="formStatus.nuevo_status" class="farma-select-input">
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+            <option value="eliminado">Eliminado</option>
+          </select>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <button class="farma-btn-limpiar px-4 gap-2" @click="dialogs.status = false">
+            <span class="text-sm font-medium">Cancelar</span>
+          </button>
+          <button class="farma-btn-buscar" :disabled="guardandoStatus" @click="confirmarCambioStatus">
+            <i v-if="guardandoStatus" class="pi pi-spin pi-spinner text-sm"></i>
+            <i v-else class="pi pi-check text-sm"></i>
+            <span>{{ guardandoStatus ? 'Guardando...' : 'Confirmar' }}</span>
+          </button>
+        </div>
+      </template>
+    </Dialog>
+
   </section>
 </template>
 
@@ -203,14 +443,18 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Paginator from 'primevue/paginator';
 import Dropdown from 'primevue/dropdown';
+import Menu from 'primevue/menu';
+import Dialog from 'primevue/dialog';
 import { useLotesStore } from '../lotesStore';
 import { useAlmacenesStore } from '@/modules/almacenes/almacenesStore';
 import { useAuthStore } from '@/modules/auth/authStore';
 
+// ── Stores ────────────────────────────────────────────────────────
 const lotesStore = useLotesStore();
 const almacenesStore = useAlmacenesStore();
 const authStore = useAuthStore();
 
+// ── Filtros ───────────────────────────────────────────────────────
 const filtrosIniciales = () => ({
   q: '',
   codigo_lote: '',
@@ -220,14 +464,99 @@ const filtrosIniciales = () => ({
 
 const filtros = ref(filtrosIniciales());
 
+// ── Paginación ────────────────────────────────────────────────────
 const first = ref(0);
 const rows = ref(10);
 let busquedaTimeout = null;
 
+// ── Estado de lote seleccionado ───────────────────────────────────
+const loteSeleccionado = ref(null);
+
+// ── Dialogs ───────────────────────────────────────────────────────
+const dialogs = ref({
+  detalle: false,
+  status: false,
+});
+
+// ── Formulario cambio de status ───────────────────────────────────
+const formStatus = ref({ nuevo_status: 'activo' });
+const guardandoStatus = ref(false);
+
+// ── Menú contextual ───────────────────────────────────────────────
+const menuRef = ref(null);
+
+const menuItems = computed(() => [
+  {
+    label: 'Ver detalle',
+    icon: 'pi pi-eye',
+    command: () => abrirDialogDetalle(),
+  },
+  {
+    label: 'Cambiar status',
+    icon: 'pi pi-sync',
+    command: () => abrirDialogStatus(),
+  },
+  { separator: true },
+  {
+    label: 'Eliminar',
+    icon: 'pi pi-trash',
+    class: 'farma-menu-item-danger',
+    command: () => confirmarEliminar(),
+  },
+]);
+
+function abrirMenu(event, lote) {
+  loteSeleccionado.value = lote;
+  menuRef.value?.toggle(event);
+}
+
+// ── Acciones de menú ──────────────────────────────────────────────
+function abrirDialogDetalle() {
+  dialogs.value.detalle = true;
+}
+
+function abrirDialogStatus() {
+  formStatus.value.nuevo_status = loteSeleccionado.value?.status || 'activo';
+  dialogs.value.status = true;
+}
+
+async function confirmarCambioStatus() {
+  if (!loteSeleccionado.value) return;
+  guardandoStatus.value = true;
+  try {
+    await lotesStore.cambiarStatusLote({
+      lote_uuid: loteSeleccionado.value.lote_uuid,
+      status: formStatus.value.nuevo_status,
+    });
+    dialogs.value.status = false;
+    await cargarLotes();
+  } catch (error) {
+    console.error('Error al cambiar status:', error);
+  } finally {
+    guardandoStatus.value = false;
+  }
+}
+
+async function confirmarEliminar() {
+  if (!loteSeleccionado.value) return;
+  const confirmado = window.confirm(
+    `¿Eliminar el lote "${loteSeleccionado.value.codigo_lote}"? Esta acción no se puede deshacer.`
+  );
+  if (!confirmado) return;
+  try {
+    await lotesStore.eliminarLote(loteSeleccionado.value.lote_uuid);
+    await cargarLotes();
+  } catch (error) {
+    console.error('Error al eliminar lote:', error);
+  }
+}
+
+// ── Computeds de datos ────────────────────────────────────────────
 const totalRegistros = computed(() => Number(lotesStore.total || 0));
 const paginaActual = computed(() => Math.floor(first.value / rows.value) + 1);
 const lotesTabla = computed(() => (lotesStore.cargando ? [] : (lotesStore.lotes ?? [])));
 
+// ── Almacenes ─────────────────────────────────────────────────────
 const almacenesOptions = computed(() =>
   (almacenesStore.almacenes ?? []).map((almacen) => ({
     label: almacen?.nombre || 'Almacén',
@@ -241,11 +570,9 @@ const almacenesOptionsConTodos = computed(() => [
   ...almacenesOptions.value,
 ]);
 
+// ── Helpers ───────────────────────────────────────────────────────
 function obtenerNombreAlmacenSeleccionado(almacenUuid) {
-  const encontrado = almacenesOptionsConTodos.value.find(
-    (item) => item.value === almacenUuid
-  );
-
+  const encontrado = almacenesOptionsConTodos.value.find((item) => item.value === almacenUuid);
   return encontrado?.label || 'Todos los almacenes';
 }
 
@@ -261,11 +588,21 @@ function statusClass(status) {
   return 'bg-slate-100 text-slate-600';
 }
 
+function caducidadClass(fechaCaducidad) {
+  if (!fechaCaducidad) return 'text-slate-500';
+  const hoy = new Date();
+  const caducidad = new Date(fechaCaducidad);
+  const diffDias = Math.floor((caducidad - hoy) / (1000 * 60 * 60 * 24));
+  if (diffDias < 0) return 'text-rose-600';
+  if (diffDias <= 30) return 'text-amber-600';
+  if (diffDias <= 90) return 'text-yellow-600';
+  return 'text-slate-500';
+}
+
 function formatearFechaTexto(value) {
   if (!value) return '—';
   const fecha = new Date(value);
   if (Number.isNaN(fecha.getTime())) return value;
-
   return fecha.toLocaleDateString('es-MX', {
     year: 'numeric',
     month: '2-digit',
@@ -284,42 +621,24 @@ function obtenerAlmacenPrincipalUuid() {
   const almacenPrincipal = almacenesStore.almacenes?.find((almacen) =>
     String(almacen?.nombre || '').toLowerCase().includes('farmacia')
   );
-
   return almacenPrincipal?.almacen_uuid || '';
 }
 
+// ── Consulta API ──────────────────────────────────────────────────
 function construirParamsConsulta() {
   const params = {
     page: paginaActual.value,
     limit: rows.value,
   };
-
-  if (filtros.value.q?.trim()) {
-    params.q = filtros.value.q.trim();
-  }
-
-  if (filtros.value.codigo_lote?.trim()) {
-    params.codigo_lote = filtros.value.codigo_lote.trim();
-  }
-
-  if (filtros.value.almacen_uuid) {
-    params.almacen_uuid = filtros.value.almacen_uuid;
-  }
-
-  if (filtros.value.status) {
-    params.status = filtros.value.status;
-  }
-
+  if (filtros.value.q?.trim()) params.q = filtros.value.q.trim();
+  if (filtros.value.codigo_lote?.trim()) params.codigo_lote = filtros.value.codigo_lote.trim();
+  if (filtros.value.almacen_uuid) params.almacen_uuid = filtros.value.almacen_uuid;
+  if (filtros.value.status) params.status = filtros.value.status;
   return params;
 }
 
 async function cargarAlmacenes() {
-  await almacenesStore.obtenerAlmacenes({
-    page: 1,
-    limit: 100,
-    status: 'activo',
-  });
-
+  await almacenesStore.obtenerAlmacenes({ page: 1, limit: 100, status: 'activo' });
   if (!filtros.value.almacen_uuid) {
     filtros.value.almacen_uuid = obtenerAlmacenPrincipalUuid();
   }
@@ -359,6 +678,7 @@ async function onPage(event) {
   await cargarLotes();
 }
 
+// ── Watchers ──────────────────────────────────────────────────────
 watch(
   () => authStore.sucursalActiva?.sucursal_uuid,
   async (nueva, anterior) => {
@@ -370,6 +690,7 @@ watch(
   }
 );
 
+// ── Lifecycle ─────────────────────────────────────────────────────
 onMounted(async () => {
   await cargarAlmacenes();
   await cargarLotes();
@@ -381,6 +702,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* ─── Filtros bar ─────────────────────────────────────────────── */
 .farma-filtros-bar {
   border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 1rem;
@@ -388,6 +710,7 @@ onBeforeUnmount(() => {
   padding: 1rem;
 }
 
+/* ─── Table shell ─────────────────────────────────────────────── */
 .farma-table-shell {
   border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 1rem;
@@ -400,6 +723,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
+/* ─── DataTable estilos ──────────────────────────────────────── */
 .lotes-table {
   height: 100%;
 }
@@ -464,6 +788,7 @@ onBeforeUnmount(() => {
   background: rgba(59, 130, 246, 0.03);
 }
 
+/* ─── Inputs ─────────────────────────────────────────────────── */
 .farma-search-input,
 .farma-select-input,
 .farma-input {
@@ -478,11 +803,6 @@ onBeforeUnmount(() => {
   line-height: 1.25rem;
   box-shadow: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.farma-search-input,
-.farma-select-input,
-.farma-input {
   padding: 0.625rem 0.9rem;
 }
 
@@ -498,6 +818,7 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
 }
 
+/* ─── Dropdown almacén ───────────────────────────────────────── */
 :deep(.farma-dropdown.p-dropdown) {
   width: 100%;
   min-height: 42px;
@@ -652,6 +973,82 @@ onBeforeUnmount(() => {
   line-height: 1rem;
 }
 
+/* ─── Botón menú (tres puntos) ───────────────────────────────── */
+.farma-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 0.6rem;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease;
+  flex-shrink: 0;
+}
+
+.farma-menu-trigger:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.farma-menu-trigger:active {
+  background: #e2e8f0;
+}
+
+/* ─── Menu popup ────────────────────────────────────────────── */
+:deep(.farma-menu-popup.p-menu) {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.85rem;
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
+  padding: 0.35rem;
+  min-width: 180px;
+}
+
+:deep(.farma-menu-popup .p-menuitem-link) {
+  border-radius: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+:deep(.farma-menu-popup .p-menuitem-link:hover) {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+:deep(.farma-menu-popup .p-menuitem-link .p-menuitem-icon) {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+:deep(.farma-menu-popup .p-menuitem.farma-menu-item-danger .p-menuitem-link) {
+  color: #e11d48;
+}
+
+:deep(.farma-menu-popup .p-menuitem.farma-menu-item-danger .p-menuitem-link:hover) {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+:deep(.farma-menu-popup .p-menuitem.farma-menu-item-danger .p-menuitem-link .p-menuitem-icon) {
+  color: #e11d48;
+}
+
+:deep(.farma-menu-popup .p-menu-separator) {
+  border-top: 1px solid #f1f5f9;
+  margin: 0.3rem 0;
+}
+
+/* ─── Botones ────────────────────────────────────────────────── */
 .farma-search-icon {
   position: absolute;
   left: 0.9rem;
@@ -664,6 +1061,9 @@ onBeforeUnmount(() => {
 .input-label {
   display: block;
   margin-bottom: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
 }
 
 .farma-btn-limpiar,
@@ -696,12 +1096,136 @@ onBeforeUnmount(() => {
   color: #fff;
   font-size: 0.875rem;
   font-weight: 600;
+  border: none;
 }
 
 .farma-btn-buscar:hover {
   background: #1d4ed8;
 }
 
+.farma-btn-buscar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── Mobile list / cards ────────────────────────────────────── */
+.farma-mobile-list {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.farma-lote-card {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 0.95rem;
+  padding: 0.875rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  transition: box-shadow 0.2s ease;
+}
+
+.farma-lote-card:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.farma-lote-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1rem;
+}
+
+.farma-lote-card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.farma-lote-card-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.farma-lote-card-value {
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Dialogs ────────────────────────────────────────────────── */
+:deep(.farma-dialog-root .p-dialog) {
+  border-radius: 1.25rem;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.16);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  overflow: hidden;
+}
+
+:deep(.farma-dialog-root .p-dialog-header) {
+  padding: 1.25rem 1.5rem 0.75rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+  background: #f8fafc;
+}
+
+:deep(.farma-dialog-root .p-dialog-content) {
+  padding: 0;
+  overflow: visible;
+}
+
+:deep(.farma-dialog-root .p-dialog-footer) {
+  padding: 0.875rem 1.5rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.7);
+  background: #f8fafc;
+}
+
+.farma-dialog-content-shell {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow: visible;
+}
+
+/* ─── Detalle grid ───────────────────────────────────────────── */
+.farma-detalle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1.25rem;
+}
+
+@media (max-width: 480px) {
+  .farma-detalle-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.farma-detalle-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.farma-detalle-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.farma-detalle-value {
+  font-size: 0.875rem;
+  color: #334155;
+  line-height: 1.3;
+}
+
+/* ─── Paginador ──────────────────────────────────────────────── */
 .farma-paginator-wrap {
   flex-shrink: 0;
   border-top: 1px solid rgba(226, 232, 240, 0.9);

@@ -1,6 +1,6 @@
 <!-- Frontend/src/modules/compras/ordenesCompra/views/OrdenesCompraGestor.view.vue -->
 <template>
-  <section class="flex min-h-[calc(100vh-8rem)] flex-col gap-5">
+  <section class="flex h-[calc(100vh-8rem)] flex-col gap-5">
     <header class="flex flex-col gap-3">
       <nav class="flex items-center gap-1.5 text-xs text-slate-400">
         <RouterLink to="/home" class="transition hover:text-slate-600">Inicio</RouterLink>
@@ -10,7 +10,7 @@
         <span class="font-medium text-blue-600">Órdenes de Compra</span>
       </nav>
 
-      <div class="flex items-center justify-between gap-4">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div class="flex items-center gap-3">
           <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600">
             <i class="pi pi-file-edit text-base text-white"></i>
@@ -37,57 +37,85 @@
     </header>
 
     <article class="mb-6">
-      <div class="mb-4 flex items-center justify-between">
-        <div>
-          <h2 class="text-sm font-semibold text-slate-900">Filtros de búsqueda</h2>
-          <p class="mt-1 text-xs text-slate-500">
-            Busca por folio, proveedor o status.
-          </p>
+      <template v-if="isMobile">
+        <div class="flex flex-col gap-3">
+          <div>
+            <label class="input-label text-xs font-medium text-slate-500">
+              Búsqueda general
+            </label>
+            <div class="relative">
+              <i class="pi pi-search farma-search-icon"></i>
+              <input v-model="filtros.q" type="text" placeholder="Folio, proveedor, RFC o status..."
+                class="farma-search-input" @input="onBuscarInput" />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2">
+            <button type="button" class="farma-btn-limpiar" title="Limpiar filtros" @click="limpiarTodo">
+              <i class="pi pi-filter-slash text-sm"></i>
+            </button>
+
+            <button type="button" class="farma-btn-buscar" @click="aplicarFiltros">
+              <i class="pi pi-search text-sm"></i>
+              <span>Buscar</span>
+            </button>
+          </div>
         </div>
-      </div>
+      </template>
 
-      <div class="flex flex-wrap items-end gap-3">
-        <div class="w-60">
-          <label class="input-label text-xs font-medium text-slate-500">
-            Folio
-          </label>
-          <input v-model="filtros.folio" type="text" placeholder="OC-PUE-000001" class="farma-input"
-            @input="onBuscarInput" />
+      <template v-else>
+        <div class="mb-4 flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-semibold text-slate-900">Filtros de búsqueda</h2>
+            <p class="mt-1 text-xs text-slate-500">
+              Busca por folio, proveedor o status.
+            </p>
+          </div>
         </div>
 
-        <div class="w-80">
-          <label class="input-label text-xs font-medium text-slate-500">
-            Proveedor
-          </label>
-          <Select v-model="filtros.proveedor_uuid" :options="proveedoresOptions" optionLabel="label" optionValue="value"
-            placeholder="Todos" showClear filter appendTo="self" class="farma-select-field w-full" :pt="selectPt"
-            @before-show="cargarProveedoresLista" @focus="cargarProveedoresLista" @change="aplicarFiltros" />
+        <div class="flex flex-wrap items-end gap-3">
+          <div class="w-60">
+            <label class="input-label text-xs font-medium text-slate-500">
+              Folio
+            </label>
+            <input v-model="filtros.folio" type="text" placeholder="OC-PUE-000001" class="farma-input"
+              @input="onBuscarInput" />
+          </div>
+
+          <div class="w-80">
+            <label class="input-label text-xs font-medium text-slate-500">
+              Proveedor
+            </label>
+            <Select v-model="filtros.proveedor_uuid" :options="proveedoresOptions" optionLabel="label"
+              optionValue="value" placeholder="Todos" showClear filter appendTo="self" class="farma-select-field w-full"
+              :pt="selectPt" @before-show="cargarProveedoresLista" @focus="cargarProveedoresLista"
+              @change="aplicarFiltros" />
+          </div>
+
+          <div class="w-52">
+            <label class="input-label text-xs font-medium text-slate-500">
+              Status
+            </label>
+            <Select v-model="filtros.status" :options="statusOptions" optionLabel="label" optionValue="value"
+              placeholder="Todos" showClear appendTo="self" class="farma-select-field w-full" :pt="selectPt"
+              @change="aplicarFiltros" />
+          </div>
+
+          <button type="button" class="farma-btn farma-btn-ghost h-[42px] px-4" @click="limpiarTodo">
+            <i class="pi pi-filter-slash text-sm"></i>
+            <span>Limpiar</span>
+          </button>
+
+          <button type="button" class="farma-btn farma-btn-primary h-[42px] px-5" @click="aplicarFiltros">
+            <i class="pi pi-search text-sm"></i>
+            <span>Buscar</span>
+          </button>
         </div>
-
-        <div class="w-52">
-          <label class="input-label text-xs font-medium text-slate-500">
-            Status
-          </label>
-          <Select v-model="filtros.status" :options="statusOptions" optionLabel="label" optionValue="value"
-            placeholder="Todos" showClear appendTo="self" class="farma-select-field w-full" :pt="selectPt"
-            @change="aplicarFiltros" />
-        </div>
-
-        <button type="button" class="farma-btn farma-btn-ghost h-[42px] px-4" @click="limpiarTodo">
-          <i class="pi pi-filter-slash text-sm"></i>
-          <span>Limpiar</span>
-        </button>
-
-        <button type="button" class="farma-btn farma-btn-primary h-[42px] px-5" @click="aplicarFiltros">
-          <i class="pi pi-search text-sm"></i>
-          <span>Buscar</span>
-        </button>
-      </div>
+      </template>
     </article>
 
     <article class="card-base farma-table-shell flex min-h-0 flex-1 flex-col overflow-hidden">
-
-      <div class="farma-table-content app-scroll flex-1 min-h-0">
+      <div v-if="!isMobile" class="farma-table-content app-scroll flex-1 min-h-0">
         <DataTable :value="ordenesTabla" scrollable scrollHeight="flex" dataKey="uuid"
           :tableStyle="{ minWidth: '1080px' }" :loading="store.cargandoOrdenes" stripedRows
           class="ordenes-table h-full">
@@ -100,7 +128,7 @@
                 {{ store.cargandoOrdenes ? 'Cargando órdenes...' : 'No se encontraron órdenes' }}
               </p>
               <p class="mt-1 text-xs text-slate-400">
-                {{ store.cargandoOrdenes ? 'Espera un momento' : 'Intenta ajustar los filtros aplicados' }}
+                {{ store.cargandoOrdenes ? 'Espera un momento' : 'Intenta ajustar la búsqueda' }}
               </p>
             </div>
           </template>
@@ -112,7 +140,7 @@
                   {{ data.folio_display || '—' }}
                 </p>
                 <p class="mt-0.5 text-xs text-slate-400">
-                  {{ formatFecha(data.fecha_orden) }}
+                  {{ formatFecha(data.fecha_orden || data.fecha_creacion) }}
                 </p>
               </RouterLink>
             </template>
@@ -177,6 +205,88 @@
             </template>
           </Column>
         </DataTable>
+      </div>
+
+      <div v-else class="farma-mobile-list app-scroll min-h-0 flex-1">
+        <div v-if="store.cargandoOrdenes" class="flex h-full flex-col items-center justify-center py-16 text-center">
+          <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+            <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+          </div>
+          <p class="text-sm font-medium text-slate-500">Cargando órdenes...</p>
+          <p class="mt-1 text-xs text-slate-400">Espera un momento</p>
+        </div>
+
+        <div v-else-if="!ordenesTabla.length"
+          class="flex h-full flex-col items-center justify-center py-16 text-center">
+          <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+            <i class="pi pi-file-edit text-2xl text-slate-300"></i>
+          </div>
+          <p class="text-sm font-medium text-slate-500">No se encontraron órdenes</p>
+          <p class="mt-1 text-xs text-slate-400">Intenta ajustar la búsqueda</p>
+        </div>
+
+        <div v-else class="farma-mobile-cards">
+          <div v-for="item in ordenesTabla" :key="item.uuid" class="farma-orden-card">
+            <div class="farma-orden-card__head">
+              <RouterLink :to="`/compras/ordenes/${item.uuid}`" class="min-w-0 flex-1 text-left">
+                <p class="truncate text-sm font-semibold text-blue-600">
+                  {{ item.folio_display || '—' }}
+                </p>
+                <p class="mt-1 truncate text-xs text-slate-500">
+                  {{ item.proveedor_nombre || 'Sin proveedor' }}
+                </p>
+              </RouterLink>
+
+              <button type="button"
+                class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+                @click="abrirMenu($event, item)">
+                <i class="pi pi-ellipsis-v text-sm"></i>
+              </button>
+            </div>
+
+            <div class="mt-3 flex">
+              <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                :class="statusClass(item.status)">
+                <span class="mr-1.5 h-1.5 w-1.5 rounded-full" :class="statusDot(item.status)"></span>
+                {{ capitalizar(item.status) }}
+              </span>
+            </div>
+
+            <div class="farma-orden-card__grid">
+              <div class="farma-orden-card__item">
+                <span class="farma-orden-card__label">RFC</span>
+                <span class="farma-orden-card__value">{{ item.proveedor_rfc || '—' }}</span>
+              </div>
+
+              <div class="farma-orden-card__item">
+                <span class="farma-orden-card__label">Almacén</span>
+                <span class="farma-orden-card__value">{{ item.almacen_nombre || '—' }}</span>
+              </div>
+
+              <div class="farma-orden-card__item">
+                <span class="farma-orden-card__label">Entrega</span>
+                <span class="farma-orden-card__value">{{ formatFecha(item.fecha_entrega_estimada) }}</span>
+              </div>
+
+              <div class="farma-orden-card__item">
+                <span class="farma-orden-card__label">Partidas</span>
+                <span class="farma-orden-card__value">{{ item.total_partidas ?? 0 }}</span>
+              </div>
+
+              <div class="farma-orden-card__item farma-orden-card__item--full">
+                <span class="farma-orden-card__label">Fecha</span>
+                <span class="farma-orden-card__value">{{ formatFecha(item.fecha_orden || item.fecha_creacion) }}</span>
+              </div>
+
+              <div class="farma-orden-card__item farma-orden-card__item--full">
+                <span class="farma-orden-card__label">Total estimado</span>
+                <span class="farma-orden-card__value farma-orden-card__value--money">
+                  {{ formatMoneda(item.total_estimado) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <footer class="farma-paginator-wrap shrink-0 border-t border-slate-200 bg-white">
@@ -346,9 +456,11 @@ import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
 import { useOrdenesCompraStore } from '../ordenesCompraStore'
+import { useIsMobile } from '@/composables/useIsMobile'
 
 const store = useOrdenesCompraStore()
 const router = useRouter()
+const { isMobile } = useIsMobile()
 
 const menuRef = ref(null)
 const ordenSeleccionada = ref(null)
@@ -360,6 +472,7 @@ const motivoRechazo = ref('')
 const motivoCancelacion = ref('')
 
 const filtros = ref({
+  q: '',
   folio: '',
   proveedor_uuid: '',
   status: '',
@@ -465,23 +578,24 @@ function cerrarMenu() {
   menuRef.value?.hide()
 }
 
+function cargarProveedoresLista() {
+  if (!store.proveedores?.length && typeof store.cargarProveedores === 'function') {
+    store.cargarProveedores()
+  }
+}
+
 async function cargarOrdenes() {
   await store.obtenerOrdenes({
     page: paginaActual.value,
     limit: rows.value,
-    folio: filtros.value.folio || undefined,
-    proveedor_uuid: filtros.value.proveedor_uuid || undefined,
-    status: filtros.value.status || undefined,
+    q: isMobile.value ? (filtros.value.q || undefined) : undefined,
+    folio: !isMobile.value ? (filtros.value.folio || undefined) : undefined,
+    proveedor_uuid: !isMobile.value ? (filtros.value.proveedor_uuid || undefined) : undefined,
+    status: !isMobile.value ? (filtros.value.status || undefined) : undefined,
     fecha_inicio: filtros.value.fecha_inicio || undefined,
     fecha_fin: filtros.value.fecha_fin || undefined,
     sort: filtros.value.sort || undefined,
   })
-}
-
-function cargarProveedoresLista() {
-  if (!store.proveedores.length) {
-    store.cargarProveedores()
-  }
 }
 
 function onBuscarInput() {
@@ -498,6 +612,7 @@ async function aplicarFiltros() {
 
 async function limpiarTodo() {
   filtros.value = {
+    q: '',
     folio: '',
     proveedor_uuid: '',
     status: '',
@@ -621,6 +736,7 @@ onBeforeUnmount(() => {
   text-align: left;
 }
 
+.farma-search-input,
 .farma-input,
 .farma-textarea {
   width: 100%;
@@ -635,11 +751,25 @@ onBeforeUnmount(() => {
   color: #0f172a;
 }
 
+.farma-search-input {
+  padding-left: 2.5rem;
+}
+
+.farma-search-input:focus,
 .farma-input:focus,
 .farma-textarea:focus {
   border-color: #60a5fa;
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
   outline: none;
+}
+
+.farma-search-icon {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 0.85rem;
 }
 
 .farma-textarea {
@@ -657,6 +787,11 @@ onBeforeUnmount(() => {
   border-color: #60a5fa !important;
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12) !important;
   outline: none !important;
+}
+
+.input-label {
+  display: block;
+  margin-bottom: 0.45rem;
 }
 
 .farma-btn {
@@ -700,11 +835,48 @@ onBeforeUnmount(() => {
   border-color: #cbd5e1;
 }
 
+.farma-btn-limpiar,
+.farma-btn-buscar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.85rem;
+  transition: all 0.18s ease;
+}
+
+.farma-btn-limpiar {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  background: #fff;
+}
+
+.farma-btn-limpiar:hover {
+  background: #f8fafc;
+  color: #334155;
+}
+
+.farma-btn-buscar {
+  min-height: 42px;
+  padding: 0 1rem;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.farma-btn-buscar:hover {
+  background: #1d4ed8;
+}
+
 .farma-table-shell {
   border: 1px solid rgba(226, 232, 240, 0.92);
   border-radius: 1.5rem;
   background: #ffffff;
   overflow: hidden;
+  min-height: 0;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
 }
 
@@ -793,6 +965,87 @@ onBeforeUnmount(() => {
   font-weight: 600 !important;
 }
 
+.farma-mobile-list {
+  min-height: 0;
+  flex: 1 1 0%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.875rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.farma-mobile-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: min-content;
+}
+
+.farma-orden-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 1rem;
+  background: #fff;
+  padding: 0.95rem;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.farma-orden-card:hover {
+  border-color: rgba(147, 197, 253, 0.9);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.08);
+}
+
+.farma-orden-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.farma-orden-card__grid {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.farma-orden-card__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.farma-orden-card__item--full {
+  grid-column: 1 / -1;
+}
+
+.farma-orden-card__label {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.farma-orden-card__value {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.farma-orden-card__value--money {
+  color: #047857;
+  font-weight: 700;
+}
+
 :global(.farma-menu-popup) {
   border-radius: 1rem !important;
   border: 1px solid #e2e8f0 !important;
@@ -841,18 +1094,98 @@ onBeforeUnmount(() => {
   padding: 0 !important;
 }
 
+.farma-paginator-wrap {
+  flex-shrink: 0;
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+  background: #fff;
+  padding: 0.75rem 1rem;
+}
+
 :global(.farma-paginator) {
   border: 0 !important;
   background: transparent !important;
-  padding: 0.85rem 1rem !important;
+  padding: 0 !important;
+}
+
+:global(.farma-paginator .p-paginator) {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+:global(.farma-paginator .p-paginator-page),
+:global(.farma-paginator .p-paginator-first),
+:global(.farma-paginator .p-paginator-prev),
+:global(.farma-paginator .p-paginator-next),
+:global(.farma-paginator .p-paginator-last) {
+  min-width: 2rem;
+  height: 2rem;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0.65rem;
+  color: #64748b;
+  background: transparent;
+}
+
+:global(.farma-paginator .p-paginator-page:hover),
+:global(.farma-paginator .p-paginator-first:hover),
+:global(.farma-paginator .p-paginator-prev:hover),
+:global(.farma-paginator .p-paginator-next:hover),
+:global(.farma-paginator .p-paginator-last:hover) {
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
+}
+
+:global(.farma-paginator .p-paginator-page.p-highlight) {
+  background: #2563eb !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+:global(.farma-paginator .p-paginator-current) {
+  margin: 0 0.5rem;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
+  .farma-paginator-wrap {
+    padding: 0.75rem;
+  }
 
-  :global(.ordenes-table .p-datatable-tbody > tr > td),
-  :global(.ordenes-table .p-datatable-thead > tr > th) {
-    padding-left: 0.8rem !important;
-    padding-right: 0.8rem !important;
+  .farma-table-shell {
+    border-radius: 0.875rem;
+  }
+
+  :global(.farma-paginator .p-paginator) {
+    justify-content: center;
+    row-gap: 0.5rem;
+  }
+
+  :global(.farma-paginator .p-paginator-current) {
+    width: 100%;
+    text-align: center;
+    order: -1;
+    margin: 0 0 0.25rem 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .farma-orden-card__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .farma-orden-card__item,
+  .farma-orden-card__item--full {
+    grid-column: auto;
   }
 }
 </style>

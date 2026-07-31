@@ -34,84 +34,109 @@
     </header>
 
     <div class="farma-filtros-bar">
-      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <div>
-          <label class="input-label text-xs font-medium text-slate-500">Nombre</label>
-          <div class="relative">
-            <i class="pi pi-search farma-search-icon"></i>
-            <input v-model="filtros.nombre" type="text" placeholder="Buscar almacén..." class="farma-search-input"
-              @input="onBuscarInput" />
+      <template v-if="isMobile">
+        <div class="grid grid-cols-1 gap-3">
+          <div>
+            <label class="input-label text-xs font-medium text-slate-500">Búsqueda general</label>
+            <div class="relative">
+              <i class="pi pi-search farma-search-icon"></i>
+              <input v-model="filtros.q" type="text" placeholder="Nombre, encargado o status..."
+                class="farma-search-input" @input="onBuscarInput" />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2">
+            <button class="farma-btn-limpiar" title="Limpiar filtros" @click="limpiarTodo">
+              <i class="pi pi-filter-slash text-sm"></i>
+            </button>
+            <button class="farma-btn-buscar" @click="aplicarFiltros">
+              <i class="pi pi-search text-sm"></i>
+              <span>Buscar</span>
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <template v-else>
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <div>
+            <label class="input-label text-xs font-medium text-slate-500">Nombre</label>
+            <div class="relative">
+              <i class="pi pi-search farma-search-icon"></i>
+              <input v-model="filtros.nombre" type="text" placeholder="Buscar almacén..." class="farma-search-input"
+                @input="onBuscarInput" />
+            </div>
+          </div>
+
+          <div>
+            <label class="input-label text-xs font-medium text-slate-500">Encargado</label>
+            <div class="relative">
+              <i class="pi pi-user farma-search-icon"></i>
+              <input v-model="filtros.encargado" type="text" placeholder="Nombre del encargado"
+                class="farma-search-input" @input="onBuscarInput" />
+            </div>
+          </div>
+
+          <div>
+            <label class="input-label text-xs font-medium text-slate-500">Status</label>
+            <select v-model="filtros.status" class="farma-select-input" @change="aplicarFiltros">
+              <option value="">Todos</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+              <option value="eliminado">Eliminado</option>
+            </select>
+          </div>
+
+          <div class="flex items-end justify-end gap-2 xl:col-span-2">
+            <button class="farma-btn-limpiar" title="Limpiar filtros" @click="limpiarTodo">
+              <i class="pi pi-filter-slash text-sm"></i>
+            </button>
+            <button class="farma-btn-buscar" @click="aplicarFiltros">
+              <i class="pi pi-search text-sm"></i>
+              <span>Buscar</span>
+            </button>
           </div>
         </div>
 
-        <div>
-          <label class="input-label text-xs font-medium text-slate-500">Encargado</label>
-          <div class="relative">
-            <i class="pi pi-user farma-search-icon"></i>
-            <input v-model="filtros.encargado" type="text" placeholder="Nombre del encargado" class="farma-search-input"
-              @input="onBuscarInput" />
+        <div class="farma-filtros-activos-reserva">
+          <div v-if="hayFiltrosActivos" class="flex flex-wrap items-center gap-1.5">
+            <span class="text-xs font-medium text-slate-400">Filtros activos</span>
+
+            <span v-if="filtros.nombre"
+              class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+              <i class="pi pi-search text-[10px]"></i>
+              {{ filtros.nombre }}
+              <button class="ml-0.5 hover:text-blue-900" @click="limpiarFiltro('nombre')">
+                <i class="pi pi-times text-[10px]"></i>
+              </button>
+            </span>
+
+            <span v-if="filtros.encargado"
+              class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+              <i class="pi pi-user text-[10px]"></i>
+              {{ filtros.encargado }}
+              <button class="ml-0.5 hover:text-blue-900" @click="limpiarFiltro('encargado')">
+                <i class="pi pi-times text-[10px]"></i>
+              </button>
+            </span>
+
+            <span v-if="filtros.status"
+              class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+              <i class="pi pi-tag text-[10px]"></i>
+              {{ capitalizar(filtros.status) }}
+              <button class="ml-0.5 hover:text-blue-900" @click="limpiarFiltro('status')">
+                <i class="pi pi-times text-[10px]"></i>
+              </button>
+            </span>
           </div>
         </div>
-
-        <div>
-          <label class="input-label text-xs font-medium text-slate-500">Status</label>
-          <select v-model="filtros.status" class="farma-select-input" @change="aplicarFiltros">
-            <option value="">Todos</option>
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-            <option value="eliminado">Eliminado</option>
-          </select>
-        </div>
-
-        <div class="flex items-end justify-end gap-2 xl:col-span-2">
-          <button class="farma-btn-limpiar" title="Limpiar filtros" @click="limpiarTodo">
-            <i class="pi pi-filter-slash text-sm"></i>
-          </button>
-          <button class="farma-btn-buscar" @click="aplicarFiltros">
-            <i class="pi pi-search text-sm"></i>
-            <span>Buscar</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="farma-filtros-activos-reserva">
-        <div v-if="hayFiltrosActivos" class="flex flex-wrap items-center gap-1.5">
-          <span class="text-xs font-medium text-slate-400">Filtros activos</span>
-
-          <span v-if="filtros.nombre"
-            class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-            <i class="pi pi-search text-[10px]"></i>
-            {{ filtros.nombre }}
-            <button class="ml-0.5 hover:text-blue-900" @click="limpiarFiltro('nombre')">
-              <i class="pi pi-times text-[10px]"></i>
-            </button>
-          </span>
-
-          <span v-if="filtros.encargado"
-            class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-            <i class="pi pi-user text-[10px]"></i>
-            {{ filtros.encargado }}
-            <button class="ml-0.5 hover:text-blue-900" @click="limpiarFiltro('encargado')">
-              <i class="pi pi-times text-[10px]"></i>
-            </button>
-          </span>
-
-          <span v-if="filtros.status"
-            class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-            <i class="pi pi-tag text-[10px]"></i>
-            {{ capitalizar(filtros.status) }}
-            <button class="ml-0.5 hover:text-blue-900" @click="limpiarFiltro('status')">
-              <i class="pi pi-times text-[10px]"></i>
-            </button>
-          </span>
-        </div>
-      </div>
+      </template>
     </div>
 
-    <article class="card-base farma-table-shell flex min-h-0 flex-1 flex-col">
-      <div class="farma-table-content app-scroll min-h-0 flex-1">
+    <article class="card-base farma-table-shell flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div v-if="!isMobile" class="farma-table-content app-scroll min-h-0 flex-1">
         <DataTable :value="almacenesTabla" scrollable scrollHeight="flex" dataKey="almacen_uuid"
-          :tableStyle="{ minWidth: '100%' }" :loading="almacenesStore.cargando" stripedRows
+          :tableStyle="{ minWidth: '1000px' }" :loading="almacenesStore.cargando" stripedRows
           class="almacenes-table h-full">
           <template #empty>
             <div class="flex flex-col items-center justify-center py-16 text-center">
@@ -144,7 +169,9 @@
 
           <Column field="descripcion" header="Descripción">
             <template #body="slotProps">
-              <span class="line-clamp-1 text-sm text-slate-500">{{ slotProps.data.descripcion || '—' }}</span>
+              <span class="line-clamp-1 text-sm text-slate-500">
+                {{ slotProps.data.descripcion || '—' }}
+              </span>
             </template>
           </Column>
 
@@ -181,35 +208,89 @@
             </template>
           </Column>
 
-          <Column header="Acciones" style="width: 180px">
+          <Column header="" style="width: 70px; text-align: center">
             <template #body="slotProps">
-              <div class="flex items-center gap-2">
-                <button class="farma-action-btn text-blue-600 hover:bg-blue-50" title="Editar almacén"
-                  @click="abrirEditar(slotProps.data)">
-                  <i class="pi pi-pencil"></i>
-                </button>
-
-                <button v-if="slotProps.data.status === 'activo'"
-                  class="farma-action-btn text-amber-600 hover:bg-amber-50" title="Desactivar"
-                  @click="abrirConfirmacionStatus(slotProps.data, 'inactivo')">
-                  <i class="pi pi-ban"></i>
-                </button>
-
-                <button v-if="slotProps.data.status === 'inactivo'"
-                  class="farma-action-btn text-emerald-600 hover:bg-emerald-50" title="Activar"
-                  @click="abrirConfirmacionStatus(slotProps.data, 'activo')">
-                  <i class="pi pi-check-circle"></i>
-                </button>
-
-                <button v-if="slotProps.data.status !== 'eliminado'"
-                  class="farma-action-btn text-rose-600 hover:bg-rose-50" title="Eliminar"
-                  @click="abrirConfirmacionStatus(slotProps.data, 'eliminado')">
-                  <i class="pi pi-trash"></i>
-                </button>
-              </div>
+              <button type="button"
+                class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-slate-400 transition hover:border-slate-200 hover:bg-slate-50 hover:text-slate-600"
+                @click="abrirMenu($event, slotProps.data)">
+                <i class="pi pi-ellipsis-v text-sm"></i>
+              </button>
             </template>
           </Column>
         </DataTable>
+      </div>
+
+      <div v-else class="farma-mobile-list app-scroll min-h-0 flex-1">
+        <div v-if="almacenesStore.cargando" class="flex flex-col items-center justify-center py-16 text-center">
+          <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+            <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+          </div>
+          <p class="text-sm font-medium text-slate-500">Cargando almacenes...</p>
+          <p class="mt-1 text-xs text-slate-400">Espera un momento</p>
+        </div>
+
+        <div v-else-if="!almacenesTabla.length" class="flex flex-col items-center justify-center py-16 text-center">
+          <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+            <i class="pi pi-building text-2xl text-slate-300"></i>
+          </div>
+          <p class="text-sm font-medium text-slate-500">No se encontraron almacenes</p>
+          <p class="mt-1 text-xs text-slate-400">Intenta ajustar los filtros de búsqueda</p>
+        </div>
+
+        <div v-else class="farma-mobile-cards">
+          <div v-for="item in almacenesTabla" :key="item.almacen_uuid" class="farma-almacen-card">
+            <div class="farma-almacen-card__head">
+              <button type="button" class="min-w-0 flex-1 text-left" @click="abrirDetalle(item)">
+                <p class="truncate text-sm font-semibold text-slate-900">
+                  {{ item.nombre || '—' }}
+                </p>
+                <p class="mt-1 truncate text-xs text-slate-500">
+                  {{ item.sucursal_nombre || 'Sin sucursal' }}
+                </p>
+              </button>
+
+              <button type="button"
+                class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+                @click="abrirMenu($event, item)">
+                <i class="pi pi-ellipsis-v text-sm"></i>
+              </button>
+            </div>
+
+            <div class="mt-3 flex">
+              <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                :class="statusClass(item.status)">
+                {{ capitalizar(item.status) }}
+              </span>
+            </div>
+
+            <div class="farma-almacen-card__grid">
+              <div class="farma-almacen-card__item">
+                <span class="farma-almacen-card__label">Encargado</span>
+                <span class="farma-almacen-card__value">{{ item.encargado || '—' }}</span>
+              </div>
+
+              <div class="farma-almacen-card__item">
+                <span class="farma-almacen-card__label">Teléfono</span>
+                <span class="farma-almacen-card__value">{{ item.telefono || '—' }}</span>
+              </div>
+
+              <div class="farma-almacen-card__item farma-almacen-card__item--full">
+                <span class="farma-almacen-card__label">Dirección</span>
+                <span class="farma-almacen-card__value">{{ item.direccion || '—' }}</span>
+              </div>
+
+              <div class="farma-almacen-card__item farma-almacen-card__item--full">
+                <span class="farma-almacen-card__label">Descripción</span>
+                <span class="farma-almacen-card__value">{{ item.descripcion || 'Sin descripción' }}</span>
+              </div>
+
+              <div class="farma-almacen-card__item">
+                <span class="farma-almacen-card__label">Creación</span>
+                <span class="farma-almacen-card__value">{{ formatearFechaTexto(item.fecha_creacion) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <footer class="farma-paginator-wrap shrink-0">
@@ -218,6 +299,24 @@
           currentPageReportTemplate="{first} - {last} de {totalRecords}" class="farma-paginator" @page="onPage" />
       </footer>
     </article>
+
+    <Menu ref="menuRef" :model="accionesMenuItems" popup :pt="{
+      root: { class: 'farma-menu-popup' },
+      list: { class: 'p-1' },
+      item: { class: 'rounded-xl overflow-hidden' },
+      itemLink: { class: '!p-0' },
+      itemLabel: { class: 'sr-only' },
+      separator: { class: 'farma-menu-separator' },
+    }">
+      <template #item="{ item }">
+        <button v-if="!item.separator" type="button"
+          class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40"
+          :class="item.itemClass" :disabled="item.disabled" @click="item.command">
+          <i :class="[item.icon, 'text-sm shrink-0', item.iconClass]"></i>
+          <span>{{ item.label }}</span>
+        </button>
+      </template>
+    </Menu>
 
     <Dialog v-model:visible="modalVisible" modal appendTo="body" :closable="!guardando" :dismissableMask="!guardando"
       :draggable="false" :style="{ width: 'min(42rem, 96vw)' }" class="farma-dialog" :pt="{
@@ -453,36 +552,28 @@
 
                 <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
                   <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
-                    <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                      Total productos
-                    </p>
+                    <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Total productos</p>
                     <p class="mt-1 text-base font-bold text-slate-900">
                       {{ almacenDetalle.resumen?.total_productos ?? 0 }}
                     </p>
                   </div>
 
                   <div class="rounded-xl border border-blue-100 bg-blue-50/40 p-3.5">
-                    <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">
-                      Stock total
-                    </p>
+                    <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400">Stock total</p>
                     <p class="mt-1 text-base font-bold text-blue-600">
                       {{ formatearNumero(almacenDetalle.resumen?.stock_total_actual ?? 0) }}
                     </p>
                   </div>
 
                   <div class="rounded-xl border border-amber-100 bg-amber-50/50 p-3.5">
-                    <p class="text-[10px] font-semibold uppercase tracking-widest text-amber-500">
-                      Stock bajo
-                    </p>
+                    <p class="text-[10px] font-semibold uppercase tracking-widest text-amber-500">Stock bajo</p>
                     <p class="mt-1 text-base font-bold text-amber-600">
                       {{ almacenDetalle.resumen?.productos_stock_bajo ?? 0 }}
                     </p>
                   </div>
 
                   <div class="rounded-xl border border-rose-100 bg-rose-50/50 p-3.5">
-                    <p class="text-[10px] font-semibold uppercase tracking-widest text-rose-500">
-                      Sin stock
-                    </p>
+                    <p class="text-[10px] font-semibold uppercase tracking-widest text-rose-500">Sin stock</p>
                     <p class="mt-1 text-base font-bold text-rose-600">
                       {{ almacenDetalle.resumen?.productos_sin_stock ?? 0 }}
                     </p>
@@ -492,9 +583,7 @@
 
               <section class="flex min-h-0 flex-1 flex-col">
                 <div class="mb-3 shrink-0">
-                  <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">
-                    Productos asociados
-                  </p>
+                  <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">Productos asociados</p>
                   <p class="mt-1 text-sm text-slate-500">
                     Stock actual, mínimos y máximos configurados.
                   </p>
@@ -581,9 +670,7 @@
               </section>
 
               <section class="shrink-0">
-                <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
-                  Auditoría
-                </p>
+                <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Auditoría</p>
 
                 <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
@@ -620,38 +707,45 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
-import { RouterLink } from 'vue-router';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Paginator from 'primevue/paginator';
-import Dialog from 'primevue/dialog';
-import { useAlmacenesStore } from '../almacenesStore';
-import { useAuthStore } from '@/modules/auth/authStore';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Paginator from 'primevue/paginator'
+import Dialog from 'primevue/dialog'
+import Menu from 'primevue/menu'
+import { useAlmacenesStore } from '../almacenesStore'
+import { useAuthStore } from '@/modules/auth/authStore'
+import { useIsMobile } from '@/composables/useIsMobile'
 
-const almacenesStore = useAlmacenesStore();
-const authStore = useAuthStore();
+const almacenesStore = useAlmacenesStore()
+const authStore = useAuthStore()
+const { isMobile } = useIsMobile()
+
+const menuRef = ref(null)
+const almacenSeleccionado = ref(null)
 
 const filtros = ref({
+  q: '',
   nombre: '',
   encargado: '',
   status: '',
-});
+})
 
-const first = ref(0);
-const rows = ref(10);
-const guardando = ref(false);
-const modalVisible = ref(false);
-const modoEdicion = ref(false);
-const detalleVisible = ref(false);
-const almacenEditando = ref(null);
+const first = ref(0)
+const rows = ref(10)
+const guardando = ref(false)
+const modalVisible = ref(false)
+const modoEdicion = ref(false)
+const detalleVisible = ref(false)
+const almacenEditando = ref(null)
 
-const confirmacionVisible = ref(false);
-const cambiandoStatus = ref(false);
-const almacenConfirmacion = ref(null);
-const statusObjetivo = ref('');
+const confirmacionVisible = ref(false)
+const cambiandoStatus = ref(false)
+const almacenConfirmacion = ref(null)
+const statusObjetivo = ref('')
 
-let busquedaTimeout = null;
+let busquedaTimeout = null
 
 const formInicial = () => ({
   nombre: '',
@@ -659,162 +753,234 @@ const formInicial = () => ({
   encargado: '',
   direccion: '',
   telefono: '',
-});
+})
 
-const form = reactive(formInicial());
+const form = reactive(formInicial())
 const errores = reactive({
   nombre: '',
   descripcion: '',
   encargado: '',
   direccion: '',
   telefono: '',
-});
+})
 
-const totalRegistros = computed(() => Number(almacenesStore.total || 0));
-const paginaActual = computed(() => Math.floor(first.value / rows.value) + 1);
-const almacenesTabla = computed(() => (almacenesStore.cargando ? [] : (almacenesStore.almacenes ?? [])));
-const almacenDetalle = computed(() => almacenesStore.almacenDetalle);
-const hayFiltrosActivos = computed(() => Boolean(filtros.value.nombre || filtros.value.encargado || filtros.value.status));
+const totalRegistros = computed(() => Number(almacenesStore.total || 0))
+const paginaActual = computed(() => Math.floor(first.value / rows.value) + 1)
+const almacenesTabla = computed(() => (almacenesStore.cargando ? [] : (almacenesStore.almacenes ?? [])))
+const almacenDetalle = computed(() => almacenesStore.almacenDetalle)
+
+const hayFiltrosActivos = computed(() =>
+  Boolean(filtros.value.nombre || filtros.value.encargado || filtros.value.status),
+)
 
 const confirmacionTitulo = computed(() => {
-  if (statusObjetivo.value === 'inactivo') return 'Desactivar almacén';
-  if (statusObjetivo.value === 'eliminado') return 'Eliminar almacén';
-  if (statusObjetivo.value === 'activo') return 'Activar almacén';
-  return 'Confirmar acción';
-});
+  if (statusObjetivo.value === 'inactivo') return 'Desactivar almacén'
+  if (statusObjetivo.value === 'eliminado') return 'Eliminar almacén'
+  if (statusObjetivo.value === 'activo') return 'Activar almacén'
+  return 'Confirmar acción'
+})
 
 const confirmacionMensaje = computed(() => {
-  const nombre = almacenConfirmacion.value?.nombre || 'este almacén';
+  const nombre = almacenConfirmacion.value?.nombre || 'este almacén'
 
   if (statusObjetivo.value === 'inactivo') {
-    return `¿Deseas desactivar el almacén "${nombre}"? Podrás activarlo nuevamente más adelante.`;
+    return `¿Deseas desactivar el almacén "${nombre}"? Podrás activarlo nuevamente más adelante.`
   }
 
   if (statusObjetivo.value === 'eliminado') {
-    return `¿Deseas eliminar el almacén "${nombre}"? Esta acción cambiará su estado a eliminado.`;
+    return `¿Deseas eliminar el almacén "${nombre}"? Esta acción cambiará su estado a eliminado.`
   }
 
   if (statusObjetivo.value === 'activo') {
-    return `¿Deseas activar nuevamente el almacén "${nombre}"?`;
+    return `¿Deseas activar nuevamente el almacén "${nombre}"?`
   }
 
-  return 'Confirma la acción seleccionada.';
-});
+  return 'Confirma la acción seleccionada.'
+})
 
 const confirmacionBotonTexto = computed(() => {
-  if (statusObjetivo.value === 'inactivo') return 'Sí, desactivar';
-  if (statusObjetivo.value === 'eliminado') return 'Sí, eliminar';
-  if (statusObjetivo.value === 'activo') return 'Sí, activar';
-  return 'Confirmar';
-});
+  if (statusObjetivo.value === 'inactivo') return 'Sí, desactivar'
+  if (statusObjetivo.value === 'eliminado') return 'Sí, eliminar'
+  if (statusObjetivo.value === 'activo') return 'Sí, activar'
+  return 'Confirmar'
+})
 
 const confirmacionBotonClase = computed(() => {
-  if (statusObjetivo.value === 'eliminado') return 'farma-btn-danger';
-  if (statusObjetivo.value === 'inactivo') return 'farma-btn-warning';
-  return 'farma-btn-success';
-});
+  if (statusObjetivo.value === 'eliminado') return 'farma-btn-danger'
+  if (statusObjetivo.value === 'inactivo') return 'farma-btn-warning'
+  return 'farma-btn-success'
+})
 
 const confirmacionIcono = computed(() => {
-  if (statusObjetivo.value === 'eliminado') return 'pi pi-trash text-white';
-  if (statusObjetivo.value === 'inactivo') return 'pi pi-ban text-white';
-  return 'pi pi-check-circle text-white';
-});
+  if (statusObjetivo.value === 'eliminado') return 'pi pi-trash text-white'
+  if (statusObjetivo.value === 'inactivo') return 'pi pi-ban text-white'
+  return 'pi pi-check-circle text-white'
+})
 
 const confirmacionIconoClase = computed(() => {
-  if (statusObjetivo.value === 'eliminado') return 'bg-rose-600';
-  if (statusObjetivo.value === 'inactivo') return 'bg-amber-500';
-  return 'bg-emerald-600';
-});
+  if (statusObjetivo.value === 'eliminado') return 'bg-rose-600'
+  if (statusObjetivo.value === 'inactivo') return 'bg-amber-500'
+  return 'bg-emerald-600'
+})
+
+const accionesMenuItems = computed(() => {
+  const a = almacenSeleccionado.value
+  if (!a) return []
+
+  const items = [
+    {
+      label: 'Ver detalle',
+      icon: 'pi pi-eye',
+      iconClass: 'text-blue-500',
+      itemClass: 'text-black font-bold hover:bg-blue-50',
+      command: () => {
+        cerrarMenu()
+        abrirDetalle(a)
+      },
+    },
+    {
+      label: 'Editar',
+      icon: 'pi pi-pencil',
+      iconClass: 'text-blue-500',
+      itemClass: 'text-black font-bold hover:bg-blue-50',
+      command: () => {
+        cerrarMenu()
+        abrirEditar(a)
+      },
+    },
+  ]
+
+  if (a.status === 'activo') {
+    items.push({
+      label: 'Desactivar',
+      icon: 'pi pi-ban',
+      iconClass: 'text-amber-500',
+      itemClass: 'text-black font-bold hover:bg-amber-50',
+      command: () => {
+        cerrarMenu()
+        abrirConfirmacionStatus(a, 'inactivo')
+      },
+    })
+  }
+
+  if (a.status === 'inactivo') {
+    items.push({
+      label: 'Activar',
+      icon: 'pi pi-check-circle',
+      iconClass: 'text-emerald-500',
+      itemClass: 'text-black font-bold hover:bg-emerald-50',
+      command: () => {
+        cerrarMenu()
+        abrirConfirmacionStatus(a, 'activo')
+      },
+    })
+  }
+
+  if (a.status !== 'eliminado') {
+    items.push({ separator: true })
+    items.push({
+      label: 'Eliminar',
+      icon: 'pi pi-trash',
+      iconClass: 'text-rose-500',
+      itemClass: 'text-black font-bold hover:bg-rose-50',
+      command: () => {
+        cerrarMenu()
+        abrirConfirmacionStatus(a, 'eliminado')
+      },
+    })
+  }
+
+  return items
+})
 
 function limpiarErrores() {
   Object.keys(errores).forEach((key) => {
-    errores[key] = '';
-  });
+    errores[key] = ''
+  })
 }
 
 function resetForm() {
-  Object.assign(form, formInicial());
-  limpiarErrores();
+  Object.assign(form, formInicial())
+  limpiarErrores()
 }
 
 function capitalizar(valor) {
-  if (!valor) return '—';
-  return String(valor).charAt(0).toUpperCase() + String(valor).slice(1);
+  if (!valor) return '—'
+  return String(valor).charAt(0).toUpperCase() + String(valor).slice(1)
 }
 
 function capitalizarEstadoStock(valor) {
-  if (!valor) return 'Normal';
-  if (valor === 'sin_stock') return 'Sin stock';
-  if (valor === 'stock_bajo') return 'Stock bajo';
-  if (valor === 'bajo') return 'Stock bajo';
-  if (valor === 'sobrestock') return 'Sobrestock';
-  return capitalizar(valor);
+  if (!valor) return 'Normal'
+  if (valor === 'sin_stock') return 'Sin stock'
+  if (valor === 'stock_bajo') return 'Stock bajo'
+  if (valor === 'bajo') return 'Stock bajo'
+  if (valor === 'sobrestock') return 'Sobrestock'
+  return capitalizar(valor)
 }
 
 function statusClass(status) {
-  if (status === 'activo') return 'bg-blue-50 text-blue-700';
-  if (status === 'inactivo') return 'bg-slate-100 text-slate-600';
-  if (status === 'eliminado') return 'bg-rose-50 text-rose-700';
-  return 'bg-slate-100 text-slate-600';
+  if (status === 'activo') return 'bg-blue-50 text-blue-700'
+  if (status === 'inactivo') return 'bg-slate-100 text-slate-600'
+  if (status === 'eliminado') return 'bg-rose-50 text-rose-700'
+  return 'bg-slate-100 text-slate-600'
 }
 
 function stockEstadoClass(status) {
-  if (status === 'sin_stock') return 'bg-rose-50 text-rose-700';
-  if (status === 'stock_bajo' || status === 'bajo') return 'bg-amber-50 text-amber-700';
-  if (status === 'sobrestock') return 'bg-violet-50 text-violet-700';
-  return 'bg-emerald-50 text-emerald-700';
+  if (status === 'sin_stock') return 'bg-rose-50 text-rose-700'
+  if (status === 'stock_bajo' || status === 'bajo') return 'bg-amber-50 text-amber-700'
+  if (status === 'sobrestock') return 'bg-violet-50 text-violet-700'
+  return 'bg-emerald-50 text-emerald-700'
 }
 
 function formatearFechaTexto(value) {
-  if (!value) return '—';
-  const fecha = new Date(value);
-
-  if (Number.isNaN(fecha.getTime())) return value;
+  if (!value) return '—'
+  const fecha = new Date(value)
+  if (Number.isNaN(fecha.getTime())) return value
 
   return fecha.toLocaleDateString('es-MX', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  });
+  })
 }
 
 function formatearNumero(value) {
   return Number(value || 0).toLocaleString('es-MX', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
-  });
+  })
 }
 
 function validarForm() {
-  limpiarErrores();
-  let valido = true;
+  limpiarErrores()
+  let valido = true
 
   if (!form.nombre || form.nombre.trim().length < 3) {
-    errores.nombre = 'El nombre debe tener al menos 3 caracteres';
-    valido = false;
+    errores.nombre = 'El nombre debe tener al menos 3 caracteres'
+    valido = false
   }
 
   if ((form.descripcion || '').length > 500) {
-    errores.descripcion = 'La descripción no puede exceder 500 caracteres';
-    valido = false;
+    errores.descripcion = 'La descripción no puede exceder 500 caracteres'
+    valido = false
   }
 
   if ((form.encargado || '').length > 150) {
-    errores.encargado = 'El encargado no puede exceder 150 caracteres';
-    valido = false;
+    errores.encargado = 'El encargado no puede exceder 150 caracteres'
+    valido = false
   }
 
   if ((form.direccion || '').length > 300) {
-    errores.direccion = 'La dirección no puede exceder 300 caracteres';
-    valido = false;
+    errores.direccion = 'La dirección no puede exceder 300 caracteres'
+    valido = false
   }
 
   if ((form.telefono || '').length > 20) {
-    errores.telefono = 'El teléfono no puede exceder 20 caracteres';
-    valido = false;
+    errores.telefono = 'El teléfono no puede exceder 20 caracteres'
+    valido = false
   }
 
-  return valido;
+  return valido
 }
 
 function buildPayload() {
@@ -824,68 +990,79 @@ function buildPayload() {
     encargado: form.encargado?.trim() || undefined,
     direccion: form.direccion?.trim() || undefined,
     telefono: form.telefono?.trim() || undefined,
-  };
+  }
 
   return Object.fromEntries(
     Object.entries(payload).filter(([, value]) => value !== undefined && value !== '')
-  );
+  )
+}
+
+function abrirMenu(event, almacen) {
+  almacenSeleccionado.value = almacen
+  menuRef.value?.toggle(event)
+}
+
+function cerrarMenu() {
+  menuRef.value?.hide()
 }
 
 async function cargarAlmacenes() {
   await almacenesStore.obtenerAlmacenes({
     page: paginaActual.value,
     limit: rows.value,
-    nombre: filtros.value.nombre || undefined,
-    encargado: filtros.value.encargado || undefined,
-    status: filtros.value.status || undefined,
-  });
+    q: isMobile.value ? (filtros.value.q || undefined) : undefined,
+    nombre: !isMobile.value ? (filtros.value.nombre || undefined) : undefined,
+    encargado: !isMobile.value ? (filtros.value.encargado || undefined) : undefined,
+    status: !isMobile.value ? (filtros.value.status || undefined) : undefined,
+  })
 }
 
 function onBuscarInput() {
-  clearTimeout(busquedaTimeout);
+  clearTimeout(busquedaTimeout)
   busquedaTimeout = setTimeout(() => {
-    aplicarFiltros();
-  }, 350);
+    aplicarFiltros()
+  }, 350)
 }
 
 async function aplicarFiltros() {
-  first.value = 0;
-  await cargarAlmacenes();
+  first.value = 0
+  await cargarAlmacenes()
 }
 
 async function limpiarFiltro(campo) {
-  filtros.value[campo] = '';
-  first.value = 0;
-  await cargarAlmacenes();
+  filtros.value[campo] = ''
+  first.value = 0
+  await cargarAlmacenes()
 }
 
 async function limpiarTodo() {
   filtros.value = {
+    q: '',
     nombre: '',
     encargado: '',
     status: '',
-  };
-  first.value = 0;
-  await cargarAlmacenes();
+  }
+  first.value = 0
+  await cargarAlmacenes()
 }
 
 async function onPage(event) {
-  first.value = event.first;
-  rows.value = event.rows;
-  await cargarAlmacenes();
+  first.value = event.first
+  rows.value = event.rows
+  await cargarAlmacenes()
 }
 
 function abrirCrear() {
-  modoEdicion.value = false;
-  almacenEditando.value = null;
-  resetForm();
-  modalVisible.value = true;
+  modoEdicion.value = false
+  almacenEditando.value = null
+  resetForm()
+  modalVisible.value = true
 }
 
 function abrirEditar(almacen) {
-  modoEdicion.value = true;
-  almacenEditando.value = almacen;
-  resetForm();
+  modoEdicion.value = true
+  almacenEditando.value = almacen
+  resetForm()
 
   Object.assign(form, {
     nombre: almacen.nombre || '',
@@ -893,121 +1070,121 @@ function abrirEditar(almacen) {
     encargado: almacen.encargado || '',
     direccion: almacen.direccion || '',
     telefono: almacen.telefono || '',
-  });
+  })
 
-  modalVisible.value = true;
+  modalVisible.value = true
 }
 
 async function abrirDetalle(almacen) {
-  detalleVisible.value = true;
+  detalleVisible.value = true
 
   try {
-    await almacenesStore.obtenerAlmacenDetalle(almacen.almacen_uuid);
+    await almacenesStore.obtenerAlmacenDetalle(almacen.almacen_uuid)
   } catch (_error) {
   }
 }
 
 function cerrarDetalle() {
-  detalleVisible.value = false;
-  almacenesStore.limpiarDetalle();
+  detalleVisible.value = false
+  almacenesStore.limpiarDetalle()
 }
 
 function cerrarModal(forzado = false) {
-  if (guardando.value && !forzado) return;
+  if (guardando.value && !forzado) return
 
-  modalVisible.value = false;
-  almacenEditando.value = null;
-  modoEdicion.value = false;
-  resetForm();
+  modalVisible.value = false
+  almacenEditando.value = null
+  modoEdicion.value = false
+  resetForm()
 }
 
 function cerrarModalExito() {
-  modalVisible.value = false;
-  almacenEditando.value = null;
-  modoEdicion.value = false;
-  resetForm();
+  modalVisible.value = false
+  almacenEditando.value = null
+  modoEdicion.value = false
+  resetForm()
 }
 
 async function guardarAlmacen() {
-  if (!validarForm()) return;
+  if (!validarForm()) return
 
-  guardando.value = true;
+  guardando.value = true
 
   try {
-    const payload = buildPayload();
+    const payload = buildPayload()
 
     if (modoEdicion.value && almacenEditando.value?.almacen_uuid) {
       await almacenesStore.actualizarAlmacen(
         almacenEditando.value.almacen_uuid,
         payload
-      );
+      )
     } else {
-      await almacenesStore.crearAlmacen(payload);
+      await almacenesStore.crearAlmacen(payload)
     }
 
-    cerrarModalExito();
-    await cargarAlmacenes();
+    cerrarModalExito()
+    await cargarAlmacenes()
   } catch (_error) {
   } finally {
-    guardando.value = false;
+    guardando.value = false
   }
 }
 
 function abrirConfirmacionStatus(almacen, status) {
-  almacenConfirmacion.value = almacen;
-  statusObjetivo.value = status;
-  confirmacionVisible.value = true;
+  almacenConfirmacion.value = almacen
+  statusObjetivo.value = status
+  confirmacionVisible.value = true
 }
 
 function cerrarConfirmacionStatus() {
-  if (cambiandoStatus.value) return;
+  if (cambiandoStatus.value) return
 
-  confirmacionVisible.value = false;
-  almacenConfirmacion.value = null;
-  statusObjetivo.value = '';
+  confirmacionVisible.value = false
+  almacenConfirmacion.value = null
+  statusObjetivo.value = ''
 }
 
 function cerrarConfirmacionExito() {
-  confirmacionVisible.value = false;
-  almacenConfirmacion.value = null;
-  statusObjetivo.value = '';
+  confirmacionVisible.value = false
+  almacenConfirmacion.value = null
+  statusObjetivo.value = ''
 }
 
 async function ejecutarCambioStatus() {
-  if (!almacenConfirmacion.value?.almacen_uuid || !statusObjetivo.value) return;
+  if (!almacenConfirmacion.value?.almacen_uuid || !statusObjetivo.value) return
 
-  cambiandoStatus.value = true;
+  cambiandoStatus.value = true
 
   try {
     await almacenesStore.cambiarStatusAlmacen(
       almacenConfirmacion.value.almacen_uuid,
       statusObjetivo.value
-    );
+    )
 
-    cerrarConfirmacionExito();
-    await cargarAlmacenes();
+    cerrarConfirmacionExito()
+    await cargarAlmacenes()
   } catch (_error) {
   } finally {
-    cambiandoStatus.value = false;
+    cambiandoStatus.value = false
   }
 }
 
 watch(
   () => authStore.sucursalActiva?.sucursal_uuid,
   async (nueva, anterior) => {
-    if (!nueva || nueva === anterior) return;
-    first.value = 0;
-    await cargarAlmacenes();
+    if (!nueva || nueva === anterior) return
+    first.value = 0
+    await cargarAlmacenes()
   }
-);
+)
 
 onMounted(async () => {
-  await cargarAlmacenes();
-});
+  await cargarAlmacenes()
+})
 
 onBeforeUnmount(() => {
-  clearTimeout(busquedaTimeout);
-});
+  clearTimeout(busquedaTimeout)
+})
 </script>
 
 <style scoped>
@@ -1085,6 +1262,14 @@ onBeforeUnmount(() => {
 
 .almacenes-table :deep(.p-datatable-tbody > tr:hover > td) {
   background: rgba(59, 130, 246, 0.03);
+}
+
+.farma-filtros-bar {
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 1rem;
+  background: #ffffff;
+  padding: 1rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
 }
 
 .farma-filtros-activos-reserva {
@@ -1239,6 +1424,114 @@ onBeforeUnmount(() => {
   margin-top: 0.35rem;
   font-size: 0.75rem;
   color: #e11d48;
+}
+
+.farma-mobile-list {
+  padding: 0.875rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  flex: 1 1 0%;
+}
+
+.farma-mobile-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.farma-almacen-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 1rem;
+  background: #fff;
+  padding: 0.95rem;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.farma-almacen-card:hover {
+  border-color: rgba(147, 197, 253, 0.9);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.08);
+}
+
+.farma-almacen-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.farma-almacen-card__grid {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.farma-almacen-card__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.farma-almacen-card__item--full {
+  grid-column: 1 / -1;
+}
+
+.farma-almacen-card__label {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.farma-almacen-card__value {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:global(.farma-menu-popup) {
+  border-radius: 1rem !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.14) !important;
+  overflow: hidden !important;
+  padding: 0.375rem !important;
+  min-width: 12rem !important;
+  background: #ffffff !important;
+  z-index: 1200 !important;
+}
+
+:global(.farma-menu-popup .p-menu-list) {
+  padding: 0 !important;
+}
+
+:global(.farma-menu-popup .p-menuitem) {
+  border-radius: 0.75rem !important;
+  overflow: hidden !important;
+}
+
+:global(.farma-menu-popup .p-menuitem-link) {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+:global(.farma-menu-popup .p-menuitem-link:hover) {
+  background: transparent !important;
+}
+
+:global(.farma-menu-separator) {
+  margin: 0.25rem 0.5rem;
+  border-top: 1px solid #e2e8f0;
 }
 
 .farma-paginator-wrap {
@@ -1439,6 +1732,17 @@ onBeforeUnmount(() => {
 
   :global(.farma-dialog-content-shell) {
     padding: 0 1rem 1rem 1rem !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .farma-almacen-card__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .farma-almacen-card__item,
+  .farma-almacen-card__item--full {
+    grid-column: auto;
   }
 }
 </style>

@@ -35,59 +35,83 @@
 
     <!-- Filtros -->
     <div class="farma-filtros-bar">
-      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <div class="xl:col-span-2">
-          <label class="input-label text-xs font-medium text-slate-500">Búsqueda general</label>
-          <div class="relative">
-            <i class="pi pi-search farma-search-icon"></i>
-            <input v-model="filtros.q" type="text" placeholder="Nombre, comercial o RFC..." class="farma-search-input"
-              @input="onBuscarInput" />
+      <template v-if="isMobile">
+        <div class="grid grid-cols-1 gap-3">
+          <div>
+            <label class="input-label text-xs font-medium text-slate-500">Búsqueda general</label>
+            <div class="relative">
+              <i class="pi pi-search farma-search-icon"></i>
+              <input v-model="filtros.q" type="text" placeholder="Nombre, comercial o RFC..." class="farma-search-input"
+                @input="onBuscarInput" />
+            </div>
           </div>
         </div>
 
-        <div>
-          <label class="input-label text-xs font-medium text-slate-500">Nombre</label>
-          <input v-model="filtros.nombre" type="text" placeholder="Proveedor" class="farma-input"
-            @input="onBuscarInput" />
+        <div class="mt-3 flex items-center justify-end gap-2">
+          <button class="farma-btn-limpiar" title="Limpiar filtros" @click="limpiarTodo">
+            <i class="pi pi-filter-slash text-sm"></i>
+          </button>
+          <button class="farma-btn-buscar" @click="aplicarFiltros">
+            <i class="pi pi-search text-sm"></i>
+            <span>Buscar</span>
+          </button>
+        </div>
+      </template>
+
+      <template v-else>
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
+          <div class="xl:col-span-2">
+            <label class="input-label text-xs font-medium text-slate-500">Búsqueda general</label>
+            <div class="relative">
+              <i class="pi pi-search farma-search-icon"></i>
+              <input v-model="filtros.q" type="text" placeholder="Nombre, comercial o RFC..." class="farma-search-input"
+                @input="onBuscarInput" />
+            </div>
+          </div>
+
+          <div>
+            <label class="input-label text-xs font-medium text-slate-500">Nombre</label>
+            <input v-model="filtros.nombre" type="text" placeholder="Proveedor" class="farma-input"
+              @input="onBuscarInput" />
+          </div>
+
+          <div>
+            <label class="input-label text-xs font-medium text-slate-500">Nombre comercial</label>
+            <input v-model="filtros.nombre_comercial" type="text" placeholder="Nombre comercial" class="farma-input"
+              @input="onBuscarInput" />
+          </div>
+
+          <div>
+            <label class="input-label text-xs font-medium text-slate-500">RFC</label>
+            <input v-model="filtros.rfc" type="text" placeholder="RFC" class="farma-input" maxlength="13"
+              @input="onBuscarInput" />
+          </div>
+
+          <div>
+            <label class="input-label text-xs font-medium text-slate-500">Status</label>
+            <select v-model="filtros.status" class="farma-select-input" @change="aplicarFiltros">
+              <option value="">Todos</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+              <option value="eliminado">Eliminado</option>
+            </select>
+          </div>
         </div>
 
-        <div>
-          <label class="input-label text-xs font-medium text-slate-500">Nombre comercial</label>
-          <input v-model="filtros.nombre_comercial" type="text" placeholder="Nombre comercial" class="farma-input"
-            @input="onBuscarInput" />
+        <div class="mt-3 flex items-center justify-end gap-2">
+          <button class="farma-btn-limpiar" title="Limpiar filtros" @click="limpiarTodo">
+            <i class="pi pi-filter-slash text-sm"></i>
+          </button>
+          <button class="farma-btn-buscar" @click="aplicarFiltros">
+            <i class="pi pi-search text-sm"></i>
+            <span>Buscar</span>
+          </button>
         </div>
-
-        <div>
-          <label class="input-label text-xs font-medium text-slate-500">RFC</label>
-          <input v-model="filtros.rfc" type="text" placeholder="RFC" class="farma-input" maxlength="13"
-            @input="onBuscarInput" />
-        </div>
-
-        <div>
-          <label class="input-label text-xs font-medium text-slate-500">Status</label>
-          <select v-model="filtros.status" class="farma-select-input" @change="aplicarFiltros">
-            <option value="">Todos</option>
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-            <option value="eliminado">Eliminado</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="mt-3 flex items-center justify-end gap-2">
-        <button class="farma-btn-limpiar" title="Limpiar filtros" @click="limpiarTodo">
-          <i class="pi pi-filter-slash text-sm"></i>
-        </button>
-        <button class="farma-btn-buscar" @click="aplicarFiltros">
-          <i class="pi pi-search text-sm"></i>
-          <span>Buscar</span>
-        </button>
-      </div>
+      </template>
     </div>
 
-    <!-- Tabla -->
     <article class="card-base farma-table-shell flex min-h-0 flex-1 flex-col">
-      <div class="farma-table-content app-scroll flex-1 min-h-0">
+      <div v-if="!isMobile" class="farma-table-content app-scroll min-h-0 flex-1">
         <DataTable :value="proveedoresTabla" scrollable scrollHeight="flex" dataKey="proveedor_uuid"
           :tableStyle="{ minWidth: '900px' }" :loading="proveedoresStore.cargando" stripedRows
           class="proveedores-table h-full">
@@ -105,7 +129,6 @@
             </div>
           </template>
 
-          <!-- Proveedor — columna clickeable igual que SKU en productos -->
           <Column field="nombre" header="Proveedor" style="width: 240px">
             <template #body="{ data }">
               <button class="text-left transition hover:underline" @click="irAlDetalle(data.proveedor_uuid)">
@@ -119,14 +142,12 @@
             </template>
           </Column>
 
-          <!-- RFC -->
           <Column field="rfc" header="RFC" style="width: 150px">
             <template #body="{ data }">
               <span class="text-sm text-slate-600">{{ data.rfc || '—' }}</span>
             </template>
           </Column>
 
-          <!-- Contacto -->
           <Column field="contacto_nombre" header="Contacto" style="width: 210px">
             <template #body="{ data }">
               <div>
@@ -136,14 +157,12 @@
             </template>
           </Column>
 
-          <!-- Teléfono -->
           <Column field="contacto_telefono" header="Teléfono" style="width: 150px">
             <template #body="{ data }">
               <span class="text-sm text-slate-600">{{ data.contacto_telefono || '—' }}</span>
             </template>
           </Column>
 
-          <!-- Crédito -->
           <Column field="dias_credito" header="Crédito" style="width: 110px">
             <template #body="{ data }">
               <span class="text-sm font-medium text-slate-700">
@@ -152,7 +171,6 @@
             </template>
           </Column>
 
-          <!-- Status -->
           <Column field="status" header="Status" style="width: 120px">
             <template #body="{ data }">
               <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
@@ -162,7 +180,6 @@
             </template>
           </Column>
 
-          <!-- Fecha creación -->
           <Column field="fecha_creacion" header="Creación" style="width: 130px">
             <template #body="{ data }">
               <span class="text-xs text-slate-500">
@@ -171,6 +188,77 @@
             </template>
           </Column>
         </DataTable>
+      </div>
+
+      <div v-else class="farma-mobile-list app-scroll min-h-0 flex-1">
+        <div v-if="proveedoresStore.cargando" class="flex flex-col items-center justify-center py-16 text-center">
+          <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+            <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+          </div>
+          <p class="text-sm font-medium text-slate-500">Cargando proveedores...</p>
+          <p class="mt-1 text-xs text-slate-400">Espera un momento</p>
+        </div>
+
+        <div v-else-if="!proveedoresTabla.length" class="flex flex-col items-center justify-center py-16 text-center">
+          <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+            <i class="pi pi-truck text-2xl text-slate-300"></i>
+          </div>
+          <p class="text-sm font-medium text-slate-500">No se encontraron proveedores</p>
+          <p class="mt-1 text-xs text-slate-400">Intenta ajustar los filtros de búsqueda</p>
+        </div>
+
+        <div v-else class="farma-mobile-cards">
+          <button v-for="item in proveedoresTabla" :key="item.proveedor_uuid" class="farma-proveedor-card"
+            @click="irAlDetalle(item.proveedor_uuid)">
+            <div class="farma-proveedor-card__head">
+              <div class="min-w-0 flex-1 text-left">
+                <p class="truncate text-sm font-semibold text-slate-900">
+                  {{ item.nombre || '—' }}
+                </p>
+                <p class="mt-1 truncate text-xs text-slate-500">
+                  {{ item.nombre_comercial || 'Sin nombre comercial' }}
+                </p>
+              </div>
+
+              <span class="inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                :class="statusClass(item.status)">
+                {{ capitalizar(item.status) }}
+              </span>
+            </div>
+
+            <div class="farma-proveedor-card__grid">
+              <div class="farma-proveedor-card__item">
+                <span class="farma-proveedor-card__label">RFC</span>
+                <span class="farma-proveedor-card__value">{{ item.rfc || '—' }}</span>
+              </div>
+
+              <div class="farma-proveedor-card__item">
+                <span class="farma-proveedor-card__label">Crédito</span>
+                <span class="farma-proveedor-card__value">{{ Number(item.dias_credito || 0) }} días</span>
+              </div>
+
+              <div class="farma-proveedor-card__item">
+                <span class="farma-proveedor-card__label">Contacto</span>
+                <span class="farma-proveedor-card__value">{{ item.contacto_nombre || '—' }}</span>
+              </div>
+
+              <div class="farma-proveedor-card__item">
+                <span class="farma-proveedor-card__label">Teléfono</span>
+                <span class="farma-proveedor-card__value">{{ item.contacto_telefono || '—' }}</span>
+              </div>
+
+              <div class="farma-proveedor-card__item farma-proveedor-card__item--full">
+                <span class="farma-proveedor-card__label">Email</span>
+                <span class="farma-proveedor-card__value">{{ item.contacto_email || 'Sin email' }}</span>
+              </div>
+
+              <div class="farma-proveedor-card__item farma-proveedor-card__item--full">
+                <span class="farma-proveedor-card__label">Creación</span>
+                <span class="farma-proveedor-card__value">{{ formatearFechaTexto(item.fecha_creacion) }}</span>
+              </div>
+            </div>
+          </button>
+        </div>
       </div>
 
       <footer class="farma-paginator-wrap shrink-0">
@@ -183,15 +271,17 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Paginator from 'primevue/paginator';
-import { useProveedoresStore } from '../proveedoresStore';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Paginator from 'primevue/paginator'
+import { useProveedoresStore } from '../proveedoresStore'
+import { useIsMobile } from '@/composables/useIsMobile'
 
-const router = useRouter();
-const proveedoresStore = useProveedoresStore();
+const router = useRouter()
+const proveedoresStore = useProveedoresStore()
+const { isMobile } = useIsMobile()
 
 const filtros = ref({
   q: '',
@@ -199,48 +289,45 @@ const filtros = ref({
   nombre_comercial: '',
   rfc: '',
   status: '',
-});
+})
 
-const first = ref(0);
-const rows = ref(10);
-let busquedaTimeout = null;
+const first = ref(0)
+const rows = ref(10)
+let busquedaTimeout = null
 
-const totalRegistros = computed(() => Number(proveedoresStore.total || 0));
-const paginaActual = computed(() => Math.floor(first.value / rows.value) + 1);
+const totalRegistros = computed(() => Number(proveedoresStore.total || 0))
+const paginaActual = computed(() => Math.floor(first.value / rows.value) + 1)
 const proveedoresTabla = computed(() =>
   proveedoresStore.cargando ? [] : (proveedoresStore.proveedores ?? [])
-);
+)
 
-// ── Navegación ──────────────────────────────────────────────────────
 function irAlDetalle(uuid) {
-  if (uuid) router.push({ name: 'DetalleProveedor', params: { uuid } });
+  if (uuid) router.push({ name: 'DetalleProveedor', params: { uuid } })
 }
 
-// ── Helpers ─────────────────────────────────────────────────────────
 function capitalizar(valor) {
-  if (!valor) return '—';
-  return String(valor).charAt(0).toUpperCase() + String(valor).slice(1);
+  if (!valor) return '—'
+  return String(valor).charAt(0).toUpperCase() + String(valor).slice(1)
 }
 
 function statusClass(status) {
-  if (status === 'activo') return 'bg-blue-50 text-blue-700';
-  if (status === 'inactivo') return 'bg-slate-100 text-slate-600';
-  if (status === 'eliminado') return 'bg-rose-50 text-rose-700';
-  return 'bg-slate-100 text-slate-600';
+  if (status === 'activo') return 'bg-blue-50 text-blue-700'
+  if (status === 'inactivo') return 'bg-slate-100 text-slate-600'
+  if (status === 'eliminado') return 'bg-rose-50 text-rose-700'
+  return 'bg-slate-100 text-slate-600'
 }
 
 function formatearFechaTexto(value) {
-  if (!value) return '—';
-  const fecha = new Date(value);
-  if (Number.isNaN(fecha.getTime())) return value;
+  if (!value) return '—'
+  const fecha = new Date(value)
+  if (Number.isNaN(fecha.getTime())) return value
   return fecha.toLocaleDateString('es-MX', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  });
+  })
 }
 
-// ── Carga y filtros ──────────────────────────────────────────────────
 async function cargarProveedores() {
   await proveedoresStore.obtenerProveedores({
     page: paginaActual.value,
@@ -250,46 +337,69 @@ async function cargarProveedores() {
     nombre_comercial: filtros.value.nombre_comercial || undefined,
     rfc: filtros.value.rfc || undefined,
     status: filtros.value.status || undefined,
-  });
+  })
 }
 
 function onBuscarInput() {
-  clearTimeout(busquedaTimeout);
-  busquedaTimeout = setTimeout(() => aplicarFiltros(), 350);
+  clearTimeout(busquedaTimeout)
+  busquedaTimeout = setTimeout(() => aplicarFiltros(), 350)
 }
 
 async function aplicarFiltros() {
-  first.value = 0;
-  await cargarProveedores();
+  first.value = 0
+  await cargarProveedores()
 }
 
 async function limpiarTodo() {
-  filtros.value = { q: '', nombre: '', nombre_comercial: '', rfc: '', status: '' };
-  first.value = 0;
-  await cargarProveedores();
+  filtros.value = {
+    q: '',
+    nombre: '',
+    nombre_comercial: '',
+    rfc: '',
+    status: '',
+  }
+  first.value = 0
+  await cargarProveedores()
 }
 
 async function onPage(event) {
-  first.value = event.first;
-  rows.value = event.rows;
-  await cargarProveedores();
+  first.value = event.first
+  rows.value = event.rows
+  await cargarProveedores()
 }
 
-onMounted(async () => await cargarProveedores());
-onBeforeUnmount(() => clearTimeout(busquedaTimeout));
+onMounted(async () => await cargarProveedores())
+onBeforeUnmount(() => clearTimeout(busquedaTimeout))
 </script>
 
 <style scoped>
+.card-base {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
 .farma-table-shell {
   border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 1rem;
   background: #ffffff;
   overflow: hidden;
+  min-width: 0;
 }
 
 .farma-table-content {
   min-height: 0;
   overflow: hidden;
+  min-width: 0;
+}
+
+.farma-filtros-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
 }
 
 .proveedores-table {
@@ -434,6 +544,83 @@ onBeforeUnmount(() => clearTimeout(busquedaTimeout));
   background: #1d4ed8;
 }
 
+.farma-mobile-list {
+  padding: 0.875rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.farma-mobile-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.farma-proveedor-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  text-align: left;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 1rem;
+  background: #fff;
+  padding: 0.95rem;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.farma-proveedor-card:active {
+  transform: scale(0.995);
+}
+
+.farma-proveedor-card:hover {
+  border-color: rgba(147, 197, 253, 0.9);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.08);
+}
+
+.farma-proveedor-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.farma-proveedor-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.farma-proveedor-card__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.farma-proveedor-card__item--full {
+  grid-column: 1 / -1;
+}
+
+.farma-proveedor-card__label {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.farma-proveedor-card__value {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .farma-paginator-wrap {
   flex-shrink: 0;
   border-top: 1px solid rgba(226, 232, 240, 0.9);
@@ -491,6 +678,15 @@ onBeforeUnmount(() => clearTimeout(busquedaTimeout));
 }
 
 @media (max-width: 768px) {
+  .farma-filtros-bar {
+    padding: 0.875rem;
+    border-radius: 0.875rem;
+  }
+
+  .farma-table-shell {
+    border-radius: 0.875rem;
+  }
+
   .farma-paginator-wrap {
     padding: 0.75rem;
   }
@@ -505,6 +701,17 @@ onBeforeUnmount(() => clearTimeout(busquedaTimeout));
     text-align: center;
     order: -1;
     margin: 0 0 0.25rem 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .farma-proveedor-card__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .farma-proveedor-card__item,
+  .farma-proveedor-card__item--full {
+    grid-column: auto;
   }
 }
 </style>

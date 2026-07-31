@@ -35,7 +35,7 @@
 
     <div class="farma-filtros-bar">
       <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <div class="xl:col-span-2">
+        <div class="xl:col-span-2 farma-filtro-principal">
           <label class="input-label text-xs font-medium text-slate-500">Búsqueda general</label>
           <div class="relative">
             <i class="pi pi-search farma-search-icon"></i>
@@ -44,19 +44,19 @@
           </div>
         </div>
 
-        <div>
+        <div class="farma-filtro-secundario">
           <label class="input-label text-xs font-medium text-slate-500">Nombre</label>
           <input v-model="filtros.nombre" type="text" placeholder="Cliente" class="farma-input"
             @input="onBuscarInput" />
         </div>
 
-        <div>
+        <div class="farma-filtro-secundario">
           <label class="input-label text-xs font-medium text-slate-500">RFC</label>
           <input v-model="filtros.rfc" type="text" placeholder="RFC" class="farma-input" maxlength="20"
             @input="onBuscarInput" />
         </div>
 
-        <div>
+        <div class="farma-filtro-secundario">
           <label class="input-label text-xs font-medium text-slate-500">Status</label>
           <select v-model="filtros.status" class="farma-select-input" @change="aplicarFiltros">
             <option value="">Todos</option>
@@ -67,7 +67,7 @@
         </div>
       </div>
 
-      <div class="mt-3 flex items-center justify-end gap-2">
+      <div class="mt-3 flex items-center justify-end gap-2 farma-filtros-acciones">
         <button class="farma-btn-limpiar" title="Limpiar filtros" @click="limpiarTodo">
           <i class="pi pi-filter-slash text-sm"></i>
         </button>
@@ -79,7 +79,108 @@
     </div>
 
     <article class="card-base farma-table-shell flex min-h-0 flex-1 flex-col">
-      <div class="farma-table-content app-scroll flex-1 min-h-0">
+      <div v-if="isMobile" class="farma-clientes-mobile app-scroll flex-1 min-h-0">
+        <div v-if="clientesStore.cargando" class="flex flex-col items-center justify-center py-16 text-center">
+          <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+            <i class="pi pi-users text-2xl text-slate-300"></i>
+          </div>
+          <p class="text-sm font-medium text-slate-500">Cargando clientes...</p>
+          <p class="mt-1 text-xs text-slate-400">Espera un momento</p>
+        </div>
+
+        <div v-else-if="!clientesTabla.length" class="flex flex-col items-center justify-center py-16 text-center">
+          <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+            <i class="pi pi-users text-2xl text-slate-300"></i>
+          </div>
+          <p class="text-sm font-medium text-slate-500">No se encontraron clientes</p>
+          <p class="mt-1 text-xs text-slate-400">Intenta ajustar los filtros de búsqueda</p>
+        </div>
+
+        <div v-else class="farma-clientes-mobile-list">
+          <article v-for="cliente in clientesTabla" :key="cliente.cliente_uuid" class="farma-mobile-card">
+            <div class="farma-mobile-card__head">
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-semibold text-slate-800">
+                  {{ cliente.nombre || '—' }}
+                </p>
+                <p class="truncate text-xs text-slate-400">
+                  {{ cliente.razon_social || 'Sin razón social' }}
+                </p>
+              </div>
+
+              <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
+                :class="statusClass(cliente.status)">
+                {{ capitalizar(cliente.status) }}
+              </span>
+            </div>
+
+            <div class="farma-mobile-card__body">
+              <div class="farma-mobile-card__row">
+                <span class="farma-mobile-card__label">RFC</span>
+                <span class="farma-mobile-card__value">
+                  {{ cliente.rfc || '—' }}
+                </span>
+              </div>
+
+              <div class="farma-mobile-card__row">
+                <span class="farma-mobile-card__label">Teléfono</span>
+                <span class="farma-mobile-card__value">
+                  {{ cliente.telefono || '—' }}
+                </span>
+              </div>
+
+              <div class="farma-mobile-card__row">
+                <span class="farma-mobile-card__label">Correo</span>
+                <span class="farma-mobile-card__value break-all">
+                  {{ cliente.email || '—' }}
+                </span>
+              </div>
+
+              <div class="farma-mobile-card__row">
+                <span class="farma-mobile-card__label">C.P. fiscal</span>
+                <span class="farma-mobile-card__value">
+                  {{ cliente.codigo_postal_fiscal || '—' }}
+                </span>
+              </div>
+
+              <div class="farma-mobile-card__row">
+                <span class="farma-mobile-card__label">Creación</span>
+                <span class="farma-mobile-card__value">
+                  {{ formatearFechaTexto(cliente.fecha_creacion) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- <div class="farma-mobile-card__footer">
+              <RouterLink :to="`/clientes/${cliente.cliente_uuid}/editar`"
+                class="farma-mobile-card__action text-blue-600">
+                <i class="pi pi-pencil text-xs"></i>
+                <span>Editar</span>
+              </RouterLink>
+
+              <button v-if="cliente.status === 'activo'"
+                class="farma-mobile-card__icon-action text-amber-600 hover:bg-amber-50" title="Desactivar"
+                @click="confirmarCambioStatus(cliente, 'inactivo')">
+                <i class="pi pi-ban"></i>
+              </button>
+
+              <button v-if="cliente.status === 'inactivo'"
+                class="farma-mobile-card__icon-action text-emerald-600 hover:bg-emerald-50" title="Activar"
+                @click="confirmarCambioStatus(cliente, 'activo')">
+                <i class="pi pi-check-circle"></i>
+              </button>
+
+              <button v-if="cliente.status !== 'eliminado'"
+                class="farma-mobile-card__icon-action text-rose-600 hover:bg-rose-50" title="Eliminar"
+                @click="confirmarCambioStatus(cliente, 'eliminado')">
+                <i class="pi pi-trash"></i>
+              </button>
+            </div> -->
+          </article>
+        </div>
+      </div>
+
+      <div v-else class="farma-table-content app-scroll flex-1 min-h-0">
         <DataTable :value="clientesTabla" scrollable scrollHeight="flex" dataKey="cliente_uuid"
           :tableStyle="{ minWidth: '1150px' }" :loading="clientesStore.cargando" stripedRows
           class="clientes-table h-full">
@@ -151,7 +252,7 @@
             </template>
           </Column>
 
-          <Column header="Acciones" style="width: 180px">
+          <!-- <Column header="Acciones" style="width: 180px">
             <template #body="slotProps">
               <div class="flex items-center gap-2">
                 <RouterLink :to="`/clientes/${slotProps.data.cliente_uuid}/editar`"
@@ -178,7 +279,7 @@
                 </button>
               </div>
             </template>
-          </Column>
+          </Column> -->
         </DataTable>
       </div>
 
@@ -194,6 +295,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
+import { useIsMobile } from '@/composables/useIsMobile';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Paginator from 'primevue/paginator';
@@ -203,6 +305,7 @@ import { useAuthStore } from '@/modules/auth/authStore';
 const router = useRouter();
 const clientesStore = useClientesStore();
 const authStore = useAuthStore();
+const { isMobile } = useIsMobile();
 
 const filtros = ref({
   q: '',
@@ -221,7 +324,6 @@ const clientesTabla = computed(() =>
   clientesStore.cargando ? [] : (clientesStore.clientes ?? [])
 );
 
-// ── Helpers ──────────────────────────────────────────────────────────
 function capitalizar(valor) {
   if (!valor) return '—';
   return String(valor).charAt(0).toUpperCase() + String(valor).slice(1);
@@ -245,7 +347,6 @@ function formatearFechaTexto(value) {
   });
 }
 
-// ── Carga y filtros ──────────────────────────────────────────────────
 async function cargarClientes() {
   await clientesStore.obtenerClientes({
     page: paginaActual.value,
@@ -294,11 +395,6 @@ async function confirmarCambioStatus(cliente, status) {
   } catch (_error) { }
 }
 
-// ── Reacción al cambio de sucursal ───────────────────────────────────
-// Cuando el usuario selecciona otra sucursal desde el header, el watch
-// detecta el nuevo UUID, resetea la paginación a la primera página y
-// recarga la lista de clientes sin necesidad de recargar la vista.
-// La guarda `nueva === anterior` evita recargas innecesarias al montar.
 watch(
   () => authStore.sucursalActiva?.sucursal_uuid,
   async (nueva, anterior) => {
@@ -308,7 +404,6 @@ watch(
   }
 );
 
-// ── Ciclo de vida ────────────────────────────────────────────────────
 onMounted(async () => {
   await cargarClientes();
 });
@@ -324,11 +419,13 @@ onBeforeUnmount(() => {
   border-radius: 1rem;
   background: #ffffff;
   overflow: hidden;
+  min-width: 0;
 }
 
 .farma-table-content {
   min-height: 0;
   overflow: hidden;
+  min-width: 0;
 }
 
 .clientes-table {
@@ -535,7 +632,138 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
+.card-base {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.farma-clientes-mobile {
+  padding: 0.9rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.farma-clientes-mobile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.farma-mobile-card {
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 1rem;
+  background: #fff;
+  padding: 0.95rem;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.farma-mobile-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.farma-mobile-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding-top: 0.8rem;
+}
+
+.farma-mobile-card__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.farma-mobile-card__label {
+  flex: 0 0 6.5rem;
+  font-size: 0.72rem;
+  line-height: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.farma-mobile-card__value {
+  min-width: 0;
+  flex: 1;
+  text-align: right;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #0f172a;
+}
+
+.farma-mobile-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  padding-top: 0.85rem;
+  margin-top: 0.85rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.farma-mobile-card__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 0.85rem;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  background: rgba(37, 99, 235, 0.08);
+  transition: all 0.18s ease;
+}
+
+.farma-mobile-card__action:hover {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.farma-mobile-card__icon-action {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.85rem;
+  transition: all 0.18s ease;
+}
+
 @media (max-width: 768px) {
+  .farma-filtros-bar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+    align-items: end;
+  }
+
+  .farma-filtros-bar>.grid {
+    min-width: 0;
+    display: block;
+  }
+
+  .farma-filtro-principal {
+    min-width: 0;
+  }
+
+  .farma-filtro-secundario {
+    display: none;
+  }
+
+  .farma-filtros-acciones {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+  }
+
   .farma-paginator-wrap {
     padding: 0.75rem;
   }
@@ -550,6 +778,52 @@ onBeforeUnmount(() => {
     text-align: center;
     order: -1;
     margin: 0 0 0.25rem 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .farma-filtros-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .farma-filtros-acciones {
+    justify-content: stretch;
+  }
+
+  .farma-filtros-acciones>* {
+    flex: 1 1 auto;
+  }
+
+  .farma-btn-limpiar {
+    flex: 0 0 42px;
+  }
+
+  .farma-mobile-card {
+    padding: 0.85rem;
+  }
+
+  .farma-mobile-card__row {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .farma-mobile-card__label,
+  .farma-mobile-card__value {
+    text-align: left;
+  }
+
+  .farma-mobile-card__label {
+    flex: none;
+  }
+
+  .farma-mobile-card__footer {
+    flex-wrap: wrap;
+    justify-content: stretch;
+  }
+
+  .farma-mobile-card__action {
+    flex: 1 1 100%;
+    justify-content: center;
   }
 }
 </style>

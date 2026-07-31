@@ -26,13 +26,13 @@
 
     <div class="farma-filtros-bar">
       <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <div>
+        <div class="farma-filtro-principal">
           <label class="input-label text-xs font-medium text-slate-500">Folio</label>
           <input v-model="filtros.folio" type="text" placeholder="VTA-PUE-000001" class="farma-input"
             @input="onBuscarInput" />
         </div>
 
-        <div>
+        <div class="farma-filtro-secundario">
           <label class="input-label text-xs font-medium text-slate-500">Método de pago</label>
           <select v-model="filtros.metodo_pago" class="farma-select-input" @change="aplicarFiltros">
             <option value="">Todos</option>
@@ -42,7 +42,7 @@
           </select>
         </div>
 
-        <div>
+        <div class="farma-filtro-secundario">
           <label class="input-label text-xs font-medium text-slate-500">Status</label>
           <select v-model="filtros.status" class="farma-select-input" @change="aplicarFiltros">
             <option value="">Todos</option>
@@ -52,17 +52,17 @@
           </select>
         </div>
 
-        <div>
+        <div class="farma-filtro-secundario">
           <label class="input-label text-xs font-medium text-slate-500">Fecha inicio</label>
           <input v-model="filtros.fecha_inicio" type="date" class="farma-input" @change="aplicarFiltros" />
         </div>
 
-        <div>
+        <div class="farma-filtro-secundario">
           <label class="input-label text-xs font-medium text-slate-500">Fecha fin</label>
           <input v-model="filtros.fecha_fin" type="date" class="farma-input" @change="aplicarFiltros" />
         </div>
 
-        <div>
+        <div class="farma-filtro-secundario">
           <label class="input-label text-xs font-medium text-slate-500">Orden</label>
           <select v-model="filtros.sort" class="farma-select-input" @change="aplicarFiltros">
             <option value="fecha_creacion:desc">Más recientes</option>
@@ -75,7 +75,7 @@
         </div>
       </div>
 
-      <div class="mt-3 flex items-center justify-end gap-2">
+      <div class="mt-3 flex items-center justify-end gap-2 farma-filtros-acciones">
         <button class="farma-btn-limpiar" title="Limpiar filtros" @click="limpiarTodo">
           <i class="pi pi-filter-slash text-sm"></i>
         </button>
@@ -87,7 +87,91 @@
     </div>
 
     <article class="card-base farma-table-shell flex min-h-0 flex-1 flex-col">
-      <div class="farma-table-content app-scroll flex-1 min-h-0">
+      <div v-if="isMobile" class="farma-ventas-mobile app-scroll flex-1 min-h-0">
+        <div v-if="ventasStore.cargando" class="flex flex-col items-center justify-center py-16 text-center">
+          <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+            <i class="pi pi-shopping-bag text-2xl text-slate-300"></i>
+          </div>
+          <p class="text-sm font-medium text-slate-500">Cargando ventas...</p>
+          <p class="mt-1 text-xs text-slate-400">Espera un momento</p>
+        </div>
+
+        <div v-else-if="!ventasTabla.length" class="flex flex-col items-center justify-center py-16 text-center">
+          <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+            <i class="pi pi-shopping-bag text-2xl text-slate-300"></i>
+          </div>
+          <p class="text-sm font-medium text-slate-500">No se encontraron ventas</p>
+          <p class="mt-1 text-xs text-slate-400">Intenta ajustar los filtros de búsqueda</p>
+        </div>
+
+        <div v-else class="farma-ventas-mobile-list">
+          <article v-for="venta in ventasTabla" :key="venta.venta_uuid" class="farma-mobile-card">
+            <div class="farma-mobile-card__head">
+              <div class="min-w-0 flex-1">
+                <button class="folio-trigger" @click="abrirDetalle(venta.venta_uuid)">
+                  <p class="truncate text-sm font-semibold text-blue-600">
+                    {{ venta.folio || '—' }}
+                  </p>
+                  <p class="text-xs text-slate-400">
+                    {{ formatearFechaTexto(venta.fecha_venta) }}
+                  </p>
+                </button>
+              </div>
+
+              <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
+                :class="statusClass(venta.status)">
+                {{ capitalizar(venta.status) }}
+              </span>
+            </div>
+
+            <div class="farma-mobile-card__body">
+              <div class="farma-mobile-card__row">
+                <span class="farma-mobile-card__label">Cliente</span>
+                <span class="farma-mobile-card__value">
+                  {{ venta.cliente_nombre || 'Público general' }}
+                </span>
+              </div>
+
+              <div class="farma-mobile-card__row">
+                <span class="farma-mobile-card__label">Almacén</span>
+                <span class="farma-mobile-card__value">
+                  {{ venta.almacen_nombre || '—' }}
+                </span>
+              </div>
+
+              <div class="farma-mobile-card__row">
+                <span class="farma-mobile-card__label">Método</span>
+                <span class="farma-mobile-card__value">
+                  {{ capitalizar(venta.metodo_pago) }}
+                </span>
+              </div>
+
+              <div class="farma-mobile-card__row">
+                <span class="farma-mobile-card__label">Total</span>
+                <span class="farma-mobile-card__value farma-mobile-card__value--success">
+                  {{ formatearMoneda(venta.total) }}
+                </span>
+              </div>
+
+              <div class="farma-mobile-card__row">
+                <span class="farma-mobile-card__label">Creación</span>
+                <span class="farma-mobile-card__value">
+                  {{ formatearFechaHora(venta.fecha_creacion) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="farma-mobile-card__footer">
+              <button class="farma-mobile-card__action" @click="abrirDetalle(venta.venta_uuid)">
+                <i class="pi pi-eye text-xs"></i>
+                <span>Ver detalle</span>
+              </button>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div v-else class="farma-table-content app-scroll flex-1 min-h-0">
         <DataTable :value="ventasTabla" scrollable scrollHeight="flex" dataKey="venta_uuid"
           :tableStyle="{ minWidth: '960px' }" :loading="ventasStore.cargando" stripedRows class="ventas-table h-full">
           <template #empty>
@@ -186,12 +270,14 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
+import { useIsMobile } from '@/composables/useIsMobile';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Paginator from 'primevue/paginator';
 import { useVentasStore } from '../ventasStore';
 import DialogVentaDetalle from './components/DialogVentaDetalle.vue';
 
+const { isMobile } = useIsMobile();
 const ventasStore = useVentasStore();
 
 const filtros = ref({
@@ -312,18 +398,19 @@ onMounted(async () => await cargarVentas());
 onBeforeUnmount(() => clearTimeout(busquedaTimeout));
 </script>
 
-
 <style scoped>
 .farma-table-shell {
   border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 1rem;
   background: #ffffff;
   overflow: hidden;
+  min-width: 0;
 }
 
 .farma-table-content {
   min-height: 0;
   overflow: hidden;
+  min-width: 0;
 }
 
 .ventas-table {
@@ -519,5 +606,197 @@ onBeforeUnmount(() => clearTimeout(busquedaTimeout));
   font-size: 0.875rem;
   font-weight: 500;
   white-space: nowrap;
+}
+
+.card-base {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.farma-ventas-mobile {
+  padding: 0.9rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.farma-ventas-mobile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.farma-mobile-card {
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 1rem;
+  background: #fff;
+  padding: 0.95rem;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.farma-mobile-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.farma-mobile-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding-top: 0.8rem;
+}
+
+.farma-mobile-card__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.farma-mobile-card__label {
+  flex: 0 0 6.5rem;
+  font-size: 0.72rem;
+  line-height: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.farma-mobile-card__value {
+  min-width: 0;
+  flex: 1;
+  text-align: right;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #0f172a;
+}
+
+.farma-mobile-card__value--success {
+  font-weight: 700;
+  color: #047857;
+}
+
+.farma-mobile-card__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.85rem;
+  margin-top: 0.85rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.farma-mobile-card__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 0.85rem;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+  transition: all 0.18s ease;
+}
+
+.farma-mobile-card__action:hover {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+@media (max-width: 768px) {
+  .farma-filtros-bar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+    align-items: end;
+  }
+
+  .farma-filtros-bar>.grid {
+    min-width: 0;
+    display: block;
+  }
+
+  .farma-filtro-principal {
+    min-width: 0;
+  }
+
+  .farma-filtro-secundario {
+    display: none;
+  }
+
+  .farma-filtros-acciones {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+  }
+
+  .farma-table-shell {
+    border-radius: 0.875rem;
+  }
+
+  .farma-paginator-wrap {
+    padding: 0.75rem;
+  }
+
+  .farma-paginator :deep(.p-paginator) {
+    justify-content: center;
+    row-gap: 0.5rem;
+  }
+
+  .farma-paginator :deep(.p-paginator-current) {
+    width: 100%;
+    text-align: center;
+    order: -1;
+    margin: 0 0 0.25rem 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .farma-filtros-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .farma-filtros-acciones {
+    justify-content: stretch;
+  }
+
+  .farma-filtros-acciones>* {
+    flex: 1 1 auto;
+  }
+
+  .farma-btn-limpiar {
+    flex: 0 0 42px;
+  }
+
+  .farma-mobile-card {
+    padding: 0.85rem;
+  }
+
+  .farma-mobile-card__row {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .farma-mobile-card__label,
+  .farma-mobile-card__value {
+    text-align: left;
+  }
+
+  .farma-mobile-card__label {
+    flex: none;
+  }
+
+  .farma-mobile-card__footer {
+    justify-content: stretch;
+  }
+
+  .farma-mobile-card__action {
+    width: 100%;
+    justify-content: center;
+  }
 }
 </style>
