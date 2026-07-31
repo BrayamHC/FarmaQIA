@@ -207,17 +207,18 @@ export const AltaLoteStockResponseSchema = z.object({
 });
 
 export const RecomendacionesTagsSchema = z.object({
-    tags: z.union([
-        z.string().transform((value) =>
-            value.split(',').map((tag) => tag.trim()).filter(Boolean),
-        ),
-        z.array(z.string()),
-    ]),
-    limite: z.coerce.number().int().min(1).max(20).default(5),
-    stock_minimo: z.coerce.number().int().min(1).default(1),
+    tags: z
+        .string()
+        .transform((val) => val.split(',').map((t) => t.trim().toLowerCase()))
+        .or(z.array(z.string().toLowerCase())),
+    limite: z.coerce.number().int().min(1).max(50).default(10),
+    stock_minimo: z.coerce.number().int().min(0).default(1),
 });
 
-export const RecomendacionProductoSchema = z.object({
+export type RecomendacionesTagsInput = z.infer<typeof RecomendacionesTagsSchema>;
+
+// Schema de respuesta para IA (sin exponer info de caducidad)
+export const ProductoRecomendadoSchema = z.object({
     producto_id: z.number(),
     uuid: z.string().uuid(),
     sku: z.string(),
@@ -229,11 +230,12 @@ export const RecomendacionProductoSchema = z.object({
     categoria: z.string().nullable(),
 });
 
-export const RecomendacionesTagsResponseSchema = z.object({
+export const RecomendacionesResponseSchema = z.object({
     success: z.boolean(),
     total: z.number(),
-    productos: z.array(RecomendacionProductoSchema),
+    productos: z.array(ProductoRecomendadoSchema),
 });
+
 
 
 // ─────────────────────────────────────────────
