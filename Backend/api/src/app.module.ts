@@ -79,6 +79,7 @@ export class AppModule implements NestModule {
                 { path: 'docs', method: RequestMethod.GET },
                 { path: 'docs-json', method: RequestMethod.GET },
                 { path: 'docs/*splat', method: RequestMethod.ALL },
+                { path: 'productos/recomendaciones', method: RequestMethod.GET },
             )
             .forRoutes('*');
     }

@@ -17,6 +17,7 @@ import {
     RecomendacionesResponseDTO,
 } from './dto/productos.dto';
 import { ProductosCoordinator } from './productos.coordinator';
+import { InternalApi } from 'src/decorators/internal.decorator';
 
 @ApiTags('Productos')
 @ApiBearerAuth()
@@ -119,6 +120,7 @@ export class ProductosController {
     }
 
     @Get('recomendaciones')
+    @InternalApi()
     @ApiOperation({
         summary: 'Obtener productos recomendados por tags (FEFO) — uso interno IA',
         description:
