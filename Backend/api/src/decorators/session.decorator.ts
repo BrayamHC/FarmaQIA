@@ -1,33 +1,37 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { SucursalNotSelectedException } from 'src/common/exceptions/business.exception';
 
-/**
-     * Route handler parameter decorator. Extracts the 
-     * entire `sucursal_seleccionada` object from the `request` object and populates 
-     * the decorated parameter with the value of the selected `sucursal`.
-     * @returns object of the `selected_sucursal` stored in session.
-     */
 export const Sucursal = createParamDecorator((propiedad: unknown, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest();
-    const { sesion: { sucursal_seleccionada } } = request;
 
-    if (!sucursal_seleccionada) {
-        throw new SucursalNotSelectedException();
+    // 1. Intentar obtener de la sesión (usuario normal)
+    if (request.sesion && request.sesion.sucursal_seleccionada) {
+        return propiedad
+            ? request.sesion.sucursal_seleccionada[`${propiedad}`]
+            : request.sesion.sucursal_seleccionada;
     }
 
-    return propiedad ? sucursal_seleccionada[`${propiedad}`] : sucursal_seleccionada;
-},
-);
+    // 2. Fallback para microservicios internos (FastAPI / IA)
+    // Si viene el header x-sucursal-id, lo usamos directamente
+    const headerSucursalId = request.headers['x-sucursal-id'];
+    if (headerSucursalId) {
+        const sucursalId = Number(headerSucursalId);
+        // Si piden una propiedad específica como 'sucursal_id', la devolvemos
+        if (propiedad === 'sucursal_id') {
+            return sucursalId;
+        }
+        // Si piden el objeto completo, simulamos la estructura
+        return { sucursal_id: sucursalId };
+    }
 
-/**
-     * Route handler parameter decorator. Extracts the 
-     * entire `usuario` object from the `request` object and populates 
-     * the decorated parameter with the value of the selected `usuario`.
-     * @returns object of the `usuario` stored in session.
-     */
+    // 3. Si no hay ni sesión ni header, lanzamos la excepción original
+    throw new SucursalNotSelectedException();
+});
+
 export const User = createParamDecorator(
     (data: unknown, ctx: ExecutionContext) => {
         const request = ctx.switchToHttp().getRequest();
-        return request.sesion.usuario;
+        // Protección contra undefined en sesiones internas
+        return request.sesion?.usuario;
     }
-)
+);

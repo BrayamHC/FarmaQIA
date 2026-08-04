@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Query, Param, ParseUUIDPipe, UseGuards, } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Query, Param, ParseUUIDPipe, UseGuards, Headers, } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { User, Sucursal } from 'src/decorators/session.decorator';
@@ -36,6 +36,28 @@ export class ProductosController {
         @Sucursal('sucursal_id') sucursalId: number,
     ): Promise<ProductosListaResponseDTO> {
         return this.service.obtenerProductos(filtros, sucursalId);
+    }
+
+    @Get('recomendaciones')
+    @InternalApi()
+    @ApiOperation({
+        summary: 'Obtener productos recomendados por tags (FEFO) — uso interno IA',
+        description:
+            'Endpoint consumido por el microservicio de IA. Devuelve productos ' +
+            'ordenados por proximidad de caducidad (FEFO) sin exponer dicha información.',
+    })
+    async obtenerRecomendacionesPorTags(
+        @Query() dto: RecomendacionesTagsDTO,
+        @Headers('x-sucursal-id') sucursalIdRaw: string,
+    ): Promise<RecomendacionesResponseDTO> {
+        const sucursalId = Number(sucursalIdRaw) || 1;
+
+        return this.service.obtenerRecomendacionesPorTags(
+            dto.tags,
+            dto.limite,
+            dto.stock_minimo,
+            sucursalId,
+        );
     }
 
     // ── Detalle ──────────────────────────────────────────────────────────────
@@ -117,25 +139,5 @@ export class ProductosController {
         @Sucursal('sucursal_id') sucursalId: number,
     ) {
         return this.service.obtenerLotesProducto(uuid, sucursalId);
-    }
-
-    @Get('recomendaciones')
-    @InternalApi()
-    @ApiOperation({
-        summary: 'Obtener productos recomendados por tags (FEFO) — uso interno IA',
-        description:
-            'Endpoint consumido por el microservicio de IA. Devuelve productos ' +
-            'ordenados por proximidad de caducidad (FEFO) sin exponer dicha información.',
-    })
-    async obtenerRecomendacionesPorTags(
-        @Query() dto: RecomendacionesTagsDTO,
-        @Sucursal('sucursal_id') sucursalId: number,
-    ): Promise<RecomendacionesResponseDTO> {
-        return this.service.obtenerRecomendacionesPorTags(
-            dto.tags,
-            dto.limite,
-            dto.stock_minimo,
-            sucursalId,
-        );
     }
 }
