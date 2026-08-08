@@ -1,3 +1,4 @@
+<!-- src/modules/ventas/views/Ventas.view.vue -->
 <template>
   <section class="flex h-[calc(100vh-8rem)] flex-col gap-4">
     <header class="flex flex-col gap-3">
@@ -263,7 +264,10 @@
     </article>
 
     <DialogVentaDetalle v-model:visible="mostrarDialogDetalle" :venta="ventasStore.ventaDetalle"
-      :cargando="ventasStore.cargandoDetalle" @hide="onCerrarDetalle" />
+      :cargando="ventasStore.cargandoVentaDetalle" @hide="onCerrarDetalle" @cancelar="abrirConfirmacionCancelar" />
+
+    <DialogCancelarVenta v-model:visible="mostrarDialogCancelar" :venta="ventaACancelar"
+      :procesando="ventasStore.cargandoCancelacion" @confirm="ejecutarCancelacion" />
   </section>
 </template>
 
@@ -276,6 +280,7 @@ import Column from 'primevue/column';
 import Paginator from 'primevue/paginator';
 import { useVentasStore } from '../ventasStore';
 import DialogVentaDetalle from './components/DialogVentaDetalle.vue';
+import DialogCancelarVenta from './components/DialogCancelarVenta.vue';
 
 const { isMobile } = useIsMobile();
 const ventasStore = useVentasStore();
@@ -292,6 +297,8 @@ const filtros = ref({
 const first = ref(0);
 const rows = ref(10);
 const mostrarDialogDetalle = ref(false);
+const mostrarDialogCancelar = ref(false);
+const ventaACancelar = ref(null);
 let busquedaTimeout = null;
 
 const totalRegistros = computed(() => Number(ventasStore.total || 0));
@@ -347,7 +354,25 @@ async function abrirDetalle(uuid) {
 }
 
 function onCerrarDetalle() {
-  ventasStore.limpiarDetalleVenta();
+  ventasStore.limpiarVentaDetalle();
+}
+
+function abrirConfirmacionCancelar(venta) {
+  ventaACancelar.value = venta;
+  mostrarDialogCancelar.value = true;
+}
+
+async function ejecutarCancelacion(venta) {
+  if (!venta?.venta_uuid) return;
+  try {
+    await ventasStore.cancelarVenta(venta.venta_uuid);
+    mostrarDialogCancelar.value = false;
+    ventaACancelar.value = null;
+    mostrarDialogDetalle.value = false;
+    await ventasStore.obtenerVentas();
+  } catch (error) {
+    // la notificación de error ya la maneja el store
+  }
 }
 
 function capitalizar(valor) {

@@ -18,10 +18,17 @@ async function obtenerVentaPorUuid(uuid) {
   return data
 }
 
+// ── Cancelar venta (devolución) ─────────────────────────────────────────────
+async function cancelarVenta(uuid) {
+  const { data } = await axios.post(`${ENDPOINT}/${uuid}/cancelar`)
+  return data
+}
+
 export const ventasService = {
   crearVenta,
   obtenerVentas,
   obtenerVentaPorUuid,
+  cancelarVenta,
 }
 
 export default ventasService

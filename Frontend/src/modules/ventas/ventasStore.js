@@ -4,6 +4,8 @@ import { computed, ref } from 'vue'
 import { productosService } from '@/modules/productos/productosService'
 import { clientesService } from '@/modules/clientes/clientesService'
 import { ventasService } from './ventasService'
+import { useNotificacionesStore } from '@/stores/notificaciones.store'
+
 
 export const useVentasStore = defineStore('ventas', () => {
   const cargando = ref(false)
@@ -17,12 +19,12 @@ export const useVentasStore = defineStore('ventas', () => {
       tags: ['Caja rápida', 'Recetas'],
     },
     {
-  titulo: 'Notas de Venta',
-  descripcion: 'Consulte historial de ventas, filtros, detalle de partidas y seguimiento de comprobantes.',
-  icono: 'pi pi-file-edit',
-  ruta: '/ventas/notas-de-venta',
-  tags: ['Historial', 'Detalle'],
-},
+      titulo: 'Notas de Venta',
+      descripcion: 'Consulte historial de ventas, filtros, detalle de partidas y seguimiento de comprobantes.',
+      icono: 'pi pi-file-edit',
+      ruta: '/ventas/notas-de-venta',
+      tags: ['Historial', 'Detalle'],
+    },
     {
       titulo: 'Clientes',
       descripcion: 'Base de datos de clientes, programas de lealtad y cuentas corrientes activas.',
@@ -78,6 +80,46 @@ export const useVentasStore = defineStore('ventas', () => {
   const totalProductos = ref(0)
   const pageProductos = ref(1)
   const limitProductos = ref(20)
+
+  const cargandoCancelacion = ref(false)
+  const notificacionesStore = useNotificacionesStore()
+
+
+  // ── Cancelar venta (devolución) ─────────────────────────────────────────────
+  async function cancelarVenta(ventaUuid) {
+    if (!ventaUuid) return null
+
+    cargandoCancelacion.value = true
+
+    try {
+      const response = await ventasService.cancelarVenta(ventaUuid)
+
+      // Reflejar el cambio localmente sin esperar un nuevo fetch
+      if (ventaDetalle.value?.venta_uuid === ventaUuid) {
+        ventaDetalle.value = {
+          ...ventaDetalle.value,
+          status: 'cancelada',
+          fecha_cancelacion: new Date().toISOString(),
+        }
+      }
+
+      const ventaEnLista = ventas.value.find((v) => v.venta_uuid === ventaUuid)
+      if (ventaEnLista) {
+        ventaEnLista.status = 'cancelada'
+      }
+
+      notificacionesStore.success(response?.message || 'Venta cancelada correctamente.')
+      return response
+    } catch (error) {
+      console.error('Error cancelando venta:', error)
+      notificacionesStore.error(
+        error?.response?.data?.message || 'Ocurrió un error al cancelar la venta.'
+      )
+      throw error
+    } finally {
+      cargandoCancelacion.value = false
+    }
+  }
 
   const filtrosProductos = ref({
     termino: '',
@@ -290,8 +332,8 @@ export const useVentasStore = defineStore('ventas', () => {
 
       ventasRecientes.value = Array.isArray(response?.ventas)
         ? response.ventas.slice(0, 5).map((venta) => ({
-            ...normalizarVentaLista(venta),
-          }))
+          ...normalizarVentaLista(venta),
+        }))
         : []
 
       return ventasRecientes.value
@@ -706,5 +748,7 @@ export const useVentasStore = defineStore('ventas', () => {
     actualizarCantidadProducto,
     eliminarProductoDelCarrito,
     limpiarCarrito,
+    cargandoCancelacion,
+    cancelarVenta,
   }
 })

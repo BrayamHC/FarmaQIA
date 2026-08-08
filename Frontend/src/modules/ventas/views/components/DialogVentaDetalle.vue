@@ -1,34 +1,64 @@
+<!-- src/modules/ventas/components/DialogVentaDetalle.vue -->
 <template>
   <Dialog :visible="visible" modal :closable="true" :draggable="false" :style="{ width: 'min(1100px, 96vw)' }" :pt="{
     root: { class: 'venta-detalle-root' },
     mask: { class: 'venta-detalle-mask' },
     content: { class: 'venta-detalle-content' },
   }" @update:visible="emit('update:visible', $event)" @hide="onHide">
+    <!-- HEADER -->
     <template #header>
-      <div class="flex min-w-0 flex-1 items-start gap-3">
-        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 shadow-sm shadow-blue-200/70">
-          <i class="pi pi-receipt text-base text-white"></i>
-        </div>
-
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-2">
-            <h3 class="truncate text-lg font-bold text-slate-900" style="font-family: var(--font-title)">
-              Detalle de venta
-            </h3>
-
-            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
-              :class="statusClass(venta?.status)">
-              {{ capitalizar(venta?.status) }}
-            </span>
+      <div class="flex min-w-0 flex-1 items-start justify-between gap-3">
+        <div class="flex min-w-0 items-start gap-3">
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 shadow-sm shadow-blue-200/70">
+            <i class="pi pi-receipt text-base text-white"></i>
           </div>
 
-          <p class="mt-0.5 text-sm text-slate-500">
-            {{ venta?.folio || 'Sin folio' }}
-          </p>
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="truncate text-lg font-bold text-slate-900" style="font-family: var(--font-title)">
+                Detalle de venta
+              </h3>
+
+              <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
+                :class="statusClass(venta?.status)">
+                {{ capitalizar(venta?.status) }}
+              </span>
+            </div>
+
+            <p class="mt-0.5 text-sm text-slate-500">
+              {{ venta?.folio || 'Sin folio' }}
+            </p>
+          </div>
         </div>
+
+        <button v-if="venta && accionesMenuItems.length" type="button"
+          class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 shadow-sm transition hover:bg-slate-50 hover:text-slate-600"
+          @click="abrirMenu">
+          <i class="pi pi-ellipsis-v text-sm"></i>
+        </button>
       </div>
     </template>
 
+    <!-- MENÚ DE ACCIONES -->
+    <Menu ref="menuRef" :model="accionesMenuItems" popup :pt="{
+      root: { class: 'ventas-acciones-menu' },
+      list: { class: 'p-1' },
+      item: { class: 'rounded-xl overflow-hidden' },
+      itemLink: { class: '!p-0' },
+      itemLabel: { class: 'sr-only' },
+      separator: { class: 'ventas-acciones-menu__separator' },
+    }">
+      <template #item="{ item }">
+        <button v-if="!item.separator" type="button"
+          class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40"
+          :class="item.itemClass" :disabled="item.disabled" @click="item.command">
+          <i :class="[item.icon, 'text-sm shrink-0', item.iconClass]"></i>
+          <span>{{ item.label }}</span>
+        </button>
+      </template>
+    </Menu>
+
+    <!-- CONTENIDO -->
     <section v-if="cargando" class="flex items-center justify-center py-16">
       <div class="text-center">
         <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
@@ -39,6 +69,7 @@
     </section>
 
     <section v-else-if="venta" class="venta-detalle-scroll flex flex-col gap-4">
+      <!-- KPIs -->
       <article class="dialog-hero">
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div class="venta-kpi">
@@ -71,6 +102,7 @@
         </div>
       </article>
 
+      <!-- Información general + cliente -->
       <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <article class="card-detalle lg:col-span-2">
           <div class="card-detalle__header">
@@ -100,6 +132,11 @@
               <span class="info-item__label">Status</span>
               <span class="info-item__value">{{ capitalizar(venta.status) }}</span>
             </div>
+
+            <div v-if="venta.status === 'cancelada'" class="info-item md:col-span-2">
+              <span class="info-item__label">Fecha de cancelación</span>
+              <span class="info-item__value">{{ formatearFechaHora(venta.fecha_cancelacion) }}</span>
+            </div>
           </div>
         </article>
 
@@ -125,6 +162,7 @@
         </article>
       </div>
 
+      <!-- Almacén + resumen financiero -->
       <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <article class="card-detalle lg:col-span-1">
           <div class="card-detalle__header">
@@ -171,6 +209,7 @@
         </article>
       </div>
 
+      <!-- Partidas -->
       <article class="card-detalle">
         <div class="card-detalle__header">
           <div class="flex items-center gap-2">
@@ -275,17 +314,54 @@
 </template>
 
 <script setup>
+import { computed, ref } from 'vue'
 import Dialog from 'primevue/dialog'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
+import Menu from 'primevue/menu'
 
-defineProps({
+const props = defineProps({
   visible: { type: Boolean, default: false },
   venta: { type: Object, default: null },
   cargando: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['update:visible', 'hide'])
+const emit = defineEmits(['update:visible', 'hide', 'cancelar'])
+
+const menuRef = ref(null)
+
+const accionesMenuItems = computed(() => {
+  const v = props.venta
+  if (!v) return []
+
+  const items = []
+
+  if (v.status === 'cobrada') {
+    items.push({
+      label: 'Cancelar venta',
+      icon: 'pi pi-times-circle',
+      iconClass: 'text-rose-500',
+      itemClass: 'text-black font-bold hover:bg-rose-50',
+      command: () => {
+        cerrarMenu()
+        // Solo notificamos al padre: la confirmación real la maneja
+        // el único diálogo de confirmación (DialogCancelarVenta) en Ventas.view.vue.
+        // No abrir un segundo diálogo de confirmación aquí para evitar duplicidad.
+        emit('cancelar', v)
+      },
+    })
+  }
+
+  return items
+})
+
+function abrirMenu(event) {
+  menuRef.value?.toggle(event)
+}
+
+function cerrarMenu() {
+  menuRef.value?.hide()
+}
 
 function onHide() {
   emit('hide')
@@ -297,7 +373,7 @@ function capitalizar(valor) {
 }
 
 function statusClass(status) {
-  if (status === 'cobrada') return 'bg-blue-50 text-blue-700'
+  if (status === 'cobrada') return 'bg-emerald-50 text-emerald-700'
   if (status === 'cancelada') return 'bg-rose-50 text-rose-700'
   if (status === 'pendiente') return 'bg-amber-50 text-amber-700'
   return 'bg-slate-100 text-slate-600'
@@ -378,7 +454,6 @@ function formatearFechaHora(value) {
   flex-direction: column !important;
 }
 
-/* única área de scroll: todo el contenido del detalle (KPIs, info, partidas...) */
 .venta-detalle-scroll {
   min-height: 0;
   flex: 1 1 auto;
@@ -476,10 +551,6 @@ function formatearFechaHora(value) {
   border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-/* la tabla de partidas tiene su propio scroll horizontal para
-   no romper el layout en pantallas angostas, pero su alto es
-   natural (no se recorta), ya que quien scrollea verticalmente
-   es .venta-detalle-scroll */
 .partidas-table-wrap {
   overflow-x: auto;
   scrollbar-width: thin;
@@ -517,5 +588,41 @@ function formatearFechaHora(value) {
 
 .ventas-partidas-table :deep(.p-datatable-tbody > tr:hover > td) {
   background: rgba(59, 130, 246, 0.03);
+}
+
+/* MENÚ DE ACCIONES */
+:global(.ventas-acciones-menu) {
+  min-width: 13rem !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(226, 232, 240, 0.95) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.14) !important;
+  overflow: hidden !important;
+  padding: 0.375rem !important;
+  z-index: 9999 !important;
+}
+
+:global(.ventas-acciones-menu .p-menu-list) {
+  padding: 0 !important;
+  background: #ffffff !important;
+}
+
+:global(.ventas-acciones-menu .p-menuitem) {
+  border-radius: 0.75rem !important;
+  overflow: hidden !important;
+}
+
+:global(.ventas-acciones-menu .p-menuitem-link) {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+:global(.ventas-acciones-menu .p-menuitem-link:hover) {
+  background: transparent !important;
+}
+
+:global(.ventas-acciones-menu__separator) {
+  margin: 0.25rem 0.5rem;
+  border-top: 1px solid rgba(226, 232, 240, 1);
 }
 </style>
