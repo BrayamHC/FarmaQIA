@@ -179,4 +179,42 @@ export class VentasCoordinator {
             detallesResueltos,
         });
     }
+
+    async cancelarVenta(ventaUuid: string, sucursalId: number, usuario: any) {
+        const usuario_id = Number(usuario?.usuario_id ?? usuario?.id);
+        const sucursal_id = Number(sucursalId);
+
+        if (!sucursal_id) {
+            throw new BadRequestException('No se encontró la sucursal en la sesión.');
+        }
+
+        if (!usuario_id) {
+            throw new BadRequestException('No se encontró el usuario en la sesión.');
+        }
+
+        const venta = await this.ventasService.obtenerVentaParaCancelar({
+            venta_uuid: ventaUuid,
+            sucursal_id,
+        });
+
+        if (!venta) {
+            throw new NotFoundException('No se encontró la venta o no pertenece a esta sucursal.');
+        }
+
+        if (venta.status !== 'cobrada') {
+            throw new BadRequestException('Solo se pueden cancelar ventas con status "cobrada".');
+        }
+
+        const partidas = await this.ventasService.obtenerPartidasParaDevolucion(venta.venta_id);
+
+        if (!partidas || !partidas.length) {
+            throw new BadRequestException('No se encontraron partidas para esta venta.');
+        }
+
+        return this.ventasService.cancelarVenta({
+            venta_id: venta.venta_id,
+            usuario_id,
+            partidas,
+        });
+    }
 }

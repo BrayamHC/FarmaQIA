@@ -251,4 +251,31 @@ export class VentasRepoData {
             throw new DatabaseQueryException('Error al obtener venta');
         }
     }
+
+    async obtenerVentaParaCancelar(ventaUuid: string, sucursalId: number) {
+        return this.knex('ventas as v')
+            .select(
+                'v.venta_id',
+                'v.venta_uuid',
+                'v.status',
+                'v.almacen_id',
+                'v.sucursal_id',
+            )
+            .where('v.venta_uuid', ventaUuid)
+            .andWhere('v.sucursal_id', sucursalId)
+            .first();
+    }
+
+    async obtenerPartidasParaDevolucion(venta_id: number) {
+        return this.knex('ventas_detalle as vd')
+            .select(
+                'vd.detalle_id',
+                'vd.producto_id',
+                'vd.lote_id',
+                'vd.cantidad',
+                'vv.almacen_id',
+            )
+            .leftJoin('ventas as vv', 'vv.venta_id', 'vd.venta_id')
+            .where('vd.venta_id', venta_id);
+    }
 }

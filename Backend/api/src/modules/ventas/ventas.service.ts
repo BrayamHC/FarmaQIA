@@ -12,7 +12,6 @@ export class VentasService {
         private readonly repoData: VentasRepoData,
     ) { }
 
-    // ── Auxiliares para creación (ya existentes) ────────────────────────────
     async obtenerClienteParaVenta(input: { cliente_id: number; sucursal_id: number }) {
         return this.repoData.obtenerClientePorId(input.cliente_id, input.sucursal_id);
     }
@@ -93,6 +92,29 @@ export class VentasService {
             stockAfectar,
             lotesAfectar,
         });
+    }
+
+    // ── Cancelar venta (devolución) ───────────────────────────────────────────
+    async obtenerVentaParaCancelar(input: { venta_uuid: string; sucursal_id: number }) {
+        return this.repoData.obtenerVentaParaCancelar(input.venta_uuid, input.sucursal_id);
+    }
+
+    async obtenerPartidasParaDevolucion(venta_id: number) {
+        return this.repoData.obtenerPartidasParaDevolucion(venta_id);
+    }
+
+    async cancelarVenta(input: {
+        venta_id: number;
+        usuario_id: number;
+        partidas: Array<{
+            detalle_id: number;
+            producto_id: number;
+            lote_id: number | null;
+            cantidad: number;
+            almacen_id: number;
+        }>;
+    }) {
+        return this.repoAction.cancelarVentaTransaccional(input);
     }
 
     // ── Listar ────────────────────────────────────────────────────────────────

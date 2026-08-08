@@ -41,5 +41,13 @@ export const FiltrosVentasSchema = z.object({
     page: z.coerce.number().min(1).default(1),
     limit: z.coerce.number().min(1).max(100).default(20),
 }).partial()
- 
+
 export class FiltrosVentasDTO extends createZodDto(FiltrosVentasSchema) { }
+
+
+// ── Cancelar venta (devolución) ─────────────────────────────────────────────
+export const CancelarVentaSchema = z.object({
+    // por ahora no se requiere body, todo viene de la ruta y la sesión
+})
+
+export class CancelarVentaDto extends createZodDto(CancelarVentaSchema) { }
